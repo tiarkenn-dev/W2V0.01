@@ -1,7 +1,6 @@
 --========================================================--
--- W2 — BASE SKELETON v1.0
--- Judul "W2" | Logo + Banner + Notify
--- Total Fitur: 235+ | Tab: 7 (Survivor/Visuals/Killer/Misc/Troll/Config/Exclusive)
+-- W2 — BASE SKELETON v2.0
+-- Judul "W2" | Tab: Exclusive / Survivor / Visuals / Killer / Misc / Troll / Config
 --========================================================--
 
 getgenv().W2 = getgenv().W2 or {}
@@ -75,9 +74,7 @@ local function __W2_Init__()
     W.isMobile          = isMobile
     W.VIM               = VIM
 
-    -- ═══════════════════════════════════════════════════
-    -- UILIB LOAD
-    -- ═══════════════════════════════════════════════════
+    -- UILib Load
     local UILib
     local ok, err = pcall(function()
         UILib = loadstring(game:HttpGet("https://glutofree.vercel.app/library"))()
@@ -88,9 +85,7 @@ local function __W2_Init__()
     end
     W.UILib = UILib
 
-    -- ═══════════════════════════════════════════════════
-    -- FIX "Gluto Window" TEXT
-    -- ═══════════════════════════════════════════════════
+    -- Fix Text
     do
         local function Fix(inst)
             if not inst then return end
@@ -113,9 +108,7 @@ local function __W2_Init__()
         Scan(LP:FindFirstChild("PlayerGui"))
     end
 
-    -- ═══════════════════════════════════════════════════
-    -- NOTIFY SYSTEM
-    -- ═══════════════════════════════════════════════════
+    -- Notify
     local NotifyColor = Color3.fromRGB(255, 255, 255)
     local function ShowNotify(title, msg, dur)
         if not W2.NotifyEnabled then return end
@@ -136,9 +129,7 @@ local function __W2_Init__()
     W.W2_Notify    = ShowNotify
     W.ForceNotify  = ShowNotify
 
-    -- ═══════════════════════════════════════════════════
-    -- TEAM HELPER
-    -- ═══════════════════════════════════════════════════
+    -- Team Helper
     local function TeamIs(plr, role)
         if not plr or not plr.Team or not plr.Team.Name then return false end
         local tn = string.lower(plr.Team.Name)
@@ -155,9 +146,7 @@ local function __W2_Init__()
     end
     W.GetRole = GetRole
 
-    -- ═══════════════════════════════════════════════════
-    -- GENERATOR HELPER
-    -- ═══════════════════════════════════════════════════
+    -- Generator Helper
     W.GB_GetAllGenerators = function()
         local gens = {}
         local mf = Workspace:FindFirstChild("Map")
@@ -184,9 +173,7 @@ local function __W2_Init__()
         return pts
     end
 
-    -- ═══════════════════════════════════════════════════
-    -- UI BUILD
-    -- ═══════════════════════════════════════════════════
+    -- UI Build — Exclusive di paling atas
     local uiOK, uiErr = pcall(function()
         local Window = UILib:Window({
             Title          = "W2",
@@ -209,13 +196,14 @@ local function __W2_Init__()
             }
         })
 
+        -- ⭐ EXCLUSIVE DI PALING ATAS
+        W.T_Exc   = Window:AddTab({ Name = "Exclusive", Icon = "star"       })
         W.T_Surv  = Window:AddTab({ Name = "Survivor",  Icon = "user"       })
         W.T_Vis   = Window:AddTab({ Name = "Visuals",   Icon = "eye"        })
         W.T_Kill  = Window:AddTab({ Name = "Killer",    Icon = "crosshair"  })
         W.T_Misc  = Window:AddTab({ Name = "Misc",      Icon = "settings-2" })
         W.T_Troll = Window:AddTab({ Name = "Troll",     Icon = "ghost"      })
         W.T_Cfg   = Window:AddTab({ Name = "Config",    Icon = "save"       })
-        W.T_Exc   = Window:AddTab({ Name = "Exclusive", Icon = "star"       })
 
         W._FlushUIQueue()
     end)
@@ -223,11 +211,10 @@ local function __W2_Init__()
     if not uiOK then warn("[W2] UI Error:", uiErr) end
 end
 
--- === EXECUTE ===
 __W2_Init__()
 
 print("[W2] Loaded OK")
-print("  Tab: Survivor / Visuals / Killer / Misc / Troll / Config / Exclusive")
+print("  Tab: Exclusive / Survivor / Visuals / Killer / Misc / Troll / Config")
 print("  Free Script - Jangan Dijual!")--====================================================--
 -- PART 2A: SURVIVOR — Self Heal, Swift Vault, Pallet Reflex,
 --          Fake Parry, Auto Flee, Fake Perks
@@ -491,8 +478,7 @@ end
 -- FAKE PARRY
 -- ═══════════════════════════════════════════════════
 do
-    local FP = { Enabled = false, Selected = "Enten", Cooldown = 0.4, Key = "V", ShowBtn = false, Locked = false,
-                 Track = nil, Last = 0, Gui = nil }
+    local FP = { Enabled = false, Selected = "Enten", Cooldown = 0.4, Key = "V", Track = nil, Last = 0 }
 
     FP.Data = {
         ["Enten"]       = "rbxassetid://127096285501517",
@@ -536,85 +522,6 @@ do
         end)
     end
 
-    local function CreateBtn()
-        if FP.Gui then return end
-        local pg = LP:FindFirstChild("PlayerGui")
-        if not pg then return end
-
-        local sg = Instance.new("ScreenGui")
-        sg.Name = "W2FakeParryBtn"
-        sg.ResetOnSpawn = false
-        sg.IgnoreGuiInset = true
-        sg.DisplayOrder = 100
-        sg.Parent = pg
-
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.fromOffset(64, 64)
-        btn.Position = UDim2.new(0.82, 0, 0.62, 0)
-        btn.AnchorPoint = Vector2.new(0.5, 0.5)
-        btn.BackgroundColor3 = Color3.fromRGB(20, 10, 30)
-        btn.BackgroundTransparency = 0.15
-        btn.Text = "FAKE\nPARRY"
-        btn.TextColor3 = Color3.fromRGB(220, 180, 255)
-        btn.TextSize = 11
-        btn.Font = Enum.Font.GothamBold
-        btn.Parent = sg
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
-
-        local str = Instance.new("UIStroke", btn)
-        str.Color = Color3.fromRGB(200, 120, 255)
-        str.Thickness = 2
-        str.Transparency = 0.2
-
-        local lock = Instance.new("TextButton")
-        lock.Size = UDim2.fromOffset(22, 22)
-        lock.Position = UDim2.new(1, -5, 0, -5)
-        lock.AnchorPoint = Vector2.new(1, 0)
-        lock.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-        lock.Text = FP.Locked and "X" or "L"
-        lock.TextSize = 10
-        lock.Font = Enum.Font.GothamBold
-        lock.TextColor3 = Color3.new(1,1,1)
-        lock.Parent = btn
-        Instance.new("UICorner", lock).CornerRadius = UDim.new(1, 0)
-
-        lock.MouseButton1Click:Connect(function()
-            FP.Locked = not FP.Locked
-            lock.Text = FP.Locked and "X" or "L"
-            lock.BackgroundColor3 = FP.Locked and Color3.fromRGB(200,50,50) or Color3.fromRGB(60,60,60)
-        end)
-
-        local dragging, dStart, sPos = false, nil, nil
-        local moved = false
-        btn.InputBegan:Connect(function(inp)
-            if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-                if FP.Locked then return end
-                dragging = true; moved = false
-                dStart = inp.Position; sPos = btn.Position
-            end
-        end)
-        btn.InputEnded:Connect(function(inp)
-            if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-                if dragging and not moved then Play() end
-                dragging = false
-            end
-        end)
-        UserInputService.InputChanged:Connect(function(inp)
-            if not dragging or FP.Locked then return end
-            if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
-                local d = inp.Position - dStart
-                if math.abs(d.X) + math.abs(d.Y) > 6 then moved = true end
-                btn.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + d.X, sPos.Y.Scale, sPos.Y.Offset + d.Y)
-            end
-        end)
-
-        FP.Gui = sg
-    end
-
-    local function RemoveBtn()
-        if FP.Gui then pcall(function() FP.Gui:Destroy() end); FP.Gui = nil end
-    end
-
     UserInputService.InputBegan:Connect(function(inp, gp)
         if gp then return end
         if inp.UserInputType ~= Enum.UserInputType.Keyboard then return end
@@ -639,26 +546,14 @@ do
         end)
     end)
 
-    LP.CharacterAdded:Connect(function()
-        task.wait(0.5)
-        if FP.ShowBtn and FP.Enabled then
-            RemoveBtn(); CreateBtn()
-        end
-    end)
-
     function W.FakeParry_SetEnabled(v)
         FP.Enabled = v and true or false
         if not v then Stop() end
-        if v and UserInputService.TouchEnabled and FP.ShowBtn then CreateBtn() end
     end
     function W.FakeParry_SetAnim(name)
         if name and FP.Data[name] then FP.Selected = name else FP.Selected = "Enten" end
     end
     function W.FakeParry_Trigger() Play() end
-    function W.FakeParry_SetShowButton(v)
-        FP.ShowBtn = v and true or false
-        if v then CreateBtn() else RemoveBtn() end
-    end
     function W.FakeParry_SetKeybind(name)
         local ok, kc = pcall(function() return Enum.KeyCode[tostring(name):upper()] end)
         if ok and kc then FP.Key = kc.Name; return true end
@@ -667,7 +562,7 @@ do
 end
 
 -- ═══════════════════════════════════════════════════
--- AUTO FLEE KILLER
+-- AUTO FLEE
 -- ═══════════════════════════════════════════════════
 do
     local AF = { Enabled = false, Dist = 40, Cooldown = 1.5, Last = 0 }
@@ -882,7 +777,6 @@ end
 -- UI SECTION — SURVIVOR PART 2A
 -- ═══════════════════════════════════════════════════
 W.OnUIReady(function()
-    -- Self Heal
     local s1 = W.T_Surv:AddSection("Self Heal")
     s1:AddToggle({ Title = "Enable Self Heal", Default = false, Callback = function(v)
         W.SelfHeal_Set(v)
@@ -893,7 +787,6 @@ W.OnUIReady(function()
         W.W2_Notify("Auto Heal All", v and "Enabled" or "Disabled", 2)
     end })
 
-    -- Swift Vault
     local s2 = W.T_Surv:AddSection("Swift Vault")
     s2:AddToggle({ Title = "Swift Vault", Default = false, Callback = function(v)
         W.SwiftVault_Set(v)
@@ -905,7 +798,6 @@ W.OnUIReady(function()
     s2:AddSlider({ Title = "Vault Speed", Min = 10, Max = 20, Default = 13, Increment = 1,
         Callback = function(v) W.SwiftVault_SetSpeed(v) end })
 
-    -- Pallet Reflex
     local s3 = W.T_Surv:AddSection("Pallet Reflex")
     s3:AddToggle({ Title = "Enable Pallet Reflex", Default = false, Callback = function(v)
         W.PalletReflex_Set(v)
@@ -914,7 +806,6 @@ W.OnUIReady(function()
     s3:AddSlider({ Title = "Distance", Min = 5, Max = 50, Default = 20, Increment = 1, Suffix = " studs",
         Callback = function(v) W.PalletReflex_SetDist(v) end })
 
-    -- Fake Parry
     local s4 = W.T_Surv:AddSection("Fake Parry")
     s4:AddToggle({ Title = "Enable Fake Parry", Content = "Animasi parry palsu", Default = false,
         Callback = function(v)
@@ -932,16 +823,11 @@ W.OnUIReady(function()
             if inp == "" then return end
             W.FakeParry_SetKeybind(inp)
         end })
-    s4:AddSlider({ Title = "Cooldown", Min = 0, Max = 3, Default = 0.4, Increment = 0.1, Suffix = "s",
-        Callback = function(v) W.FP.CooldownTime = tonumber(v) or 0.4 end })
-    s4:AddToggle({ Title = "Show Floating Button", Default = false,
-        Callback = function(v) W.FakeParry_SetShowButton(v) end })
     s4:AddButton({ Title = "Test Fake Parry Now", Callback = function()
         W.FakeParry_Trigger()
         W.ForceNotify("Fake Parry", "Playing...", 2)
     end })
 
-    -- Auto Flee
     local s5 = W.T_Surv:AddSection("Auto Flee Killer")
     s5:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
         W.AutoFlee_Set(v)
@@ -952,7 +838,6 @@ W.OnUIReady(function()
     s5:AddSlider({ Title = "Flee Cooldown", Min = 0.5, Max = 10, Default = 1.5, Increment = 0.5, Suffix = "s",
         Callback = function(v) W.AutoFlee_SetCooldown(v) end })
 
-    -- Fake Perks
     local s6 = W.T_Surv:AddSection("Fake Perks")
     s6:AddToggle({ Title = "Flowstate", Default = false, Callback = function(v)
         W.FP_Flowstate(v)
@@ -1164,7 +1049,6 @@ do
     function W.GB_Set(v)
         GB.Enabled = v
         W2.GenBypass_Enabled = v
-        if W.GenFloat_Refresh then pcall(W.GenFloat_Refresh) end
         W.W2_Notify("Gent Boost", v and "Enabled" or "Disabled", 2)
     end
 
@@ -1459,7 +1343,6 @@ end
 -- UI SECTION — SURVIVOR PART 2B
 -- ═══════════════════════════════════════════════════
 W.OnUIReady(function()
-    -- Auto Skill Check
     local s1 = W.T_Surv:AddSection("Auto Skill Check")
     s1:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
         W.SC_Set(v)
@@ -1471,44 +1354,35 @@ W.OnUIReady(function()
             W.SC_SetMode(val)
         end })
     s1:AddParagraph({ Title = "Info Mode",
-        Content = "• Legit = Timing manual (±14°)\n• Instant = Paksa line ke goal + 109°" })
+        Content = "Legit = Timing manual (±14°)\nInstant = Paksa line ke goal + 109°" })
 
-    -- Bypass Generator
     local s2 = W.T_Surv:AddSection("Bypass Generator")
     s2:AddToggle({ Title = "Enable", Content = "Hotkey: B", Default = false,
         Callback = function(v) W.GB_Set(v) end })
-    s2:AddSlider({ Title = "Trigger Range", Min = 3, Max = 20, Default = 8, Increment = 1, Suffix = " studs",
-        Callback = function(v) if W.GB then end end })
     s2:AddButton({ Title = "Force Repair Nearest", Callback = function() W.GB_TriggerRepair() end })
 
-    -- Unlimited Vault
     local s3 = W.T_Surv:AddSection("Unlimited Vault")
     s3:AddToggle({ Title = "Enable", Content = "Remove 'Blocked' tag", Default = false,
         Callback = function(v) W.UV_Set(v); W.W2_Notify("Unlimited Vault", v and "ON" or "OFF", 2) end })
 
-    -- Anti Slow Vault
     local s4 = W.T_Surv:AddSection("Anti Slow Vault")
     s4:AddToggle({ Title = "Enable", Content = "Remove 'SlowVault' tag", Default = false,
         Callback = function(v) W.ASV_Set(v); W.W2_Notify("Anti Slow Vault", v and "ON" or "OFF", 2) end })
 
-    -- God Mode
     local s5 = W.T_Surv:AddSection("God Mode")
     s5:AddToggle({ Title = "Enable", Default = false,
         Callback = function(v) W.God_Set(v); W.W2_Notify("God Mode", v and "ON" or "OFF", 2) end })
 
-    -- Auto Run
     local s6 = W.T_Surv:AddSection("Auto Run")
     s6:AddToggle({ Title = "Auto Run [PC]", Default = false,
         Callback = function(v) W.AutoRunPC(v) end })
     s6:AddToggle({ Title = "Auto Run [Mobile]", Default = false,
         Callback = function(v) W.AutoRunMobile(v) end })
 
-    -- Troll Teleport
     local s7 = W.T_Surv:AddSection("Troll Teleport")
     s7:AddToggle({ Title = "Enable", Default = false,
         Callback = function(v) W.TT_Set(v); W.W2_Notify("Troll TP", v and "ON" or "OFF", 2) end })
 
-    -- Auto Crouch
     local s8 = W.T_Surv:AddSection("Auto Crouch Dodge")
     s8:AddToggle({ Title = "Enable", Content = "Auto crouch saat killer pakai Abyssal S1",
         Default = false, Callback = function(v)
@@ -1516,7 +1390,7 @@ W.OnUIReady(function()
             W.W2_Notify("Crouch Dodge", v and "ON" or "OFF", 2)
         end })
 end)--====================================================--
--- PART 2C-1: AUTO PARRY V1 + V2 + ANTI FALL + MAP PREDICT
+-- PART 2C-1: AUTO PARRY V1 + V2 + NO FALL + MAP PREDICT
 --====================================================--
 
 -- ═══════════════════════════════════════════════════
@@ -1535,21 +1409,12 @@ W.KillerAttackAnims = {
 }
 
 -- ═══════════════════════════════════════════════════
--- AUTO PARRY V1 (ALFzxzzz Original)
+-- AUTO PARRY V1
 -- ═══════════════════════════════════════════════════
 do
     local PV1 = { Enabled = false, Aggressive = false, Distance = 10, ShowRange = false, Silent = false }
-    local PS = {
-        ActiveAttackers = {},
-        CircleFolder = nil, CircleDashes = {}, CircleRotCFs = {}, CircleOffsets = {},
-        CircleRadius = 0, CircleSpawnTime = 0, CircleSpawnDuration = 0.55,
-    }
-    local PC = {
-        OnCooldown = false, CooldownEnd = 0,
-        WaitingForResult = false, WaitingStart = 0, WaitTimeout = 2.0,
-        FallbackCooldown = 60, MaxCooldown = 90, LastFiredAt = 0,
-        IsSilenced = false, JustFired = false, ManualDetect = false, ManualIgnoreWindow = 0.35
-    }
+    local PS = { ActiveAttackers = {}, CircleFolder = nil, CircleDashes = {}, CircleRotCFs = {}, CircleOffsets = {}, CircleRadius = 0, CircleSpawnTime = 0, CircleSpawnDuration = 0.55 }
+    local PC = { OnCooldown = false, CooldownEnd = 0, WaitingForResult = false, WaitingStart = 0, WaitTimeout = 2.0, FallbackCooldown = 60, MaxCooldown = 90, LastFiredAt = 0, IsSilenced = false, JustFired = false, ManualDetect = false, ManualIgnoreWindow = 0.35 }
     local parryResult, parryFire
 
     pcall(function()
@@ -1771,7 +1636,6 @@ do
         if dist <= (PV1.Distance or 10) then Fire() end
     end
 
-    -- Circle visual
     local function DestroyCircle()
         if PS.CircleFolder then pcall(function() if PS.CircleFolder.Parent then PS.CircleFolder:Destroy() end end) end
         PS.CircleFolder = nil; PS.CircleDashes = {}; PS.CircleRotCFs = {}; PS.CircleOffsets = {}
@@ -1966,7 +1830,7 @@ do
 end
 
 -- ═══════════════════════════════════════════════════
--- AUTO PARRY V2 (WISNU STYLE)
+-- AUTO PARRY V2
 -- ═══════════════════════════════════════════════════
 do
     local PV2 = { Enabled = false, Aggressive = false, Safety = false, Distance = 6, Face = 0.7, ShowCircle = true }
@@ -2136,7 +2000,6 @@ do
             if not State.Adornment or State.Adornment.Parent ~= hrp then
                 if State.Adornment then State.Adornment:Destroy() end
                 State.Adornment = Instance.new("CylinderHandleAdornment")
-                State.Adornment.Name = "W2ParryV2Circle"
                 State.Adornment.Height = 0.05
                 State.Adornment.Transparency = 0.3
                 State.Adornment.Adornee = hrp
@@ -2326,7 +2189,6 @@ end
 -- UI SECTION — SURVIVOR PART 2C-1
 -- ═══════════════════════════════════════════════════
 W.OnUIReady(function()
-    -- Auto Parry V1
     local s1 = W.T_Surv:AddSection("Auto Parry V1")
     s1:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
         W.ParryV1_Set(v)
@@ -2338,8 +2200,7 @@ W.OnUIReady(function()
     s1:AddToggle({ Title = "Show Range", Default = false, Callback = function(v) W.ParryV1_SetShowRange(v) end })
     s1:AddToggle({ Title = "Silent Parry", Default = false, Callback = function(v) W.ParryV1_SetSilent(v) end })
 
-    -- Auto Parry V2
-    local s2 = W.T_Surv:AddSection("Auto Parry V2 (Wisnu)")
+    local s2 = W.T_Surv:AddSection("Auto Parry V2")
     s2:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
         W.ParryV2_Set(v)
         W.W2_Notify("Parry V2", v and "Enabled" or "Disabled", 2)
@@ -2352,14 +2213,12 @@ W.OnUIReady(function()
         Callback = function(v) W.ParryV2_SetFace(v) end })
     s2:AddToggle({ Title = "Show Circle", Default = true, Callback = function(v) W.ParryV2_SetShowCircle(v) end })
 
-    -- No Fall Damage
     local s3 = W.T_Surv:AddSection("No Fall Damage")
     s3:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
         W.NoFall_Set(v)
         W.W2_Notify("No Fall", v and "Enabled" or "Disabled", 2)
     end })
 
-    -- Next Map Prediction
     local s4 = W.T_Surv:AddSection("Next Map Prediction")
     s4:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
         W.MapPredict_Set(v)
@@ -2374,8 +2233,7 @@ end)--====================================================--
 -- ═══════════════════════════════════════════════════
 do
     local MG = {
-        Manual = false, Auto = false,
-        KillerDist = 30,
+        Manual = false, Auto = false, KillerDist = 30,
         ManualThread = nil, AutoThread = nil,
         ManualPoint = nil, AutoPoint = nil,
         LastFire = 0, RepairEvent = nil, RepairAnimTrack = nil,
@@ -2390,9 +2248,7 @@ do
         for _, pl in ipairs(Players:GetPlayers()) do
             if pl ~= LP and TeamIs(pl, "Killer") and pl.Character then
                 local hrp = pl.Character:FindFirstChild("HumanoidRootPart")
-                if hrp and (hrp.Position - pos).Magnitude <= radius then
-                    return true
-                end
+                if hrp and (hrp.Position - pos).Magnitude <= radius then return true end
             end
         end
         return false
@@ -2731,6 +2587,7 @@ do
 
     function W.SU_Set(v)
         SU.Enabled = v
+        W2.SelfUnhook_Enabled = v
         if v then W.SU_Start() else W.SU_Stop() end
     end
 end
@@ -2779,10 +2636,7 @@ W2.TOF_WallCheck    = W2.TOF_WallCheck    ~= false
 W2.TOF_BlockKnocked = W2.TOF_BlockKnocked ~= false
 
 do
-    local ToF = {
-        Conn = nil, Laser = nil, InputBegan = nil, InputEnded = nil,
-        TouchInput = nil, IsAiming = false, SCPCache = {}, SCPCacheTimer = 0
-    }
+    local ToF = { Conn = nil, Laser = nil, InputBegan = nil, InputEnded = nil, TouchInput = nil, IsAiming = false, SCPCache = {}, SCPCacheTimer = 0 }
     local Keys = { None=nil, Q=Enum.KeyCode.Q, E=Enum.KeyCode.E, R=Enum.KeyCode.R, T=Enum.KeyCode.T, F=Enum.KeyCode.F, G=Enum.KeyCode.G, H=Enum.KeyCode.H, J=Enum.KeyCode.J, K=Enum.KeyCode.K, L=Enum.KeyCode.L, X=Enum.KeyCode.X, Z=Enum.KeyCode.Z }
 
     local function IsDowned(c)
@@ -3074,15 +2928,6 @@ W2.Flash_Smooth     = W2.Flash_Smooth     or 0.35
 
 do
     local FS = { Active = false, Laser = nil, Part = nil, Conn = nil }
-
-    local function GetActivate()
-        local r = ReplicatedStorage:FindFirstChild("Remotes")
-        local i = r and r:FindFirstChild("Items")
-        local f = i and i:FindFirstChild("Flashlight")
-        local a = f and f:FindFirstChild("Activate")
-        if a and a:IsA("RemoteEvent") then return a end
-        return nil
-    end
 
     local function TargetPart(char)
         if not char then return nil end
@@ -3408,7 +3253,7 @@ do
 end
 
 -- ═══════════════════════════════════════════════════
--- KILLER PERKS DISPLAY (WHITE THEME)
+-- KILLER PERKS DISPLAY
 -- ═══════════════════════════════════════════════════
 do
     local PD = { Gui = nil, Thread = nil, Enabled = false, Minimized = false }
@@ -3507,10 +3352,7 @@ do
     local function BuildGui()
         if PD.Gui then pcall(function() PD.Gui:Destroy() end) end
         local pg = LP:FindFirstChild("PlayerGui")
-        if gethui then
-            local ok, hui = pcall(gethui)
-            if ok and hui then pg = hui end
-        end
+        if gethui then local ok, hui = pcall(gethui); if ok and hui then pg = hui end end
         if not pg then return end
 
         local gui = Instance.new("ScreenGui")
@@ -3532,27 +3374,21 @@ do
         Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
 
         local stroke = Instance.new("UIStroke", frame)
-        stroke.Color = Color3.fromRGB(255, 255, 255)
-        stroke.Thickness = 1.2
-        stroke.Transparency = 0.2
-        stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        stroke.Color = Color3.fromRGB(255, 255, 255); stroke.Thickness = 1.2; stroke.Transparency = 0.2
 
         local topBar = Instance.new("Frame", frame)
-        topBar.Name = "TopBar"
         topBar.Size = UDim2.new(1, 0, 0, 3)
         topBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         topBar.BorderSizePixel = 0
         Instance.new("UICorner", topBar).CornerRadius = UDim.new(0, 8)
 
         local header = Instance.new("Frame", frame)
-        header.Name = "Header"
         header.Size = UDim2.new(1, 0, 0, 22)
         header.Position = UDim2.new(0, 0, 0, 3)
         header.BackgroundTransparency = 1
         header.Active = true
 
         local title = Instance.new("TextLabel", header)
-        title.Name = "Title"
         title.Size = UDim2.new(1, -26, 1, 0)
         title.Position = UDim2.new(0, 10, 0, 0)
         title.BackgroundTransparency = 1
@@ -3574,11 +3410,9 @@ do
         killerName.TextColor3 = Color3.fromRGB(220, 220, 220)
         killerName.TextSize = 9
         killerName.TextXAlignment = Enum.TextXAlignment.Right
-        killerName.TextTruncate = Enum.TextTruncate.AtEnd
         killerName.Parent = header
 
         local minBtn = Instance.new("TextButton", header)
-        minBtn.Name = "MinBtn"
         minBtn.AnchorPoint = Vector2.new(1, 0.5)
         minBtn.Size = UDim2.new(0, 20, 0, 20)
         minBtn.Position = UDim2.new(1, -3, 0.5, 0)
@@ -3587,11 +3421,9 @@ do
         minBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
         minBtn.Font = Enum.Font.GothamBold
         minBtn.TextSize = 13
-        minBtn.AutoButtonColor = false
         minBtn.Parent = header
 
         local divider = Instance.new("Frame", frame)
-        divider.Name = "Divider"
         divider.Size = UDim2.new(1, -12, 0, 1)
         divider.Position = UDim2.new(0, 6, 0, 25)
         divider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -3599,15 +3431,12 @@ do
         divider.BorderSizePixel = 0
 
         local body = Instance.new("Frame", frame)
-        body.Name = "Body"
         body.Size = UDim2.new(1, -12, 0, 0)
         body.Position = UDim2.new(0, 6, 0, 28)
         body.AutomaticSize = Enum.AutomaticSize.Y
         body.BackgroundTransparency = 1
 
         local layout = Instance.new("UIListLayout", body)
-        layout.FillDirection = Enum.FillDirection.Vertical
-        layout.SortOrder = Enum.SortOrder.LayoutOrder
         layout.Padding = UDim.new(0, 3)
 
         local function setMin(state)
@@ -3641,9 +3470,7 @@ do
             end
         end)
         UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                dragging = false
-            end
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
         end)
 
         PD.Gui = gui
@@ -3669,13 +3496,11 @@ do
         end
 
         local perks = {}
-        if killer and killer.Character then
-            perks = ReadPerks(killer.Character)
-        end
+        if killer and killer.Character then perks = ReadPerks(killer.Character) end
 
         local count = math.min(#perks, 6)
         if count == 0 then
-            local lbl = Instance.new("TextLabel")
+            local lbl = Instance.new("TextLabel", body)
             lbl.Size = UDim2.new(1, 0, 0, 14)
             lbl.BackgroundTransparency = 1
             lbl.Font = Enum.Font.GothamMedium
@@ -3683,11 +3508,10 @@ do
             lbl.TextColor3 = Color3.fromRGB(180, 180, 180)
             lbl.TextSize = 9
             lbl.TextXAlignment = Enum.TextXAlignment.Left
-            lbl.Parent = body
         else
             for i = 1, count do
                 local p = perks[i]
-                local lbl = Instance.new("TextLabel")
+                local lbl = Instance.new("TextLabel", body)
                 lbl.Size = UDim2.new(1, 0, 0, 14)
                 lbl.BackgroundTransparency = 1
                 lbl.Font = Enum.Font.GothamMedium
@@ -3696,7 +3520,6 @@ do
                 lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
                 lbl.TextSize = 10
                 lbl.TextXAlignment = Enum.TextXAlignment.Left
-                lbl.Parent = body
             end
         end
 
@@ -3722,10 +3545,7 @@ do
         if PD.Enabled then return end
         PD.Enabled = true
         BuildGui()
-        task.spawn(function()
-            task.wait(0.05)
-            UpdateDisplay()
-        end)
+        task.spawn(function() task.wait(0.05); UpdateDisplay() end)
         PD.Thread = task.spawn(function()
             while PD.Enabled do
                 pcall(UpdateDisplay)
@@ -3763,8 +3583,7 @@ W.OnUIReady(function()
             W.W2_Notify("Killer Perks", v and "Enabled" or "Disabled", 2)
         end })
 end)--====================================================--
--- BOMBAX MUSIC PLAYER (32 Lagu)
--- Floating Button + Window UI
+-- BOMBAX MUSIC PLAYER (32 Lagu) — UI KECIL 170x170
 --====================================================--
 do
     local IMG = "rbxassetid://138040631725974"
@@ -3811,7 +3630,7 @@ do
         local BX = W.Bombax
         if BX then BS.NowLabel.Text = "▶ " .. tostring(BX.Selected) end
         if BS.PickerBtn and BX then
-            BS.PickerBtn.Text = "🎵 SONG: " .. tostring(BX.Selected)
+            BS.PickerBtn.Text = "🎵 " .. tostring(BX.Selected)
         end
     end
 
@@ -3843,7 +3662,7 @@ do
             BS.Window.Size = UDim2.fromOffset(0, 0)
             BS.Window.BackgroundTransparency = 1
             TweenService:Create(BS.Window, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                Size = UDim2.fromOffset(260, 260),
+                Size = UDim2.fromOffset(170, 170),
                 BackgroundTransparency = 0.05,
             }):Play()
         else
@@ -3856,17 +3675,15 @@ do
                 if BS.Window then BS.Window.Visible = false end
             end)
         end
-        if getgenv().W2_BombaxRefresh then
-            pcall(getgenv().W2_BombaxRefresh)
-        end
+        if getgenv().W2_BombaxRefresh then pcall(getgenv().W2_BombaxRefresh) end
     end
 
     local function buildButton()
         if BS.ButtonBox then pcall(function() BS.ButtonBox:Destroy() end); BS.ButtonBox = nil end
         local box = Instance.new("Frame")
         box.Name = "W2MenuToggleBtn"
-        box.Size = UDim2.fromOffset(54, 54)
-        box.Position = UDim2.new(0, 20, 0, 20)
+        box.Size = UDim2.fromOffset(38, 38)
+        box.Position = UDim2.new(0, 15, 0, 15)
         box.BackgroundTransparency = 1
         box.Parent = BS.Gui
         BS.ButtonBox = box
@@ -3882,9 +3699,7 @@ do
         glow.Parent = box
         Instance.new("UICorner", glow).CornerRadius = UDim.new(1, 0)
         local glowStroke = Instance.new("UIStroke", glow)
-        glowStroke.Color = Color3.fromRGB(255, 255, 255)
-        glowStroke.Thickness = 1
-        glowStroke.Transparency = 1
+        glowStroke.Color = Color3.fromRGB(255, 255, 255); glowStroke.Thickness = 1; glowStroke.Transparency = 1
 
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.fromScale(1, 1)
@@ -3897,9 +3712,7 @@ do
         btn.Parent = box
         Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
         local btnStroke = Instance.new("UIStroke", btn)
-        btnStroke.Color = Color3.fromRGB(255, 255, 255)
-        btnStroke.Thickness = 1.5
-        btnStroke.Transparency = 0.35
+        btnStroke.Color = Color3.fromRGB(255, 255, 255); btnStroke.Thickness = 1.2; btnStroke.Transparency = 0.35
 
         local icon = Instance.new("ImageLabel", btn)
         icon.Size = UDim2.fromScale(0.62, 0.62)
@@ -3911,13 +3724,13 @@ do
 
         local hint = Instance.new("TextLabel", box)
         hint.AnchorPoint = Vector2.new(0.5, 0)
-        hint.Position = UDim2.new(0.5, 0, 1, 4)
-        hint.Size = UDim2.fromOffset(60, 12)
+        hint.Position = UDim2.new(0.5, 0, 1, 3)
+        hint.Size = UDim2.fromOffset(50, 10)
         hint.BackgroundTransparency = 1
         hint.Font = Enum.Font.GothamBold
         hint.Text = "MENU"
         hint.TextColor3 = Color3.fromRGB(180, 180, 200)
-        hint.TextSize = 9
+        hint.TextSize = 8
         hint.TextStrokeTransparency = 0.5
         hint.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
         hint.ZIndex = 2
@@ -3925,19 +3738,11 @@ do
         task.spawn(function()
             while box.Parent do
                 if not BS.Open then
-                    TweenService:Create(glowStroke, TweenInfo.new(1.2, Enum.EasingStyle.Sine), {
-                        Transparency = 0.2, Thickness = 2.5,
-                    }):Play()
-                    TweenService:Create(glow, TweenInfo.new(1.2, Enum.EasingStyle.Sine), {
-                        Size = UDim2.fromScale(1.45, 1.45),
-                    }):Play()
+                    TweenService:Create(glowStroke, TweenInfo.new(1.2, Enum.EasingStyle.Sine), { Transparency = 0.2, Thickness = 2 }):Play()
+                    TweenService:Create(glow, TweenInfo.new(1.2, Enum.EasingStyle.Sine), { Size = UDim2.fromScale(1.45, 1.45) }):Play()
                     task.wait(1.2)
-                    TweenService:Create(glowStroke, TweenInfo.new(1.2, Enum.EasingStyle.Sine), {
-                        Transparency = 1, Thickness = 1,
-                    }):Play()
-                    TweenService:Create(glow, TweenInfo.new(1.2, Enum.EasingStyle.Sine), {
-                        Size = UDim2.fromScale(1.15, 1.15),
-                    }):Play()
+                    TweenService:Create(glowStroke, TweenInfo.new(1.2, Enum.EasingStyle.Sine), { Transparency = 1, Thickness = 1 }):Play()
+                    TweenService:Create(glow, TweenInfo.new(1.2, Enum.EasingStyle.Sine), { Size = UDim2.fromScale(1.15, 1.15) }):Play()
                     task.wait(1.2)
                 else
                     task.wait(0.3)
@@ -3953,19 +3758,13 @@ do
             local iconColor = Color3.fromRGB(255, 255, 255)
             local bgColor = Color3.fromRGB(12, 12, 16)
             if isOpen then
-                strokeColor = Color3.fromRGB(120, 200, 255)
-                strokeTrans = 0
-                iconColor = Color3.fromRGB(120, 200, 255)
-                bgColor = Color3.fromRGB(20, 25, 40)
+                strokeColor = Color3.fromRGB(120, 200, 255); strokeTrans = 0
+                iconColor = Color3.fromRGB(120, 200, 255); bgColor = Color3.fromRGB(20, 25, 40)
             elseif isPlaying then
-                strokeColor = Color3.fromRGB(120, 255, 160)
-                strokeTrans = 0
-                iconColor = Color3.fromRGB(120, 255, 160)
-                bgColor = Color3.fromRGB(15, 30, 20)
+                strokeColor = Color3.fromRGB(120, 255, 160); strokeTrans = 0
+                iconColor = Color3.fromRGB(120, 255, 160); bgColor = Color3.fromRGB(15, 30, 20)
             end
-            TweenService:Create(btnStroke, TweenInfo.new(0.3), {
-                Color = strokeColor, Transparency = strokeTrans, Thickness = isOpen and 2 or 1.5,
-            }):Play()
+            TweenService:Create(btnStroke, TweenInfo.new(0.3), { Color = strokeColor, Transparency = strokeTrans, Thickness = isOpen and 2 or 1.2 }):Play()
             TweenService:Create(icon, TweenInfo.new(0.3), { ImageColor3 = iconColor }):Play()
             TweenService:Create(btn, TweenInfo.new(0.3), { BackgroundColor3 = bgColor }):Play()
             TweenService:Create(hint, TweenInfo.new(0.3), {
@@ -4002,10 +3801,7 @@ do
             if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
                 local d = inp.Position - dragStart
                 dDist = math.abs(d.X) + math.abs(d.Y)
-                box.Position = UDim2.new(
-                    startPos.X.Scale, startPos.X.Offset + d.X,
-                    startPos.Y.Scale, startPos.Y.Offset + d.Y
-                )
+                box.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
             end
         end))
     end
@@ -4014,8 +3810,8 @@ do
         if BS.Window then pcall(function() BS.Window:Destroy() end); BS.Window = nil end
         local win = Instance.new("Frame")
         win.Name = "BombaxWindow"
-        win.Size = UDim2.fromOffset(260, 260)
-        win.Position = UDim2.new(0, 20, 0, 84)
+        win.Size = UDim2.fromOffset(170, 170)
+        win.Position = UDim2.new(0, 15, 0, 60)
         win.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
         win.BackgroundTransparency = 0.05
         win.BorderSizePixel = 0
@@ -4024,88 +3820,84 @@ do
         win.Active = true
         win.Parent = BS.Gui
         BS.Window = win
-        Instance.new("UICorner", win).CornerRadius = UDim.new(0, 14)
+        Instance.new("UICorner", win).CornerRadius = UDim.new(0, 10)
         local winStroke = Instance.new("UIStroke", win)
-        winStroke.Color = Color3.fromRGB(255, 255, 255)
-        winStroke.Thickness = 1.2
-        winStroke.Transparency = 0.25
+        winStroke.Color = Color3.fromRGB(255, 255, 255); winStroke.Thickness = 1; winStroke.Transparency = 0.25
 
         local header = Instance.new("Frame", win)
         header.Name = "Header"
-        header.Size = UDim2.new(1, 0, 0, 40)
+        header.Size = UDim2.new(1, 0, 0, 28)
         header.BackgroundTransparency = 1
         header.Active = true
 
         local iconBox = Instance.new("ImageLabel", header)
-        iconBox.Size = UDim2.fromOffset(28, 28)
-        iconBox.Position = UDim2.new(0, 10, 0.5, -14)
+        iconBox.Size = UDim2.fromOffset(20, 20)
+        iconBox.Position = UDim2.new(0, 7, 0.5, -10)
         iconBox.BackgroundTransparency = 1
         iconBox.Image = IMG
         iconBox.ImageColor3 = Color3.fromRGB(255, 255, 255)
 
         local title = Instance.new("TextLabel", header)
-        title.Size = UDim2.new(1, -80, 0, 16)
-        title.Position = UDim2.new(0, 46, 0, 6)
+        title.Size = UDim2.new(1, -55, 0, 12)
+        title.Position = UDim2.new(0, 32, 0, 4)
         title.BackgroundTransparency = 1
         title.Font = Enum.Font.GothamBold
-        title.Text = "BOMBAX PLAYER"
+        title.Text = "BOMBAX"
         title.TextColor3 = Color3.fromRGB(255, 255, 255)
-        title.TextSize = 12
+        title.TextSize = 10
         title.TextXAlignment = Enum.TextXAlignment.Left
 
         local sub = Instance.new("TextLabel", header)
-        sub.Size = UDim2.new(1, -80, 0, 12)
-        sub.Position = UDim2.new(0, 46, 0, 22)
+        sub.Size = UDim2.new(1, -55, 0, 10)
+        sub.Position = UDim2.new(0, 32, 0, 16)
         sub.BackgroundTransparency = 1
         sub.Font = Enum.Font.Gotham
         sub.Text = "Music Player"
         sub.TextColor3 = Color3.fromRGB(140, 140, 160)
-        sub.TextSize = 9
+        sub.TextSize = 8
         sub.TextXAlignment = Enum.TextXAlignment.Left
 
         local closeBtn = Instance.new("TextButton", header)
         closeBtn.AnchorPoint = Vector2.new(1, 0.5)
-        closeBtn.Size = UDim2.fromOffset(24, 24)
-        closeBtn.Position = UDim2.new(1, -8, 0.5, 0)
+        closeBtn.Size = UDim2.fromOffset(20, 20)
+        closeBtn.Position = UDim2.new(1, -6, 0.5, 0)
         closeBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
         closeBtn.BorderSizePixel = 0
         closeBtn.Text = "✕"
         closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
         closeBtn.Font = Enum.Font.GothamBold
-        closeBtn.TextSize = 12
+        closeBtn.TextSize = 11
         closeBtn.AutoButtonColor = false
-        Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
+        Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 5)
         closeBtn.MouseButton1Click:Connect(function()
             if BS.Open then toggleWindow() end
         end)
 
         local nowCard = Instance.new("Frame", win)
-        nowCard.Size = UDim2.new(1, -20, 0, 46)
-        nowCard.Position = UDim2.fromOffset(10, 48)
+        nowCard.Size = UDim2.new(1, -14, 0, 32)
+        nowCard.Position = UDim2.fromOffset(7, 32)
         nowCard.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
         nowCard.BorderSizePixel = 0
-        Instance.new("UICorner", nowCard).CornerRadius = UDim.new(0, 8)
+        Instance.new("UICorner", nowCard).CornerRadius = UDim.new(0, 6)
         local nowStroke = Instance.new("UIStroke", nowCard)
-        nowStroke.Color = Color3.fromRGB(60, 60, 80)
-        nowStroke.Thickness = 1
-        nowStroke.Transparency = 0.4
+        nowStroke.Color = Color3.fromRGB(60, 60, 80); nowStroke.Thickness = 1; nowStroke.Transparency = 0.4
 
         local nowLabel = Instance.new("TextLabel", nowCard)
         nowLabel.Name = "NowLabel"
-        nowLabel.Size = UDim2.new(1, -16, 0, 18)
-        nowLabel.Position = UDim2.fromOffset(8, 4)
+        nowLabel.Size = UDim2.new(1, -12, 0, 14)
+        nowLabel.Position = UDim2.fromOffset(6, 2)
         nowLabel.BackgroundTransparency = 1
         nowLabel.Font = Enum.Font.GothamBold
         nowLabel.Text = "▶ " .. tostring((W.Bombax and W.Bombax.Selected) or "One")
         nowLabel.TextColor3 = Color3.fromRGB(150, 200, 255)
-        nowLabel.TextSize = 11
+        nowLabel.TextSize = 9
         nowLabel.TextXAlignment = Enum.TextXAlignment.Left
         nowLabel.TextTruncate = Enum.TextTruncate.AtEnd
         BS.NowLabel = nowLabel
 
         local progBg = Instance.new("Frame", nowCard)
-        progBg.Size = UDim2.new(1, -110, 0, 6)
-        progBg.Position = UDim2.new(0, 8, 0, 30)
+        progBg.Size = UDim2.new(1, -70, 0, 4)
+        progBg.Position = UDim2.new(0, 6, 0, 20)
         progBg.BackgroundColor3 = Color3.fromRGB(40, 40, 52)
         progBg.BorderSizePixel = 0
         Instance.new("UICorner", progBg).CornerRadius = UDim.new(1, 0)
@@ -4119,31 +3911,29 @@ do
 
         local timeLabel = Instance.new("TextLabel", nowCard)
         timeLabel.AnchorPoint = Vector2.new(1, 0)
-        timeLabel.Size = UDim2.fromOffset(96, 12)
-        timeLabel.Position = UDim2.new(1, -8, 0, 26)
+        timeLabel.Size = UDim2.fromOffset(60, 10)
+        timeLabel.Position = UDim2.new(1, -6, 0, 18)
         timeLabel.BackgroundTransparency = 1
         timeLabel.Font = Enum.Font.GothamBold
         timeLabel.Text = "0:00 / 0:00"
         timeLabel.TextColor3 = Color3.fromRGB(180, 180, 200)
-        timeLabel.TextSize = 9
+        timeLabel.TextSize = 7
         timeLabel.TextXAlignment = Enum.TextXAlignment.Right
         BS.TimeLabel = timeLabel
 
         local pick = Instance.new("TextButton", win)
-        pick.Size = UDim2.new(1, -20, 0, 32)
-        pick.Position = UDim2.fromOffset(10, 102)
+        pick.Size = UDim2.new(1, -14, 0, 22)
+        pick.Position = UDim2.fromOffset(7, 68)
         pick.BackgroundColor3 = Color3.fromRGB(28, 28, 40)
         pick.BorderSizePixel = 0
-        pick.Text = "🎵 SONG: " .. tostring((W.Bombax and W.Bombax.Selected) or "One")
+        pick.Text = "🎵 " .. tostring((W.Bombax and W.Bombax.Selected) or "One")
         pick.TextColor3 = Color3.fromRGB(230, 230, 245)
         pick.Font = Enum.Font.GothamBold
-        pick.TextSize = 11
+        pick.TextSize = 9
         pick.TextTruncate = Enum.TextTruncate.AtEnd
-        Instance.new("UICorner", pick).CornerRadius = UDim.new(0, 8)
+        Instance.new("UICorner", pick).CornerRadius = UDim.new(0, 6)
         local pickStroke = Instance.new("UIStroke", pick)
-        pickStroke.Color = Color3.fromRGB(80, 80, 100)
-        pickStroke.Thickness = 1
-        pickStroke.Transparency = 0.4
+        pickStroke.Color = Color3.fromRGB(80, 80, 100); pickStroke.Thickness = 1; pickStroke.Transparency = 0.4
         BS.PickerBtn = pick
         pick.MouseButton1Click:Connect(function()
             W.Bombax_Next()
@@ -4153,36 +3943,32 @@ do
         end)
 
         local ctrl = Instance.new("Frame", win)
-        ctrl.Size = UDim2.new(1, -20, 0, 44)
-        ctrl.Position = UDim2.fromOffset(10, 142)
+        ctrl.Size = UDim2.new(1, -14, 0, 30)
+        ctrl.Position = UDim2.fromOffset(7, 94)
         ctrl.BackgroundTransparency = 1
 
         local function mkBtn(txt, x, bg)
             local b = Instance.new("TextButton", ctrl)
-            b.Size = UDim2.fromOffset(74, 44)
+            b.Size = UDim2.fromOffset(46, 30)
             b.Position = UDim2.fromOffset(x, 0)
             b.BackgroundColor3 = bg
             b.BorderSizePixel = 0
             b.Text = txt
             b.TextColor3 = Color3.fromRGB(255, 255, 255)
             b.Font = Enum.Font.GothamBold
-            b.TextSize = 18
-            Instance.new("UICorner", b).CornerRadius = UDim.new(0, 10)
+            b.TextSize = 14
+            Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
             local s = Instance.new("UIStroke", b)
-            s.Color = Color3.fromRGB(255, 255, 255)
-            s.Thickness = 1
-            s.Transparency = 0.6
+            s.Color = Color3.fromRGB(255, 255, 255); s.Thickness = 1; s.Transparency = 0.6
             return b
         end
 
         local prevB = mkBtn("⏮", 0, Color3.fromRGB(45, 45, 58))
-        local playB = mkBtn("▶", 78, Color3.fromRGB(30, 70, 40))
-        local nextB = mkBtn("⏭", 156, Color3.fromRGB(45, 45, 58))
+        local playB = mkBtn("▶", 50, Color3.fromRGB(30, 70, 40))
+        local nextB = mkBtn("⏭", 100, Color3.fromRGB(45, 45, 58))
         BS.PlayBtn = playB
 
-        prevB.MouseButton1Click:Connect(function()
-            W.Bombax_Prev(); updateNowLabel(); updatePlayBtn()
-        end)
+        prevB.MouseButton1Click:Connect(function() W.Bombax_Prev(); updateNowLabel(); updatePlayBtn() end)
         playB.MouseButton1Click:Connect(function()
             local BX = W.Bombax
             if not BX then return end
@@ -4190,27 +3976,25 @@ do
             else W.Bombax_Play(BX.Selected) end
             updatePlayBtn()
         end)
-        nextB.MouseButton1Click:Connect(function()
-            W.Bombax_Next(); updateNowLabel(); updatePlayBtn()
-        end)
+        nextB.MouseButton1Click:Connect(function() W.Bombax_Next(); updateNowLabel(); updatePlayBtn() end)
 
         local vrow = Instance.new("Frame", win)
-        vrow.Size = UDim2.new(1, -20, 0, 22)
-        vrow.Position = UDim2.fromOffset(10, 194)
+        vrow.Size = UDim2.new(1, -14, 0, 16)
+        vrow.Position = UDim2.fromOffset(7, 128)
         vrow.BackgroundTransparency = 1
 
         local vIcon = Instance.new("TextLabel", vrow)
-        vIcon.Size = UDim2.fromOffset(24, 22)
+        vIcon.Size = UDim2.fromOffset(16, 16)
         vIcon.BackgroundTransparency = 1
         vIcon.Font = Enum.Font.GothamBold
         vIcon.Text = "🔊"
         vIcon.TextColor3 = Color3.fromRGB(200, 200, 220)
-        vIcon.TextSize = 13
+        vIcon.TextSize = 11
         vIcon.TextXAlignment = Enum.TextXAlignment.Left
 
         local vbar = Instance.new("Frame", vrow)
-        vbar.Size = UDim2.new(1, -80, 0, 8)
-        vbar.Position = UDim2.new(0, 28, 0.5, -4)
+        vbar.Size = UDim2.new(1, -60, 0, 6)
+        vbar.Position = UDim2.new(0, 20, 0.5, -3)
         vbar.BackgroundColor3 = Color3.fromRGB(45, 45, 58)
         vbar.BorderSizePixel = 0
         Instance.new("UICorner", vbar).CornerRadius = UDim.new(1, 0)
@@ -4222,13 +4006,13 @@ do
 
         local vval = Instance.new("TextLabel", vrow)
         vval.AnchorPoint = Vector2.new(1, 0.5)
-        vval.Size = UDim2.fromOffset(42, 22)
+        vval.Size = UDim2.fromOffset(34, 16)
         vval.Position = UDim2.new(1, 0, 0.5, 0)
         vval.BackgroundTransparency = 1
         vval.Font = Enum.Font.GothamBold
         vval.Text = string.format("%.1f", (W.Bombax and W.Bombax.Volume) or 2)
         vval.TextColor3 = Color3.fromRGB(255, 255, 255)
-        vval.TextSize = 11
+        vval.TextSize = 9
         vval.TextXAlignment = Enum.TextXAlignment.Right
 
         local vhit = Instance.new("TextButton", vbar)
@@ -4265,15 +4049,15 @@ do
         end))
 
         local loop = Instance.new("TextButton", win)
-        loop.Size = UDim2.new(1, -20, 0, 26)
-        loop.Position = UDim2.fromOffset(10, 222)
+        loop.Size = UDim2.new(1, -14, 0, 18)
+        loop.Position = UDim2.fromOffset(7, 148)
         loop.BackgroundColor3 = ((W.Bombax and W.Bombax.Looped) and Color3.fromRGB(30, 70, 40)) or Color3.fromRGB(45, 45, 58)
         loop.BorderSizePixel = 0
         loop.Text = "LOOP: " .. (((W.Bombax and W.Bombax.Looped) and "ON") or "OFF")
         loop.TextColor3 = Color3.fromRGB(255, 255, 255)
         loop.Font = Enum.Font.GothamBold
-        loop.TextSize = 11
-        Instance.new("UICorner", loop).CornerRadius = UDim.new(0, 8)
+        loop.TextSize = 9
+        Instance.new("UICorner", loop).CornerRadius = UDim.new(0, 6)
         BS.LoopBtn = loop
         loop.MouseButton1Click:Connect(function()
             local BX = W.Bombax
@@ -4321,9 +4105,7 @@ do
         buildWindow()
     end
 
-    function W.BombaxUI_Start()
-        if not BS.Gui then W.BombaxUI_BuildAll() end
-    end
+    function W.BombaxUI_Start() if not BS.Gui then W.BombaxUI_BuildAll() end end
     function W.BombaxUI_Stop()
         clean()
         if BS.ButtonBox then pcall(function() BS.ButtonBox:Destroy() end); BS.ButtonBox = nil end
@@ -4335,9 +4117,7 @@ do
         W2.Bombax_ButtonEnabled = v
         if v then W.BombaxUI_Start() else W.BombaxUI_Stop() end
     end
-    function W.BombaxUI_Toggle()
-        toggleWindow()
-    end
+    function W.BombaxUI_Toggle() toggleWindow() end
 
     task.spawn(function()
         while true do
@@ -4488,9 +4268,7 @@ end
 -- ═══════════════════════════════════════════════════
 W.OnUIReady(function()
     local s = W.T_Troll:AddSection("Bombax Music Player")
-    s:AddToggle({ Title = "Enable Bombax", Default = false, Callback = function(v)
-        W.Bombax_Set(v)
-    end })
+    s:AddToggle({ Title = "Enable Bombax", Default = false, Callback = function(v) W.Bombax_Set(v) end })
     s:AddDropdown({ Title = "Select Song",
         Options = W.Bombax_GetList and W.Bombax_GetList() or {},
         Default = "One", Multi = false,
@@ -4509,14 +4287,13 @@ W.OnUIReady(function()
     s:AddButton({ Title = "⏸ Stop", Callback = function() W.Bombax_Stop() end })
     s:AddButton({ Title = "⏭ Next", Callback = function() W.Bombax_Next() end })
     s:AddButton({ Title = "⏮ Prev", Callback = function() W.Bombax_Prev() end })
-    s:AddToggle({ Title = "Show Bombax Button", Content = "Tombol kecil + window toggle",
+    s:AddToggle({ Title = "Show Bombax Button", Content = "Tombol kecil (38x38)",
         Default = false, Callback = function(v)
             if W.BombaxUI_Set then W.BombaxUI_Set(v) end
         end })
-    s:AddButton({ Title = "Toggle Bombax Window", Content = "Buka/tutup window",
-        Callback = function()
-            if W.BombaxUI_Toggle then W.BombaxUI_Toggle() end
-        end })
+    s:AddButton({ Title = "Toggle Bombax Window", Callback = function()
+        if W.BombaxUI_Toggle then W.BombaxUI_Toggle() end
+    end })
 end)--====================================================--
 -- PART 3A: VISUALS — ESP SYSTEM + ESP STATUS
 --====================================================--
@@ -4686,7 +4463,6 @@ do
 
             local ps = Instance.new("UIStroke", pill)
             ps.Name = "PillStroke"; ps.Color = accent; ps.Thickness = 1; ps.Transparency = 0.5
-            ps.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
             local lay = Instance.new("UIListLayout", pill)
             lay.FillDirection = Enum.FillDirection.Horizontal
@@ -5057,7 +4833,7 @@ W.OnUIReady(function()
     s2:AddSlider({ Title = "Status Radius", Min = 20, Max = 1000, Default = 500, Increment = 10,
         Callback = function(v) FESPS.Radius = v end })
 end)--====================================================--
--- PART 3B: VISUALS — GRAPHICS + CLOCK + ZOOM + POV + HITBOX
+-- PART 3B: VISUALS — HITBOX + GRAPHICS + CLOCK + ZOOM + POV
 --====================================================--
 
 -- ═══════════════════════════════════════════════════
@@ -5389,7 +5165,6 @@ local function potatoDisable()
     pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic end)
 end
 
--- RenderStepped FOV Lock
 RunService.RenderStepped:Connect(function()
     if G.FOVEnabled then
         local cam = Workspace.CurrentCamera
@@ -6158,7 +5933,6 @@ do
     W._VeilV1_State = State
     RunService.RenderStepped:Connect(function() pcall(Update) end)
 
-    -- Hook Spearthrow
     if typeof(hookmetamethod) == "function" then
         task.spawn(function()
             pcall(function()
@@ -6227,633 +6001,6 @@ W.OnUIReady(function()
         Callback = function(v) W2.VeilV1_Gravity = v end })
     s4:AddSlider({ Title = "Lead Multiplier", Min = 0.1, Max = 5, Default = 1.4, Increment = 0.1,
         Callback = function(v) W2.VeilV1_Lead = v end })
-end)--====================================================--
--- PART 4C-1: SILENT VEIL V2 (W424) + BYPASS
---====================================================--
-
--- ═══════════════════════════════════════════════════
--- SILENT VEIL V2 (W424 ORIGINAL)
--- ═══════════════════════════════════════════════════
-do
-    local Config = {}
-    local Camera = Workspace.CurrentCamera
-    local AC = AC or {}
-    AC.Aim_SilentVeil = false
-    AC.Aim_SilentVeilV2 = false
-    AC.Veil_ShowFOV = true
-    AC.SpearSmart_enable = false
-    AC.Veil_FOV = 150
-    AC.SPEAR_Speed = 165
-    AC.SPEAR_Gravity = workspace.Gravity * 0.5
-    AC.SPEAR_MaxDist = 200
-    AC.Veil_LeadMultiplier = 1.4
-    AC.AIM_Auto = false
-    AC.AIM_TargetPart = "Torso"
-
-    local isCharging = false
-    local isAttackCD = false
-    local isFiring = false
-    local currentTouch = nil
-
-    local function IsSilent() return AC.Aim_SilentVeil or AC.Aim_SilentVeilV2 end
-
-    local function GetTargetPart(char)
-        if AC.AIM_TargetPart == "Head" then return char:FindFirstChild("Head")
-        elseif AC.AIM_TargetPart == "Root" or AC.AIM_TargetPart == "HumanoidRootPart" then return char:FindFirstChild("HumanoidRootPart")
-        else return char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso") or char:FindFirstChild("HumanoidRootPart") end
-    end
-
-    local function GetClosest()
-        local myChar = LP.Character
-        local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
-        if not myRoot then return nil end
-        local closestFov = AC.Veil_FOV
-        local closest = nil
-        local cam = workspace.CurrentCamera
-        local center = Vector2.new(cam.ViewportSize.X / 2, cam.ViewportSize.Y / 2)
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= LP and p.Team and p.Team.Name == "Survivors" and p.Character then
-                local char = p.Character
-                local hum = char:FindFirstChildOfClass("Humanoid")
-                local tPart = GetTargetPart(char)
-                if hum and hum.Health > 0 and tPart then
-                    local d3 = (tPart.Position - myRoot.Position).Magnitude
-                    if d3 <= AC.SPEAR_MaxDist then
-                        local sp, on = cam:WorldToViewportPoint(tPart.Position)
-                        if on then
-                            local d2 = (Vector2.new(sp.X, sp.Y) - center).Magnitude
-                            if d2 <= closestFov then closestFov = d2; closest = tPart end
-                        end
-                    end
-                end
-            end
-        end
-        return closest
-    end
-
-    local vHighlight = Instance.new("Highlight")
-    vHighlight.Name = "W2_VeilV2Target"
-    vHighlight.FillColor = Color3.fromRGB(150, 150, 150)
-    vHighlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-    vHighlight.FillTransparency = 0.5
-    vHighlight.OutlineTransparency = 0
-
-    local trackerOn = false
-    local trackerLine = nil
-    local curBillboard = nil
-
-    local function SetupTracker()
-        if CoreGui:FindFirstChild("W2VeilV2Tracker") then return end
-        local sg = Instance.new("ScreenGui")
-        sg.Name = "W2VeilV2Tracker"
-        sg.IgnoreGuiInset = true
-        sg.ResetOnSpawn = false
-        sg.Parent = CoreGui
-        trackerLine = Instance.new("Frame")
-        trackerLine.AnchorPoint = Vector2.new(0.5, 0.5)
-        trackerLine.BackgroundColor3 = Color3.fromRGB(138, 138, 138)
-        trackerLine.BackgroundTransparency = 0.2
-        trackerLine.BorderSizePixel = 0
-        trackerLine.Visible = false
-        trackerLine.Parent = sg
-    end
-    SetupTracker()
-
-    local fovFrame = nil
-    if not CoreGui:FindFirstChild("W2VeilV2FOV") then
-        local fg = Instance.new("ScreenGui")
-        fg.Name = "W2VeilV2FOV"
-        fg.Parent = CoreGui
-        fg.ResetOnSpawn = false
-        fg.IgnoreGuiInset = true
-        fovFrame = Instance.new("Frame")
-        fovFrame.BackgroundTransparency = 1
-        fovFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-        fovFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-        fovFrame.Visible = false
-        fovFrame.Parent = fg
-        Instance.new("UICorner", fovFrame).CornerRadius = UDim.new(1, 0)
-        local stk = Instance.new("UIStroke", fovFrame)
-        stk.Color = Color3.fromRGB(222, 222, 222)
-        stk.Thickness = 1.5
-    end
-
-    UserInputService.InputBegan:Connect(function(inp, gp)
-        local isTouch = (inp.UserInputType == Enum.UserInputType.Touch)
-        if gp and not isTouch then return end
-        local c = LP.Character
-        local isSpear = c and c:GetAttribute("spearmode") == true
-        if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-            if IsSilent() and isSpear then isCharging = true end
-        end
-        if isTouch then
-            if IsSilent() and isSpear then
-                local pg = LP:FindFirstChild("PlayerGui")
-                if pg then
-                    local sm = pg:FindFirstChild("Slasher-mob")
-                    local ctrl = sm and sm:FindFirstChild("Controls")
-                    local atk = ctrl and ctrl:FindFirstChild("attack")
-                    if atk and atk.Visible then
-                        local pos = inp.Position
-                        local ap = atk.AbsolutePosition
-                        local az = atk.AbsoluteSize
-                        if pos.X >= ap.X and pos.X <= ap.X + az.X and pos.Y >= ap.Y and pos.Y <= ap.Y + az.Y then
-                            isCharging = true
-                            currentTouch = inp
-                        end
-                    end
-                end
-            end
-        end
-    end)
-
-    UserInputService.InputEnded:Connect(function(inp, gp)
-        if isCharging and (inp == currentTouch or inp.UserInputType == Enum.UserInputType.MouseButton1) then
-            isCharging = false
-            if isAttackCD then return end
-            isAttackCD = true
-            task.delay(2, function() isAttackCD = false end)
-            local myChar = LP.Character
-            local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
-            local startPart = myChar and (myChar:FindFirstChild("Head") or myHRP)
-            if startPart and myHRP then
-                local isSpecial = myChar:GetAttribute("special") == true
-                local startPos = Config.SpearSmart_enable and myHRP.Position or startPart.Position
-                local curSpeed = Config.SpearSmart_enable and (isSpecial and 165 or 142.5) or AC.SPEAR_Speed
-                local targetPart = GetClosest()
-                local aimDir
-                if targetPart then
-                    local targetHRP = targetPart:IsA("Model") and targetPart:FindFirstChild("HumanoidRootPart") or targetPart
-                    local targetPos = targetHRP.Position
-                    local targetVel = Vector3.new(0,0,0)
-                    local targetHum = targetPart.Parent and targetPart.Parent:FindFirstChildOfClass("Humanoid")
-                    if targetHum and targetHum.MoveDirection.Magnitude > 0 then
-                        targetVel = targetHum.MoveDirection * targetHum.WalkSpeed
-                    elseif targetHRP:IsA("BasePart") then
-                        targetVel = targetHRP.AssemblyLinearVelocity
-                    end
-                    targetVel = Vector3.new(targetVel.X, 0, targetVel.Z)
-                    local distance = (targetPos - startPos).Magnitude
-                    local timeToHit = distance / curSpeed
-                    if Config.SpearSmart_enable then
-                        local leadMult = AC.Veil_LeadMultiplier or 1.4
-                        local predicted = targetPos + (targetVel * (timeToHit * leadMult))
-                        local spearG = workspace.Gravity * 0.5
-                        local dropComp = 0.5 * spearG * (timeToHit ^ 2)
-                        local finalPos = predicted + Vector3.new(0, dropComp - 1.5, 0)
-                        aimDir = (finalPos - startPos).Unit
-                    else
-                        local dynPred = math.clamp(distance / 50, 0.1, 4.0)
-                        local predicted = targetPos + (targetVel * (timeToHit * dynPred))
-                        local distMult = math.clamp(distance / 100, 1, 2.5)
-                        local autoG = math.max(0, distance - 8)
-                        local g = AC.AIM_Auto and autoG or AC.SPEAR_Gravity
-                        local dropComp = 0.5 * g * (timeToHit ^ 2) * distMult
-                        local finalPos = predicted + Vector3.new(0, dropComp, 0)
-                        aimDir = (finalPos - startPos).Unit
-                    end
-                else
-                    aimDir = Camera.CFrame.LookVector
-                end
-                if AC.Aim_SilentVeil then
-                    pcall(function()
-                        ReplicatedStorage.Remotes.Killers.Veil.Spearthrow:FireServer(aimDir, curSpeed, startPos)
-                    end)
-                end
-            end
-        end
-    end)
-
-    RunService.RenderStepped:Connect(function()
-        local c = LP.Character
-        local isSpear = c and c:GetAttribute("spearmode") == true
-        local cam = workspace.CurrentCamera
-        if fovFrame then
-            if IsSilent() and AC.Veil_ShowFOV and isSpear then
-                fovFrame.Visible = true
-                fovFrame.Size = UDim2.new(0, AC.Veil_FOV * 2, 0, AC.Veil_FOV * 2)
-            else fovFrame.Visible = false end
-        end
-        if IsSilent() and isSpear and cam then
-            local targetPart = GetClosest()
-            if targetPart and targetPart.Parent then
-                vHighlight.Parent = targetPart.Parent
-                if trackerOn then
-                    if not curBillboard or curBillboard.Parent ~= targetPart then
-                        if curBillboard then curBillboard:Destroy() end
-                        local bb = Instance.new("BillboardGui")
-                        bb.Name = "VeilV2Billboard"
-                        bb.Size = UDim2.fromOffset(14, 14)
-                        bb.AlwaysOnTop = true
-                        bb.LightInfluence = 0
-                        bb.MaxDistance = 500
-                        local ring = Instance.new("Frame")
-                        ring.AnchorPoint = Vector2.new(0.5, 0.5)
-                        ring.Position = UDim2.fromScale(0.5, 0.5)
-                        ring.Size = UDim2.fromScale(1, 1)
-                        ring.BackgroundTransparency = 1
-                        ring.Parent = bb
-                        Instance.new("UICorner", ring).CornerRadius = UDim.new(1, 0)
-                        local s = Instance.new("UIStroke")
-                        s.Color = Color3.fromRGB(255, 255, 255)
-                        s.Thickness = 1
-                        s.Transparency = 0.1
-                        s.Parent = ring
-                        bb.Adornee = targetPart
-                        bb.Parent = targetPart
-                        curBillboard = bb
-                    end
-                    local sp, on = cam:WorldToViewportPoint(targetPart.Position)
-                    if on and sp.Z > 0 and trackerLine then
-                        local vp = cam.ViewportSize
-                        local fx = vp.X * 0.5
-                        local fy = vp.Y
-                        local tx, ty = sp.X, sp.Y
-                        local dx, dy = tx - fx, ty - fy
-                        local len = math.sqrt(dx*dx + dy*dy)
-                        trackerLine.Size = UDim2.fromOffset(math.max(len, 1), 1)
-                        trackerLine.Position = UDim2.fromOffset((fx + tx) * 0.5, (fy + ty) * 0.5)
-                        trackerLine.Rotation = math.deg(math.atan2(dy, dx))
-                        trackerLine.Visible = true
-                    elseif trackerLine then trackerLine.Visible = false end
-                else
-                    if curBillboard then curBillboard:Destroy(); curBillboard = nil end
-                    if trackerLine then trackerLine.Visible = false end
-                end
-            else
-                vHighlight.Parent = nil
-                if curBillboard then curBillboard:Destroy(); curBillboard = nil end
-                if trackerLine then trackerLine.Visible = false end
-            end
-        else
-            vHighlight.Parent = nil
-            if curBillboard then curBillboard:Destroy(); curBillboard = nil end
-            if trackerLine then trackerLine.Visible = false end
-        end
-    end)
-
-    W.W424Veil_API = {
-        AimConfig = AC,
-        Config = Config,
-        getClosestSurvivor = GetClosest,
-        IsVeilSilentOn = IsSilent,
-        setTracker = function(v) trackerOn = v end,
-    }
-
-    -- Hook Namecall untuk intercept Spearthrow
-    if typeof(hookmetamethod) == "function" then
-        task.spawn(function()
-            pcall(function()
-                local oldNC
-                oldNC = hookmetamethod(game, "__namecall", function(self, ...)
-                    if checkcaller() then return oldNC(self, ...) end
-                    local method = getnamecallmethod()
-                    if method == "FireServer" then
-                        local ok, n = pcall(function() return self.Name end)
-                        if ok and n == "Spearthrow" then
-                            if AC.Aim_SilentVeil and not AC.Aim_SilentVeilV2 then return nil end
-                            if AC.Aim_SilentVeilV2 and not isFiring then
-                                local lookVec, speed, originPos = ...
-                                speed = speed or AC.SPEAR_Speed or 165
-                                local myChar = LP.Character
-                                local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
-                                local startPart = myChar and (myChar:FindFirstChild("Head") or myHRP)
-                                originPos = originPos or (myHRP and myHRP.Position) or (startPart and startPart.Position)
-                                local bestDir = lookVec
-                                local targetPart = GetClosest()
-                                if targetPart and originPos then
-                                    local targetHRP = targetPart:IsA("Model") and targetPart:FindFirstChild("HumanoidRootPart") or targetPart
-                                    local targetPos = targetHRP.Position
-                                    local targetVel = Vector3.new(0, 0, 0)
-                                    local targetHum = targetPart.Parent and targetPart.Parent:FindFirstChildOfClass("Humanoid")
-                                    if targetHum and targetHum.MoveDirection.Magnitude > 0 then
-                                        targetVel = targetHum.MoveDirection * targetHum.WalkSpeed
-                                    elseif targetHRP:IsA("BasePart") then
-                                        targetVel = targetHRP.AssemblyLinearVelocity
-                                    end
-                                    targetVel = Vector3.new(targetVel.X, 0, targetVel.Z)
-                                    local distance = (targetPos - originPos).Magnitude
-                                    local timeToHit = distance / math.max(speed, 1)
-                                    local leadMult = AC.Veil_LeadMultiplier or 1.4
-                                    local predicted = targetPos + (targetVel * (timeToHit * leadMult))
-                                    local spearG = workspace.Gravity * 0.5
-                                    local drop = 0.5 * spearG * (timeToHit * timeToHit)
-                                    local finalPos = predicted + Vector3.new(0, drop - 1.5, 0)
-                                    bestDir = (finalPos - originPos).Unit
-                                end
-                                isFiring = true
-                                pcall(function()
-                                    ReplicatedStorage.Remotes.Killers.Veil.Spearthrow:FireServer(bestDir, speed, originPos)
-                                end)
-                                isFiring = false
-                                return nil
-                            end
-                        end
-                    end
-                    return oldNC(self, ...)
-                end)
-            end)
-        end)
-    end
-end
-
--- ═══════════════════════════════════════════════════
--- BYPASS HIDDEN LEAP
--- ═══════════════════════════════════════════════════
-do
-    local Thread = nil
-    function W.StartHiddenBypass()
-        if Thread then return end
-        Thread = task.spawn(function()
-            local leapFn, m2Fn
-            local function scan()
-                pcall(function()
-                    for _, v in pairs(getgc(true)) do
-                        if type(v) == "function" and islclosure(v) then
-                            local info
-                            pcall(function() info = debug.getinfo(v) end)
-                            if info then
-                                if info.name == "tryActivate" then leapFn = v
-                                elseif info.name == "playM2Animation" then m2Fn = v end
-                            end
-                        end
-                        if leapFn and m2Fn then break end
-                    end
-                end)
-            end
-            scan()
-            local lastScan = os.clock()
-            while task.wait(0.1) do
-                if not W2.Bypass_HiddenLeap then break end
-                if not (leapFn and m2Fn) then
-                    if os.clock() - lastScan >= 2 then lastScan = os.clock(); scan() end
-                end
-                if leapFn then
-                    pcall(function()
-                        for i, v in pairs(debug.getupvalues(leapFn)) do
-                            if type(v) == "boolean" and v == true then debug.setupvalue(leapFn, i, false) end
-                        end
-                    end)
-                end
-                if m2Fn then
-                    pcall(function()
-                        for i, v in pairs(debug.getupvalues(m2Fn)) do
-                            if type(v) == "boolean" and v == true then debug.setupvalue(m2Fn, i, false) end
-                        end
-                    end)
-                end
-            end
-            Thread = nil
-        end)
-    end
-    function W.SetHiddenLeap(v)
-        W2.Bypass_HiddenLeap = v and true or false
-        if W2.Bypass_HiddenLeap then W.StartHiddenBypass() end
-    end
-end
-
--- ═══════════════════════════════════════════════════
--- BYPASS MYERS GRAB
--- ═══════════════════════════════════════════════════
-W.MyersData = W.MyersData or { Enabled = false, Hotkey = Enum.KeyCode.H }
-
-do
-    local M = W.MyersData
-
-    function W.Myers_GetTarget()
-        local c = LP.Character
-        if not c then return nil end
-        local myHRP = c:FindFirstChild("HumanoidRootPart")
-        if not myHRP then return nil end
-        local list = {}
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= LP and p.Character then
-                local hrp = p.Character:FindFirstChild("HumanoidRootPart")
-                local h = p.Character:FindFirstChildOfClass("Humanoid")
-                if hrp and h and h.Health > 0 then
-                    table.insert(list, { player = p, dist = (hrp.Position - myHRP.Position).Magnitude })
-                end
-            end
-        end
-        table.sort(list, function(a, b) return a.dist < b.dist end)
-        for _, v in ipairs(list) do return v.player end
-        return nil
-    end
-
-    function W.Myers_DoGrab()
-        if not M.Enabled then return end
-        local t = W.Myers_GetTarget()
-        if not t or not t.Character then return end
-        pcall(function() ReplicatedStorage.Remotes.Killers.Stalker.grab:FireServer(t.Character) end)
-    end
-
-    function W.Myers_Set(v)
-        M.Enabled = v and true or false
-        W2.Bypass_MyersGrab = M.Enabled
-    end
-
-    UserInputService.InputBegan:Connect(function(inp, gp)
-        if gp then return end
-        if inp.KeyCode == M.Hotkey and M.Enabled then W.Myers_DoGrab() end
-    end)
-end
-
--- ═══════════════════════════════════════════════════
--- BYPASS SLASHER (LAKEMIST + PURSUIT)
--- ═══════════════════════════════════════════════════
-do
-    local Thread = nil
-    function W.StartSlasherBypass()
-        if Thread then return end
-        pcall(function()
-            local b = true
-            local mt = debug.getmetatable(b)
-            if not mt then mt = {}; debug.setmetatable(b, mt) end
-            if setreadonly then setreadonly(mt, false) end
-            mt.__div = function() return 0 end
-            mt.__mul = function() return 0 end
-            mt.__add = function() return 0 end
-            mt.__sub = function() return 0 end
-            if setreadonly then setreadonly(mt, true) end
-        end)
-        Thread = task.spawn(function()
-            local toggleFn, pursuitFn
-            local function scan()
-                pcall(function()
-                    for _, v in pairs(getgc(true)) do
-                        if type(v) == "function" and islclosure(v) then
-                            local cs = debug.getconstants(v)
-                            local ho, hl, ha, ht, hp, hw = false, false, false, false, false, false
-                            for _, c in pairs(cs) do
-                                if c == "Offset" then ho = true end
-                                if c == "Linear" then hl = true end
-                                if c == "action" then ha = true end
-                                if c == "TweenInfo" then ht = true end
-                                if c == "Pursuit" then hp = true end
-                                if c == "WalkSpeed" then hw = true end
-                            end
-                            if ho and hl and ha and ht and not hp then toggleFn = v end
-                            if hp and ht and ha and hw then pursuitFn = v end
-                        end
-                        if toggleFn and pursuitFn then break end
-                    end
-                end)
-            end
-            scan()
-            local lastScan = os.clock()
-            while task.wait(0.1) do
-                if not W2.Bypass_LakeMist and not W2.Bypass_Pursuit then break end
-                if not (toggleFn and pursuitFn) then
-                    if os.clock() - lastScan >= 2 then scan(); lastScan = os.clock() end
-                end
-                if toggleFn and W2.Bypass_LakeMist then
-                    pcall(function()
-                        debug.setupvalue(toggleFn, 6, false)
-                        debug.setupvalue(toggleFn, 10, false)
-                    end)
-                end
-                if pursuitFn and W2.Bypass_Pursuit then
-                    pcall(function()
-                        debug.setupvalue(pursuitFn, 5, false)
-                        debug.setupvalue(pursuitFn, 6, false)
-                    end)
-                end
-            end
-            Thread = nil
-        end)
-    end
-    function W.SetLakeMist(v)
-        W2.Bypass_LakeMist = v and true or false
-        if W2.Bypass_LakeMist or W2.Bypass_Pursuit then W.StartSlasherBypass() end
-    end
-    function W.SetPursuit(v)
-        W2.Bypass_Pursuit = v and true or false
-        if W2.Bypass_LakeMist or W2.Bypass_Pursuit then W.StartSlasherBypass() end
-    end
-end
-
--- ═══════════════════════════════════════════════════
--- BYPASS ABYSS
--- ═══════════════════════════════════════════════════
-do
-    local __hasVal = function(t, v)
-        for _, x in ipairs(t) do if x == v then return true end end
-        return false
-    end
-    local Conn = nil
-    local CorruptFn = nil
-
-    function W.StartAbyssBypass()
-        if not CorruptFn then
-            pcall(function()
-                for _, v in pairs(getgc(true)) do
-                    if type(v) == "function" and islclosure(v) then
-                        local cs = debug.getconstants(v)
-                        if __hasVal(cs, "corrupt") and __hasVal(cs, "Immobile") then
-                            CorruptFn = v
-                            break
-                        end
-                    end
-                end
-            end)
-        end
-        if not CorruptFn then return end
-        if Conn then Conn:Disconnect() end
-        Conn = RunService.Heartbeat:Connect(function()
-            if not W2.Bypass_AbyssCD then return end
-            if CorruptFn then
-                local ups = debug.getupvalues(CorruptFn)
-                for i, v in pairs(ups) do
-                    if type(v) == "boolean" and v == false then
-                        debug.setupvalue(CorruptFn, i, true)
-                    end
-                end
-            end
-        end)
-    end
-    function W.SetAbyssBypass(v)
-        W2.Bypass_AbyssCD = v and true or false
-        if W2.Bypass_AbyssCD then W.StartAbyssBypass()
-        elseif Conn then Conn:Disconnect(); Conn = nil end
-    end
-end
-
--- ═══════════════════════════════════════════════════
--- BYPASS JEFF FRENZY
--- ═══════════════════════════════════════════════════
-do
-    local Thread = nil
-    function W.StartJeffBypass()
-        if Thread then return end
-        Thread = task.spawn(function()
-            while task.wait() do
-                if not W2.Bypass_JeffFrenzy then break end
-                pcall(function()
-                    local c = LP.Character
-                    if c and c:GetAttribute("Frenzy") ~= true then c:SetAttribute("Frenzy", true) end
-                end)
-            end
-            Thread = nil
-        end)
-    end
-    function W.StopJeffBypass()
-        pcall(function()
-            local c = LP.Character
-            if c and c:GetAttribute("Frenzy") == true then
-                c:SetAttribute("Frenzy", false)
-                local k = ReplicatedStorage:FindFirstChild("Remotes")
-                    and ReplicatedStorage.Remotes:FindFirstChild("Killers")
-                    and ReplicatedStorage.Remotes.Killers:FindFirstChild("Killer")
-                if k then
-                    local d = k:FindFirstChild("Deactivatefromclient")
-                    if d then d:FireServer() end
-                end
-            end
-        end)
-    end
-    function W.SetJeffFrenzy(v)
-        W2.Bypass_JeffFrenzy = v and true or false
-        if W2.Bypass_JeffFrenzy then W.StartJeffBypass() else W.StopJeffBypass() end
-    end
-end
-
--- ═══════════════════════════════════════════════════
--- UI SECTION — KILLER PART 4C-1
--- ═══════════════════════════════════════════════════
-W.OnUIReady(function()
-    local s1 = W.T_Kill:AddSection("Silent Spear Veil V2")
-    s1:AddToggle({ Title = "V1 (Block)", Default = false, Callback = function(v)
-        W.W424Veil_API.AimConfig.Aim_SilentVeil = v
-    end })
-    s1:AddToggle({ Title = "V2 (Predict)", Default = false, Callback = function(v)
-        W.W424Veil_API.AimConfig.Aim_SilentVeilV2 = v
-        W.W2_Notify("Veil V2", v and "ON" or "OFF", 2)
-    end })
-    s1:AddToggle({ Title = "Auto Predict", Default = false, Callback = function(v)
-        W.W424Veil_API.Config.SpearSmart_enable = v
-    end })
-    s1:AddSlider({ Title = "Lead Multiplier", Min = 0.5, Max = 5, Default = 1.4, Increment = 0.1,
-        Callback = function(v) W.W424Veil_API.AimConfig.Veil_LeadMultiplier = v end })
-    s1:AddSlider({ Title = "Spear Speed", Min = 50, Max = 200, Default = 165, Increment = 5,
-        Callback = function(v) W.W424Veil_API.AimConfig.SPEAR_Speed = v end })
-    s1:AddSlider({ Title = "Spear Gravity", Min = 0, Max = 200, Default = 103, Increment = 1,
-        Callback = function(v) W.W424Veil_API.AimConfig.SPEAR_Gravity = v end })
-    s1:AddToggle({ Title = "ESP Tracker", Default = false, Callback = function(v)
-        W.W424Veil_API.setTracker(v)
-    end })
-    s1:AddToggle({ Title = "Show Veil FOV", Default = true, Callback = function(v)
-        W.W424Veil_API.AimConfig.Veil_ShowFOV = v
-    end })
-    s1:AddSlider({ Title = "Veil FOV Radius", Min = 50, Max = 500, Default = 150, Increment = 10,
-        Callback = function(v) W.W424Veil_API.AimConfig.Veil_FOV = v end })
-
-    local s2 = W.T_Kill:AddSection("Bypass No Cooldown")
-    s2:AddToggle({ Title = "Hidden Leap", Default = false, Callback = function(v) W.SetHiddenLeap(v) end })
-    s2:AddToggle({ Title = "Myers Grab (H)", Default = false, Callback = function(v) W.Myers_Set(v) end })
-    s2:AddToggle({ Title = "Slasher LakeMist", Default = false, Callback = function(v) W.SetLakeMist(v) end })
-    s2:AddToggle({ Title = "Slasher Pursuit", Default = false, Callback = function(v) W.SetPursuit(v) end })
-    s2:AddToggle({ Title = "Abyss Bypass", Default = false, Callback = function(v) W.SetAbyssBypass(v) end })
-    s2:AddToggle({ Title = "Jeff Infinite Frenzy", Default = false, Callback = function(v) W.SetJeffFrenzy(v) end })
 end)--====================================================--
 -- PART 4D: SPEAR AIMBOT + KILLER ABILITIES + AUTO HOOK
 --====================================================--
@@ -7077,9 +6224,7 @@ do
         left.Parent = SD.Button
         Instance.new("UICorner", left).CornerRadius = UDim.new(1, 0)
         local ls = Instance.new("UIStroke", left)
-        ls.Color = Color3.fromRGB(255, 80, 80)
-        ls.Thickness = 1.5
-        ls.Transparency = 0.3
+        ls.Color = Color3.fromRGB(255, 80, 80); ls.Thickness = 1.5; ls.Transparency = 0.3
         left.MouseButton1Click:Connect(function() Cycle(-1) end)
 
         local right = Instance.new("TextButton")
@@ -7096,9 +6241,7 @@ do
         right.Parent = SD.Button
         Instance.new("UICorner", right).CornerRadius = UDim.new(1, 0)
         local rs = Instance.new("UIStroke", right)
-        rs.Color = Color3.fromRGB(255, 80, 80)
-        rs.Thickness = 1.5
-        rs.Transparency = 0.3
+        rs.Color = Color3.fromRGB(255, 80, 80); rs.Thickness = 1.5; rs.Transparency = 0.3
         right.MouseButton1Click:Connect(function() Cycle(1) end)
 
         SD.Button.InputBegan:Connect(function(inp)
@@ -7675,7 +6818,6 @@ do
     function W.Flask_SetBeamColor(c) W2.Flask_BeamColor = c end
     function W.Flask_SetAccentColor(c) W2.Flask_AccentColor = c end
 
-    -- Hook ThrowFlask
     if typeof(hookmetamethod) == "function" then
         task.spawn(function()
             pcall(function()
@@ -8086,8 +7228,8 @@ do
     end
 
     local function loadAPI()
-        if _G.MengHub and _G.MengHub.Invisible and validate(_G.MengHub.Invisible) then
-            MV.API = _G.MengHub.Invisible; MV.Ready = true
+        if _G.W2External and _G.W2External.Invisible and validate(_G.W2External.Invisible) then
+            MV.API = _G.W2External.Invisible; MV.Ready = true
             return true
         end
         MV.Loading = true; MV.Ready = false
@@ -8095,8 +7237,8 @@ do
             MV._retries = i
             local ok = pcall(function() loadstring(game:HttpGet(URL))() end)
             task.wait(0.5)
-            if ok and _G.MengHub and _G.MengHub.Invisible and validate(_G.MengHub.Invisible) then
-                MV.API = _G.MengHub.Invisible; MV.Ready = true; MV.Loading = false
+            if ok and _G.W2External and _G.W2External.Invisible and validate(_G.W2External.Invisible) then
+                MV.API = _G.W2External.Invisible; MV.Ready = true; MV.Loading = false
                 if MV._queueState ~= nil then
                     local q = MV._queueState; MV._queueState = nil
                     task.defer(function() W.Invisible_SetState(q, false) end)
@@ -8159,14 +7301,13 @@ end
 do
     local bindName = "W2_CamDBD_Fix"
     local prevPos, prevRot = nil, nil
-    local smoothRot = nil
     pcall(function() RunService:UnbindFromRenderStep(bindName) end)
 
     RunService:BindToRenderStep(bindName, Enum.RenderPriority.Camera.Value + 1, function(dt)
         local cam = Workspace.CurrentCamera
         if not cam then return end
         if cam.CameraType ~= Enum.CameraType.Custom and cam.CameraType ~= Enum.CameraType.Follow then
-            prevPos = nil; prevRot = nil; smoothRot = nil
+            prevPos = nil; prevRot = nil
             return
         end
         if W2.CamDBD_Enabled then
@@ -8197,7 +7338,7 @@ do
 
     LP.CharacterAdded:Connect(function()
         task.wait(0.5)
-        prevPos = nil; prevRot = nil; smoothRot = nil
+        prevPos = nil; prevRot = nil
     end)
 end
 
@@ -8256,9 +7397,8 @@ W.OnUIReady(function()
     s3:AddSlider({ Title = "POV Smoothness", Min = 3, Max = 20, Default = 9, Increment = 1,
         Callback = function(v) W2.CamDBD_POVSmooth = v end })
 end)--====================================================--
--- PART 5B: MISC — Player Utility + Speed Boost + Cursor
---          + Jerk Off + Emote + Fake Avatar + Korless
---          + Header + Spectator
+-- PART 5B: MISC — Player Utility + Speed Boost + Cursor + Jerk Off
+--          + Emote + Fake Avatar + Korless + Header + Spectator
 --====================================================--
 
 W2.PU_SpeedEnabled = W2.PU_SpeedEnabled or false
@@ -8266,6 +7406,9 @@ W2.PU_SpeedValue   = W2.PU_SpeedValue   or 16
 W2.PU_ShiftLock    = W2.PU_ShiftLock    or false
 W2.PU_UnlimitedZoom= W2.PU_UnlimitedZoom or false
 W2.PU_Noclip       = W2.PU_Noclip       or false
+W2.PU_ShowPingFPS  = W2.PU_ShowPingFPS  or false
+W2.HideName_Enabled= W2.HideName_Enabled or false
+W2.HideIcon_Enabled= W2.HideIcon_Enabled or false
 W2.SpeedBoost_Enabled = W2.SpeedBoost_Enabled or false
 W2.SpeedBoost_Value   = W2.SpeedBoost_Value   or 30
 W2.Cursor_Enabled  = W2.Cursor_Enabled  or false
@@ -8929,7 +8072,13 @@ do
         HS.Txt = t
     end
 
-    function W.Header_Set(v) W2.Header_Enabled = v; if v then Create() else if HS.Billboard then HS.Billboard:Destroy(); HS.Billboard = nil; HS.Txt = nil end end end
+    function W.Header_Set(v)
+        W2.Header_Enabled = v
+        if v then Create()
+        else
+            if HS.Billboard then HS.Billboard:Destroy(); HS.Billboard = nil; HS.Txt = nil end
+        end
+    end
     function W.Header_SetText(t) W2.Header_Text = t or "W2"; if HS.Txt then HS.Txt.Text = W2.Header_Text end end
     function W.Header_SetColor(c) W2.Header_Color = c; if HS.Txt then HS.Txt.TextColor3 = c end end
     LP.CharacterAdded:Connect(function()
@@ -9110,8 +8259,7 @@ W.OnUIReady(function()
     local s9 = W.T_Misc:AddSection("Spectator Counter")
     s9:AddToggle({ Title = "Enable", Default = false, Callback = function(v) W.Spectator_Set(v) end })
 end)--====================================================--
--- PART 6: TROLL (Instant Escape + Bombax Tab Control)
--- PART 7: CONFIG MANAGER
+-- PART 6+7: TROLL (Instant Escape) + CONFIG MANAGER
 --====================================================--
 
 W2.Escape_Enabled = W2.Escape_Enabled or false
@@ -9323,7 +8471,7 @@ W.OnUIReady(function()
     s1:AddButton({ Title = "Teleport Now", Callback = function() W.Escape_TP() end })
 
     local s2 = W.T_Troll:AddSection("Bombax Button")
-    s2:AddToggle({ Title = "Show Bombax Button", Content = "Tombol + window toggle",
+    s2:AddToggle({ Title = "Show Bombax Button", Content = "Tombol kecil (38x38)",
         Default = false, Callback = function(v)
             if W.BombaxUI_Set then W.BombaxUI_Set(v) end
         end })
@@ -9335,8 +8483,8 @@ end)
 -- ═══════════════════════════════════════════════════
 -- CLOSING
 -- ═══════════════════════════════════════════════════
-print("[W2] Loaded OK")
-print("  Tab: Survivor / Visuals / Killer / Misc / Troll / Config / Exclusive")
+print("[W2] FULL LOADED OK")
+print("  Tab: Exclusive / Survivor / Visuals / Killer / Misc / Troll / Config")
 print("  Free Script - Jangan Dijual!")
 
 W.W2_Notify("W2", "Script Loaded!", 5)--====================================================--
@@ -9344,7 +8492,7 @@ W.W2_Notify("W2", "Script Loaded!", 5)--========================================
 --====================================================--
 
 -- ═══════════════════════════════════════════════════
--- KILLER PERKS DISPLAY (WHITE)
+-- KILLER PERKS DISPLAY
 -- ═══════════════════════════════════════════════════
 do
     local PD = { Gui = nil, Thread = nil, Enabled = false, Minimized = false }
@@ -9652,7 +8800,7 @@ do
 end
 
 -- ═══════════════════════════════════════════════════
--- FAKE PERKS UI CARD DISPLAY
+-- FAKE PERKS CARD DISPLAY
 -- ═══════════════════════════════════════════════════
 do
     local PC = {
@@ -9832,8 +8980,7 @@ W.OnUIReady(function()
             W.W2_Notify("Fake Perks Card", v and "Enabled" or "Disabled", 2)
         end })
 end)--====================================================--
--- PART 8B: EXCLUSIVE — Auto Run Mobile Advanced
---          + Veil V2 W424 + Flask Color Picker
+-- PART 8B: EXCLUSIVE — Auto Run Mobile Advanced + Veil V2
 --====================================================--
 
 -- ═══════════════════════════════════════════════════
@@ -9932,7 +9079,7 @@ do
 end
 
 -- ═══════════════════════════════════════════════════
--- VEIL V2 (W424 ORIGINAL)
+-- VEIL V2 (EXCLUSIVE)
 -- ═══════════════════════════════════════════════════
 do
     local AC = AC or {}
@@ -10182,7 +9329,7 @@ do
         end
     end)
 
-    W.W424Veil_API = {
+    W.W2ExVeil_API = {
         AimConfig = AC, Config = Config,
         getClosestSurvivor = GetClosest,
         IsVeilSilentOn = IsSilent,
@@ -10224,7 +9371,7 @@ do
                                     local leadMult = AC.Veil_LeadMultiplier or 1.4
                                     local predicted = targetPos + (targetVel * (timeToHit * leadMult))
                                     local spearG = workspace.Gravity * 0.5
-                                    local drop = 0.5 * spearG * (timeToHit ^ 2)
+                                    local drop = 0.5 * spearG * (timeToHit * timeToHit)
                                     local finalPos = predicted + Vector3.new(0, drop - 1.5, 0)
                                     bestDir = (finalPos - originPos).Unit
                                 end
@@ -10255,33 +9402,33 @@ W.OnUIReady(function()
             W.W2_Notify("Auto Run Mobile Adv", v and "Enabled" or "Disabled", 2)
         end })
 
-    local s2 = W.T_Exc:AddSection("Silent Veil V2 (W424)")
+    local s2 = W.T_Exc:AddSection("Silent Veil V2 (Exclusive)")
     s2:AddToggle({ Title = "V1 (Block)", Default = false, Callback = function(v)
-        W.W424Veil_API.AimConfig.Aim_SilentVeil = v
+        W.W2ExVeil_API.AimConfig.Aim_SilentVeil = v
     end })
     s2:AddToggle({ Title = "V2 (Predict)", Default = false, Callback = function(v)
-        W.W424Veil_API.AimConfig.Aim_SilentVeilV2 = v
+        W.W2ExVeil_API.AimConfig.Aim_SilentVeilV2 = v
         W.W2_Notify("Veil V2", v and "ON" or "OFF", 2)
     end })
     s2:AddToggle({ Title = "Auto Predict", Default = false, Callback = function(v)
-        W.W424Veil_API.Config.SpearSmart_enable = v
+        W.W2ExVeil_API.Config.SpearSmart_enable = v
     end })
     s2:AddSlider({ Title = "Lead Multiplier", Min = 0.5, Max = 5, Default = 1.4, Increment = 0.1,
-        Callback = function(v) W.W424Veil_API.AimConfig.Veil_LeadMultiplier = v end })
+        Callback = function(v) W.W2ExVeil_API.AimConfig.Veil_LeadMultiplier = v end })
     s2:AddSlider({ Title = "Spear Speed", Min = 50, Max = 200, Default = 165, Increment = 5,
-        Callback = function(v) W.W424Veil_API.AimConfig.SPEAR_Speed = v end })
+        Callback = function(v) W.W2ExVeil_API.AimConfig.SPEAR_Speed = v end })
     s2:AddSlider({ Title = "Spear Gravity", Min = 0, Max = 200, Default = 103, Increment = 1,
-        Callback = function(v) W.W424Veil_API.AimConfig.SPEAR_Gravity = v end })
+        Callback = function(v) W.W2ExVeil_API.AimConfig.SPEAR_Gravity = v end })
     s2:AddToggle({ Title = "ESP Tracker", Default = false, Callback = function(v)
-        W.W424Veil_API.setTracker(v)
+        W.W2ExVeil_API.setTracker(v)
     end })
     s2:AddToggle({ Title = "Show Veil FOV", Default = true, Callback = function(v)
-        W.W424Veil_API.AimConfig.Veil_ShowFOV = v
+        W.W2ExVeil_API.AimConfig.Veil_ShowFOV = v
     end })
     s2:AddSlider({ Title = "Veil FOV Radius", Min = 50, Max = 500, Default = 150, Increment = 10,
-        Callback = function(v) W.W424Veil_API.AimConfig.Veil_FOV = v end })
+        Callback = function(v) W.W2ExVeil_API.AimConfig.Veil_FOV = v end })
 end)--====================================================--
--- PART 8C: EXCLUSIVE — Spear Manual + Aim Mobile Hook
+-- PART 8C: EXCLUSIVE — Spear Manual + Mobile Hook
 --          + No Cutscene + Skip End + Header Shine + Boolean Failsafe
 --====================================================--
 
@@ -10785,7 +9932,7 @@ do
         task.spawn(function()
             while shineLbl and shineLbl.Parent and grad and grad.Parent do
                 grad.Offset = Vector2.new(-1, 0)
-                local tw = TweenService:Create(grad, TweenInfo.new(4, Enum.EasingStyle.Sine, Enum.EasingMode.InOut or Enum.EasingDirection.InOut), { Offset = Vector2.new(1, 0) })
+                local tw = TweenService:Create(grad, TweenInfo.new(4, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Offset = Vector2.new(1, 0) })
                 tw:Play()
                 tw.Completed:Wait()
                 task.wait(2)
@@ -10883,9 +10030,7 @@ W.OnUIReady(function()
 
     local s6 = W.T_Exc:AddSection("Boolean Math Failsafe")
     s6:AddButton({ Title = "Apply Boolean Failsafe", Content = "Set __div, __mul, __add, __sub → 0",
-        Callback = function()
-            W.BooleanFailsafe_Apply()
-        end })
+        Callback = function() W.BooleanFailsafe_Apply() end })
     s6:AddParagraph({ Title = "Info",
         Content = "Bypass cooldown yang pakai math operation di boolean" })
 end)
@@ -10894,8 +10039,830 @@ end)
 -- CLOSING
 -- ═══════════════════════════════════════════════════
 print("[W2] FULL LOADED OK")
-print("  Tab: Survivor / Visuals / Killer / Misc / Troll / Config / Exclusive")
+print("  Tab: Exclusive / Survivor / Visuals / Killer / Misc / Troll / Config")
 print("  Total: ~260 fitur")
 print("  Free Script - Jangan Dijual!")
 
-W.W2_Notify("W2", "Script FULL Loaded!", 6)
+W.W2_Notify("W2", "Script FULL Loaded!", 6)--====================================================--
+-- PART 9A: FLOATING BUTTONS — SURVIVOR (14)
+--====================================================--
+
+do
+    local FB = { Buttons = {} }
+
+    -- ═══════════════════════════════════════════════
+    -- CREATE FLOATING BUTTON FACTORY
+    -- ═══════════════════════════════════════════════
+    function W.CreateFloatingButton(cfg)
+        local st = cfg.state or {}
+        st.Conns = st.Conns or {}
+        st.SavedPos = st.SavedPos or UDim2.new(0.03, 0, 0.5, 0)
+        st.DragLocked = false
+        st.Enabled = false
+
+        local function destroy()
+            for _, c in ipairs(st.Conns) do pcall(function() c:Disconnect() end) end
+            st.Conns = {}
+            if st.Gui then pcall(function() st.Gui:Destroy() end); st.Gui = nil end
+        end
+
+        local function refresh()
+            if not st.Gui then return end
+            local main = st.Gui:FindFirstChild("MainBtn", true)
+            if not main then return end
+            local on = cfg.isOn and cfg.isOn() or false
+            local sp = main:FindFirstChild("StatusPill")
+            local sT = sp and sp:FindFirstChild("StatusText")
+            local sD = sp and sp:FindFirstChild("StatusDot")
+            local sStr = main:FindFirstChild("MainStroke")
+            local ic = main:FindFirstChild("IconCircle")
+            if on then
+                if ic then TweenService:Create(ic, TweenInfo.new(0.25), { BackgroundColor3 = Color3.fromRGB(255,255,255), BackgroundTransparency = 0.15 }):Play() end
+                if sT then sT.Text = "ON"; TweenService:Create(sT, TweenInfo.new(0.25), { TextColor3 = Color3.fromRGB(255,255,255) }):Play() end
+                if sD then TweenService:Create(sD, TweenInfo.new(0.25), { BackgroundColor3 = Color3.fromRGB(255,255,255) }):Play() end
+                if sStr then TweenService:Create(sStr, TweenInfo.new(0.25), { Color = Color3.fromRGB(120,255,160) }):Play() end
+            else
+                if ic then TweenService:Create(ic, TweenInfo.new(0.25), { BackgroundColor3 = Color3.fromRGB(90,90,90), BackgroundTransparency = 0.4 }):Play() end
+                if sT then sT.Text = "OFF"; TweenService:Create(sT, TweenInfo.new(0.25), { TextColor3 = Color3.fromRGB(120,120,120) }):Play() end
+                if sD then TweenService:Create(sD, TweenInfo.new(0.25), { BackgroundColor3 = Color3.fromRGB(90,90,90) }):Play() end
+                if sStr then TweenService:Create(sStr, TweenInfo.new(0.25), { Color = Color3.fromRGB(25,25,25) }):Play() end
+            end
+        end
+
+        local function toggle()
+            local newState = not (cfg.isOn and cfg.isOn() or false)
+            if cfg.onToggle then cfg.onToggle(newState) end
+            refresh()
+        end
+
+        local function create()
+            destroy()
+            local parent = LP:FindFirstChild("PlayerGui")
+            if gethui then local ok, hui = pcall(gethui); if ok and hui then parent = hui end end
+            if not parent then return end
+
+            local gui = Instance.new("ScreenGui")
+            gui.Name = "W2Float_" .. (cfg.id or "Btn")
+            gui.ResetOnSpawn = false
+            gui.IgnoreGuiInset = true
+            gui.DisplayOrder = 999
+            gui.Parent = parent
+            st.Gui = gui
+
+            local cont = Instance.new("Frame", gui)
+            cont.Name = "Container"
+            cont.Size = UDim2.fromOffset(140, 36)
+            cont.Position = st.SavedPos
+            cont.BackgroundTransparency = 1
+
+            local main = Instance.new("Frame", cont)
+            main.Name = "MainBtn"
+            main.Size = UDim2.fromOffset(96, 36)
+            main.BackgroundColor3 = Color3.fromRGB(0,0,0)
+            main.BorderSizePixel = 0
+            Instance.new("UICorner", main).CornerRadius = UDim.new(1, 0)
+
+            local ms = Instance.new("UIStroke", main)
+            ms.Name = "MainStroke"; ms.Color = Color3.fromRGB(25,25,25); ms.Thickness = 1.2; ms.Transparency = 0.2
+
+            local ic = Instance.new("Frame", main)
+            ic.Name = "IconCircle"
+            ic.Size = UDim2.fromOffset(20, 20)
+            ic.Position = UDim2.new(0, 6, 0.5, -10)
+            ic.BackgroundColor3 = Color3.fromRGB(90,90,90)
+            ic.BackgroundTransparency = 0.4
+            ic.BorderSizePixel = 0
+            Instance.new("UICorner", ic).CornerRadius = UDim.new(1, 0)
+
+            local idot = Instance.new("TextLabel", ic)
+            idot.Name = "IconDot"
+            idot.Size = UDim2.fromScale(1, 1)
+            idot.BackgroundTransparency = 1
+            idot.Font = Enum.Font.GothamBold
+            idot.Text = cfg.icon or "★"
+            idot.TextSize = 12
+            idot.TextColor3 = Color3.fromRGB(255,255,255)
+
+            local ml = Instance.new("TextLabel", main)
+            ml.Size = UDim2.new(1, -46, 1, 0)
+            ml.Position = UDim2.new(0, 30, 0, 0)
+            ml.BackgroundTransparency = 1
+            ml.Font = Enum.Font.GothamBold
+            ml.Text = cfg.title or "Btn"
+            ml.TextColor3 = Color3.fromRGB(240,240,245)
+            ml.TextSize = 11
+            ml.TextXAlignment = Enum.TextXAlignment.Left
+
+            local sp = Instance.new("Frame", main)
+            sp.Name = "StatusPill"
+            sp.AnchorPoint = Vector2.new(1, 0.5)
+            sp.Size = UDim2.fromOffset(36, 18)
+            sp.Position = UDim2.new(1, -6, 0.5, 0)
+            sp.BackgroundColor3 = Color3.fromRGB(0,0,0)
+            sp.BorderSizePixel = 0
+            Instance.new("UICorner", sp).CornerRadius = UDim.new(1, 0)
+
+            local sd = Instance.new("Frame", sp)
+            sd.Name = "StatusDot"
+            sd.Size = UDim2.fromOffset(5, 5)
+            sd.Position = UDim2.new(0, 6, 0.5, -2.5)
+            sd.BackgroundColor3 = Color3.fromRGB(90,90,90)
+            sd.BorderSizePixel = 0
+            Instance.new("UICorner", sd).CornerRadius = UDim.new(1, 0)
+
+            local stx = Instance.new("TextLabel", sp)
+            stx.Name = "StatusText"
+            stx.Size = UDim2.new(1, -14, 1, 0)
+            stx.Position = UDim2.new(0, 13, 0, 0)
+            stx.BackgroundTransparency = 1
+            stx.Font = Enum.Font.GothamBold
+            stx.Text = "OFF"
+            stx.TextColor3 = Color3.fromRGB(140,140,152)
+            stx.TextSize = 9
+            stx.TextXAlignment = Enum.TextXAlignment.Center
+
+            local cd = Instance.new("TextButton", main)
+            cd.Name = "ClickDetect"
+            cd.Size = UDim2.fromScale(1, 1)
+            cd.BackgroundTransparency = 1
+            cd.Text = ""
+            cd.AutoButtonColor = false
+            cd.ZIndex = 5
+
+            local drag, dStart, sPos, dDist = false, nil, nil, 0
+            table.insert(st.Conns, cd.InputBegan:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                    dStart = inp.Position; sPos = cont.Position; dDist = 0
+                    if not st.DragLocked then drag = true end
+                end
+            end))
+            table.insert(st.Conns, cd.InputEnded:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                    if drag then drag = false; st.SavedPos = cont.Position end
+                    if dDist < 8 then toggle() end
+                end
+            end))
+            table.insert(st.Conns, UserInputService.InputChanged:Connect(function(inp)
+                if not drag then return end
+                if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
+                    local d = inp.Position - dStart
+                    dDist = math.abs(d.X) + math.abs(d.Y)
+                    cont.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + d.X, sPos.Y.Scale, sPos.Y.Offset + d.Y)
+                end
+            end))
+
+            refresh()
+        end
+
+        st.SetEnabled = function(en)
+            st.Enabled = en and true or false
+            if st.Enabled then create() else destroy() end
+        end
+        st.Refresh = refresh
+        st.GetState = function() return st.Enabled end
+        return st
+    end
+
+    -- ═══════════════════════════════════════════════
+    -- 14 SURVIVOR BUTTONS
+    -- ═══════════════════════════════════════════════
+
+    FB.Buttons.SelfHeal = W.CreateFloatingButton({
+        id = "SelfHeal", title = "Heal", icon = "➕",
+        state = { SavedPos = UDim2.new(0.02, 0, 0.20, 0) },
+        isOn = function() return W2.SelfHeal_Enabled end,
+        onToggle = function(v) W.SelfHeal_Set(v) end,
+    })
+
+    FB.Buttons.HealAll = W.CreateFloatingButton({
+        id = "HealAll", title = "Heal All", icon = "💚",
+        state = { SavedPos = UDim2.new(0.02, 0, 0.24, 0) },
+        isOn = function() return W2.SelfHeal_AutoAll end,
+        onToggle = function(v) W.AutoHealAll_Set(v) end,
+    })
+
+    FB.Buttons.SwiftVault = W.CreateFloatingButton({
+        id = "SwiftVault", title = "Vault", icon = "🪟",
+        state = { SavedPos = UDim2.new(0.02, 0, 0.28, 0) },
+        isOn = function() return W2.SwiftVault_Enabled end,
+        onToggle = function(v) W.SwiftVault_Set(v) end,
+    })
+
+    FB.Buttons.Pallet = W.CreateFloatingButton({
+        id = "Pallet", title = "Pallet", icon = "🚪",
+        state = { SavedPos = UDim2.new(0.02, 0, 0.32, 0) },
+        isOn = function() return W2.PalletReflex_Enabled end,
+        onToggle = function(v) W.PalletReflex_Set(v) end,
+    })
+
+    FB.Buttons.FakeParry = W.CreateFloatingButton({
+        id = "FakeParry", title = "Fake P", icon = "🤺",
+        state = { SavedPos = UDim2.new(0.02, 0, 0.36, 0) },
+        isOn = function() return W2.SURV_FakeParry end,
+        onToggle = function(v) W.FakeParry_SetEnabled(v) end,
+    })
+
+    FB.Buttons.AutoFlee = W.CreateFloatingButton({
+        id = "AutoFlee", title = "Flee", icon = "🏃",
+        state = { SavedPos = UDim2.new(0.02, 0, 0.40, 0) },
+        isOn = function() return W2.AutoFlee end,
+        onToggle = function(v) W.AutoFlee_Set(v) end,
+    })
+
+    FB.Buttons.ParryV1 = W.CreateFloatingButton({
+        id = "ParryV1", title = "Parry1", icon = "🛡️",
+        state = { SavedPos = UDim2.new(0.02, 0, 0.44, 0) },
+        isOn = function() return W2.ParryV1_Enabled end,
+        onToggle = function(v) W.ParryV1_Set(v) end,
+    })
+
+    FB.Buttons.ParryV2 = W.CreateFloatingButton({
+        id = "ParryV2", title = "Parry2", icon = "⚔️",
+        state = { SavedPos = UDim2.new(0.02, 0, 0.48, 0) },
+        isOn = function() return W2.ParryV2_Enabled end,
+        onToggle = function(v) W.ParryV2_Set(v) end,
+    })
+
+    FB.Buttons.SelfUnhook = W.CreateFloatingButton({
+        id = "SelfUnhook", title = "Unhook", icon = "🔓",
+        state = { SavedPos = UDim2.new(0.02, 0, 0.52, 0) },
+        isOn = function() return W2.SelfUnhook_Enabled end,
+        onToggle = function(v) W.SU_Set(v) end,
+    })
+
+    FB.Buttons.ManualGen = W.CreateFloatingButton({
+        id = "ManualGen", title = "M.Gen", icon = "⚡",
+        state = { SavedPos = UDim2.new(0.02, 0, 0.56, 0) },
+        isOn = function() return W2.ManualGen end,
+        onToggle = function(v) W.ManualGen_Set(v) end,
+    })
+
+    FB.Buttons.AutoGen = W.CreateFloatingButton({
+        id = "AutoGen", title = "A.Gen", icon = "⚙️",
+        state = { SavedPos = UDim2.new(0.02, 0, 0.60, 0) },
+        isOn = function() return W2.AutoGen end,
+        onToggle = function(v) W.AutoGen_Set(v) end,
+    })
+
+    FB.Buttons.TOF = W.CreateFloatingButton({
+        id = "TOF", title = "TOF", icon = "🎯",
+        state = { SavedPos = UDim2.new(0.02, 0, 0.64, 0) },
+        isOn = function() return W2.TOF_Enabled end,
+        onToggle = function(v)
+            W.SetToFEnabled(v)
+            if v then
+                local modes = {"Killer", "Survivors", "Zombie"}
+                local cur = W2.TOF_TargetMode or "Killer"
+                local idx = 1
+                for i, m in ipairs(modes) do if m == cur then idx = i; break end end
+                local nxt = modes[(idx % #modes) + 1]
+                W.ToF_SetMode(nxt, true)
+            end
+        end,
+    })
+
+    FB.Buttons.Flash = W.CreateFloatingButton({
+        id = "Flash", title = "Flash", icon = "🔦",
+        state = { SavedPos = UDim2.new(0.02, 0, 0.68, 0) },
+        isOn = function() return W2.Flash_Enabled end,
+        onToggle = function(v) W.Flash_Set(v) end,
+    })
+
+    FB.Buttons.AimGun = W.CreateFloatingButton({
+        id = "AimGun", title = "GunAim", icon = "🔫",
+        state = { SavedPos = UDim2.new(0.02, 0, 0.72, 0) },
+        isOn = function() return W.GunAim_Cfg and W.GunAim_Cfg.Enabled end,
+        onToggle = function(v)
+            if W.GunAim_Cfg then W.GunAim_Cfg.Enabled = v end
+            if v and W.GunAim_Start then W.GunAim_Start() end
+        end,
+    })
+
+    W._FloatButtons = FB
+end
+
+-- ═══════════════════════════════════════════════════
+-- UI SECTION — EXCLUSIVE TAB
+-- ═══════════════════════════════════════════════════
+W.OnUIReady(function()
+    local s = W.T_Exc:AddSection("Floating Buttons — Survivor")
+    local list = {
+        { key = "SelfHeal", title = "Self Heal" },
+        { key = "HealAll", title = "Auto Heal All" },
+        { key = "SwiftVault", title = "Swift Vault" },
+        { key = "Pallet", title = "Pallet Reflex" },
+        { key = "FakeParry", title = "Fake Parry" },
+        { key = "AutoFlee", title = "Auto Flee" },
+        { key = "ParryV1", title = "Auto Parry V1" },
+        { key = "ParryV2", title = "Auto Parry V2" },
+        { key = "SelfUnhook", title = "Self Unhook" },
+        { key = "ManualGen", title = "Manual Gen" },
+        { key = "AutoGen", title = "Auto Gen" },
+        { key = "TOF", title = "Silent Aim TOF" },
+        { key = "Flash", title = "Silent Flashlight" },
+        { key = "AimGun", title = "Aim Lock Gun" },
+    }
+    for _, item in ipairs(list) do
+        s:AddToggle({
+            Title = "Show " .. item.title,
+            Default = false,
+            Callback = function(v)
+                local btn = W._FloatButtons and W._FloatButtons.Buttons[item.key]
+                if btn and btn.SetEnabled then btn.SetEnabled(v) end
+            end,
+        })
+    end
+    s:AddButton({
+        Title = "Show All Survivor Buttons",
+        Callback = function()
+            for _, item in ipairs(list) do
+                local btn = W._FloatButtons and W._FloatButtons.Buttons[item.key]
+                if btn and btn.SetEnabled then btn.SetEnabled(true) end
+            end
+            W.W2_Notify("Floating Buttons", "All Survivor ON", 2)
+        end,
+    })
+    s:AddButton({
+        Title = "Hide All Survivor Buttons",
+        Callback = function()
+            for _, item in ipairs(list) do
+                local btn = W._FloatButtons and W._FloatButtons.Buttons[item.key]
+                if btn and btn.SetEnabled then btn.SetEnabled(false) end
+            end
+            W.W2_Notify("Floating Buttons", "All Survivor OFF", 2)
+        end,
+    })
+end)--====================================================--
+-- PART 9B: FLOATING BUTTONS — KILLER (14)
+--====================================================--
+
+do
+    local FB = W._FloatButtons or { Buttons = {} }
+    W._FloatButtons = FB
+
+    -- ═══════════════════════════════════════════════
+    -- 14 KILLER BUTTONS
+    -- ═══════════════════════════════════════════════
+
+    -- 1. Auto Attack
+    FB.Buttons.AutoAttack = W.CreateFloatingButton({
+        id = "AutoAttack", title = "Attack", icon = "⚔️",
+        state = { SavedPos = UDim2.new(0.86, 0, 0.20, 0) },
+        isOn = function() return W2.AutoAttack_Enabled end,
+        onToggle = function(v) W2.AutoAttack_Enabled = v end,
+    })
+
+    -- 2. Infinite Lunge
+    FB.Buttons.InfLunge = W.CreateFloatingButton({
+        id = "InfLunge", title = "Lunge", icon = "🎯",
+        state = { SavedPos = UDim2.new(0.86, 0, 0.24, 0) },
+        isOn = function() return W2.InfLunge_Enabled end,
+        onToggle = function(v) W2.InfLunge_Enabled = v end,
+    })
+
+    -- 3. Counter Parry
+    FB.Buttons.CounterParry = W.CreateFloatingButton({
+        id = "CounterParry", title = "Counter", icon = "🛡️",
+        state = { SavedPos = UDim2.new(0.86, 0, 0.28, 0) },
+        isOn = function() return W2.CounterParry_Enabled end,
+        onToggle = function(v) W2.CounterParry_Enabled = v end,
+    })
+
+    -- 4. Aim Lock Hidden
+    FB.Buttons.AimHidden = W.CreateFloatingButton({
+        id = "AimHidden", title = "AimHid", icon = "🎯",
+        state = { SavedPos = UDim2.new(0.86, 0, 0.32, 0) },
+        isOn = function() return W2.AimHidden_Enabled end,
+        onToggle = function(v) W.AimHidden_Set(v) end,
+    })
+
+    -- 5. Aim Lock Attack
+    FB.Buttons.AimAttack = W.CreateFloatingButton({
+        id = "AimAttack", title = "AimAtk", icon = "🎯",
+        state = { SavedPos = UDim2.new(0.86, 0, 0.36, 0) },
+        isOn = function() return W.AttackAim_Cfg and W.AttackAim_Cfg.Enabled end,
+        onToggle = function(v)
+            if W.AttackAim_Cfg then W.AttackAim_Cfg.Enabled = v end
+            if v and W.AttackAim_Start then W.AttackAim_Start() end
+        end,
+    })
+
+    -- 6. Anti Blind
+    FB.Buttons.AntiBlind = W.CreateFloatingButton({
+        id = "AntiBlind", title = "AntiB", icon = "👁️",
+        state = { SavedPos = UDim2.new(0.86, 0, 0.40, 0) },
+        isOn = function() return W2.AntiBlind_Enabled end,
+        onToggle = function(v) W.AntiBlind_Set(v) end,
+    })
+
+    -- 7. Destroy Pallet
+    FB.Buttons.DestroyPallet = W.CreateFloatingButton({
+        id = "DestroyPallet", title = "Pallet", icon = "🔨",
+        state = { SavedPos = UDim2.new(0.86, 0, 0.44, 0) },
+        isOn = function() return W2.DestroyPallet end,
+        onToggle = function(v) W2.DestroyPallet = v end,
+    })
+
+    -- 8. Veil V1
+    FB.Buttons.VeilV1 = W.CreateFloatingButton({
+        id = "VeilV1", title = "Veil1", icon = "🗡️",
+        state = { SavedPos = UDim2.new(0.86, 0, 0.48, 0) },
+        isOn = function() return W2.VeilV1_Enabled end,
+        onToggle = function(v) W2.VeilV1_Enabled = v end,
+    })
+
+    -- 9. Veil V2
+    FB.Buttons.VeilV2 = W.CreateFloatingButton({
+        id = "VeilV2", title = "Veil2", icon = "🗡️",
+        state = { SavedPos = UDim2.new(0.86, 0, 0.52, 0) },
+        isOn = function()
+            if W.W2Veil_API and W.W2Veil_API.AimConfig then
+                return W.W2Veil_API.AimConfig.Aim_SilentVeil or W.W2Veil_API.AimConfig.Aim_SilentVeilV2
+            end
+            return false
+        end,
+        onToggle = function(v)
+            if W.W2Veil_API and W.W2Veil_API.AimConfig then
+                W.W2Veil_API.AimConfig.Aim_SilentVeil = v
+                W.W2Veil_API.AimConfig.Aim_SilentVeilV2 = v
+            end
+        end,
+    })
+
+    -- 10. Spear Aimbot
+    FB.Buttons.SpearAim = W.CreateFloatingButton({
+        id = "SpearAim", title = "Spear", icon = "🔱",
+        state = { SavedPos = UDim2.new(0.86, 0, 0.56, 0) },
+        isOn = function() return W2.SpearAimbot_Enabled end,
+        onToggle = function(v) W.SpearAimbot_Set(v) end,
+    })
+
+    -- 11. Silent Flask
+    FB.Buttons.Flask = W.CreateFloatingButton({
+        id = "Flask", title = "Flask", icon = "🧪",
+        state = { SavedPos = UDim2.new(0.86, 0, 0.60, 0) },
+        isOn = function() return W2.Flask_Enabled end,
+        onToggle = function(v) W.Flask_Set(v) end,
+    })
+
+    -- 12. Dash Lock
+    FB.Buttons.DashLock = W.CreateFloatingButton({
+        id = "DashLock", title = "Dash", icon = "💨",
+        state = { SavedPos = UDim2.new(0.86, 0, 0.64, 0) },
+        isOn = function() return W2.DashLock_Enabled end,
+        onToggle = function(v) W.DashLock_Set(v) end,
+    })
+
+    -- 13. Auto Hook
+    FB.Buttons.AutoHook = W.CreateFloatingButton({
+        id = "AutoHook", title = "Hook", icon = "🪝",
+        state = { SavedPos = UDim2.new(0.86, 0, 0.68, 0) },
+        isOn = function() return W2.AutoHook end,
+        onToggle = function(v) W.KA_SetAutoHook(v) end,
+    })
+
+    -- 14. Myers Grab
+    FB.Buttons.MyersGrab = W.CreateFloatingButton({
+        id = "MyersGrab", title = "Grab", icon = "🤚",
+        state = { SavedPos = UDim2.new(0.86, 0, 0.72, 0) },
+        isOn = function() return W.MyersData and W.MyersData.Enabled end,
+        onToggle = function(v) if W.Myers_Set then W.Myers_Set(v) end end,
+    })
+end
+
+-- ═══════════════════════════════════════════════════
+-- UI SECTION — EXCLUSIVE TAB
+-- ═══════════════════════════════════════════════════
+W.OnUIReady(function()
+    local s = W.T_Exc:AddSection("Floating Buttons — Killer")
+    local list = {
+        { key = "AutoAttack", title = "Auto Attack" },
+        { key = "InfLunge", title = "Infinite Lunge" },
+        { key = "CounterParry", title = "Counter Parry" },
+        { key = "AimHidden", title = "Aim Lock Hidden" },
+        { key = "AimAttack", title = "Aim Lock Attack" },
+        { key = "AntiBlind", title = "Anti Blind" },
+        { key = "DestroyPallet", title = "Destroy Pallet" },
+        { key = "VeilV1", title = "Veil V1" },
+        { key = "VeilV2", title = "Veil V2" },
+        { key = "SpearAim", title = "Spear Aimbot" },
+        { key = "Flask", title = "Silent Flask" },
+        { key = "DashLock", title = "Dash Lock" },
+        { key = "AutoHook", title = "Auto Hook" },
+        { key = "MyersGrab", title = "Myers Grab" },
+    }
+    for _, item in ipairs(list) do
+        s:AddToggle({
+            Title = "Show " .. item.title,
+            Default = false,
+            Callback = function(v)
+                local btn = W._FloatButtons and W._FloatButtons.Buttons[item.key]
+                if btn and btn.SetEnabled then btn.SetEnabled(v) end
+            end,
+        })
+    end
+    s:AddButton({
+        Title = "Show All Killer Buttons",
+        Callback = function()
+            for _, item in ipairs(list) do
+                local btn = W._FloatButtons and W._FloatButtons.Buttons[item.key]
+                if btn and btn.SetEnabled then btn.SetEnabled(true) end
+            end
+            W.W2_Notify("Floating Buttons", "All Killer ON", 2)
+        end,
+    })
+    s:AddButton({
+        Title = "Hide All Killer Buttons",
+        Callback = function()
+            for _, item in ipairs(list) do
+                local btn = W._FloatButtons and W._FloatButtons.Buttons[item.key]
+                if btn and btn.SetEnabled then btn.SetEnabled(false) end
+            end
+            W.W2_Notify("Floating Buttons", "All Killer OFF", 2)
+        end,
+    })
+end)--====================================================--
+-- PART 9C: FLOATING BUTTONS — MISC + TROLL (16)
+--====================================================--
+
+do
+    local FB = W._FloatButtons or { Buttons = {} }
+    W._FloatButtons = FB
+
+    -- ═══════════════════════════════════════════════
+    -- 8 MISC BUTTONS
+    -- ═══════════════════════════════════════════════
+
+    -- 1. Invisibility
+    FB.Buttons.Invis = W.CreateFloatingButton({
+        id = "Invis", title = "Invis", icon = "👻",
+        state = { SavedPos = UDim2.new(0.03, 0, 0.55, 0) },
+        isOn = function()
+            local MV = getgenv().W2Invis
+            return MV and MV.Enabled or false
+        end,
+        onToggle = function(v) W.Invisible_SetState(v, false) end,
+    })
+
+    -- 2. Speed Boost
+    FB.Buttons.SpeedBoost = W.CreateFloatingButton({
+        id = "SpeedBoost", title = "Speed", icon = "⚡",
+        state = { SavedPos = UDim2.new(0.03, 0, 0.60, 0) },
+        isOn = function() return W2.SpeedBoost_Enabled end,
+        onToggle = function(v) W.SpeedBoost_Set(v) end,
+    })
+
+    -- 3. Noclip
+    FB.Buttons.Noclip = W.CreateFloatingButton({
+        id = "Noclip", title = "Noclip", icon = "🚶",
+        state = { SavedPos = UDim2.new(0.03, 0, 0.65, 0) },
+        isOn = function() return W2.PU_Noclip end,
+        onToggle = function(v) W2.PU_Noclip = v end,
+    })
+
+    -- 4. Cursor Unlock
+    FB.Buttons.Cursor = W.CreateFloatingButton({
+        id = "Cursor", title = "Cursor", icon = "🖱️",
+        state = { SavedPos = UDim2.new(0.03, 0, 0.70, 0) },
+        isOn = function() return W2.Cursor_Enabled end,
+        onToggle = function(v) W.Cursor_Set(v) end,
+    })
+
+    -- 5. Stun Indicator
+    FB.Buttons.Stun = W.CreateFloatingButton({
+        id = "Stun", title = "Stun", icon = "💫",
+        state = { SavedPos = UDim2.new(0.03, 0, 0.75, 0) },
+        isOn = function() return W2.Stun_Enabled end,
+        onToggle = function(v) W.SInd_Set(v) end,
+    })
+
+    -- 6. Hide Name
+    FB.Buttons.HideName = W.CreateFloatingButton({
+        id = "HideName", title = "H.Name", icon = "👤",
+        state = { SavedPos = UDim2.new(0.03, 0, 0.80, 0) },
+        isOn = function() return W2.HideName_Enabled end,
+        onToggle = function(v) W.HideName_Set(v) end,
+    })
+
+    -- 7. Ping & FPS
+    FB.Buttons.PingFPS = W.CreateFloatingButton({
+        id = "PingFPS", title = "Ping", icon = "📊",
+        state = { SavedPos = UDim2.new(0.03, 0, 0.85, 0) },
+        isOn = function() return W2.PU_ShowPingFPS end,
+        onToggle = function(v)
+            W2.PU_ShowPingFPS = v
+            if not v and W.PU and W.PU._pingGui then
+                pcall(function() W.PU._pingGui:Destroy() end)
+                W.PU._pingGui = nil
+            end
+        end,
+    })
+
+    -- 8. Skip End Screen
+    FB.Buttons.SkipEnd = W.CreateFloatingButton({
+        id = "SkipEnd", title = "SkipEnd", icon = "⏭️",
+        state = { SavedPos = UDim2.new(0.03, 0, 0.90, 0) },
+        isOn = function() return W2.SkipEndAdv_Enabled end,
+        onToggle = function(v) if W.SkipEnd_Set then W.SkipEnd_Set(v) end end,
+    })
+
+    -- ═══════════════════════════════════════════════
+    -- 8 TROLL BUTTONS
+    -- ═══════════════════════════════════════════════
+
+    -- 9. Instant Escape
+    FB.Buttons.Escape = W.CreateFloatingButton({
+        id = "Escape", title = "Escape", icon = "🚪",
+        state = { SavedPos = UDim2.new(0.86, 0, 0.20, 0) },
+        isOn = function() return W2.Escape_Enabled end,
+        onToggle = function(v) W2.Escape_Enabled = v; if v then W.Escape_TP() end end,
+    })
+
+    -- 10. Troll Teleport
+    FB.Buttons.TrollTP = W.CreateFloatingButton({
+        id = "TrollTP", title = "T_TP", icon = "🌀",
+        state = { SavedPos = UDim2.new(0.86, 0, 0.25, 0) },
+        isOn = function() return W.TT and W.TT.Enabled end,
+        onToggle = function(v) W.TT_Set(v) end,
+    })
+
+    -- 11. Moonwalk
+    FB.Buttons.Moonwalk = W.CreateFloatingButton({
+        id = "Moonwalk", title = "Moon", icon = "🌙",
+        state = { SavedPos = UDim2.new(0.86, 0, 0.30, 0) },
+        isOn = function() return W2.Moonwalk_Enabled end,
+        onToggle = function(v) W.Moonwalk_Set(v) end,
+    })
+
+    -- 12. Emote
+    FB.Buttons.Emote = W.CreateFloatingButton({
+        id = "Emote", title = "Emote", icon = "💃",
+        state = { SavedPos = UDim2.new(0.86, 0, 0.35, 0) },
+        isOn = function() return W.Emote and W.Emote.Enabled end,
+        onToggle = function(v) W.Emote_Set(v) end,
+    })
+
+    -- 13. Fake Avatar
+    FB.Buttons.FakeAvatar = W.CreateFloatingButton({
+        id = "FakeAvatar", title = "Avatar", icon = "👤",
+        state = { SavedPos = UDim2.new(0.86, 0, 0.40, 0) },
+        isOn = function() return W2.FakeAvatar_Enabled end,
+        onToggle = function(v) W.FakeAvatar_Set(v) end,
+    })
+
+    -- 14. Korless Morph
+    FB.Buttons.Korless = W.CreateFloatingButton({
+        id = "Korless", title = "Korless", icon = "🗿",
+        state = { SavedPos = UDim2.new(0.86, 0, 0.45, 0) },
+        isOn = function() return W2.Korless_Enabled end,
+        onToggle = function(v) W.Korless_Set(v) end,
+    })
+
+    -- 15. Header Shine
+    FB.Buttons.HeaderShine = W.CreateFloatingButton({
+        id = "HeaderShine", title = "Header", icon = "✨",
+        state = { SavedPos = UDim2.new(0.86, 0, 0.50, 0) },
+        isOn = function() return W2.HeaderShine_Enabled end,
+        onToggle = function(v) W.HeaderShine_Set(v) end,
+    })
+
+    -- 16. Bombax Player
+    FB.Buttons.Bombax = W.CreateFloatingButton({
+        id = "Bombax", title = "Bombax", icon = "🎵",
+        state = { SavedPos = UDim2.new(0.86, 0, 0.55, 0) },
+        isOn = function() return W.Bombax and W.Bombax.Playing or false end,
+        onToggle = function(v)
+            if v then
+                W.Bombax_Play(W.Bombax.Selected)
+            else
+                W.Bombax_Stop()
+            end
+        end,
+    })
+end
+
+-- ═══════════════════════════════════════════════════
+-- UI SECTION — EXCLUSIVE TAB
+-- ═══════════════════════════════════════════════════
+W.OnUIReady(function()
+    local s = W.T_Exc:AddSection("Floating Buttons — Misc")
+    local listMisc = {
+        { key = "Invis", title = "Invisibility" },
+        { key = "SpeedBoost", title = "Speed Boost" },
+        { key = "Noclip", title = "Noclip" },
+        { key = "Cursor", title = "Cursor Unlock" },
+        { key = "Stun", title = "Stun Indicator" },
+        { key = "HideName", title = "Hide Name" },
+        { key = "PingFPS", title = "Show Ping & FPS" },
+        { key = "SkipEnd", title = "Skip End Screen" },
+    }
+    for _, item in ipairs(listMisc) do
+        s:AddToggle({
+            Title = "Show " .. item.title,
+            Default = false,
+            Callback = function(v)
+                local btn = W._FloatButtons and W._FloatButtons.Buttons[item.key]
+                if btn and btn.SetEnabled then btn.SetEnabled(v) end
+            end,
+        })
+    end
+    s:AddButton({
+        Title = "Show All Misc Buttons",
+        Callback = function()
+            for _, item in ipairs(listMisc) do
+                local btn = W._FloatButtons and W._FloatButtons.Buttons[item.key]
+                if btn and btn.SetEnabled then btn.SetEnabled(true) end
+            end
+            W.W2_Notify("Floating Buttons", "All Misc ON", 2)
+        end,
+    })
+    s:AddButton({
+        Title = "Hide All Misc Buttons",
+        Callback = function()
+            for _, item in ipairs(listMisc) do
+                local btn = W._FloatButtons and W._FloatButtons.Buttons[item.key]
+                if btn and btn.SetEnabled then btn.SetEnabled(false) end
+            end
+            W.W2_Notify("Floating Buttons", "All Misc OFF", 2)
+        end,
+    })
+
+    local s2 = W.T_Exc:AddSection("Floating Buttons — Troll")
+    local listTroll = {
+        { key = "Escape", title = "Instant Escape" },
+        { key = "TrollTP", title = "Troll Teleport" },
+        { key = "Moonwalk", title = "Moonwalk" },
+        { key = "Emote", title = "Emote" },
+        { key = "FakeAvatar", title = "Fake Avatar" },
+        { key = "Korless", title = "Korless Morph" },
+        { key = "HeaderShine", title = "Header Shine" },
+        { key = "Bombax", title = "Bombax Player" },
+    }
+    for _, item in ipairs(listTroll) do
+        s2:AddToggle({
+            Title = "Show " .. item.title,
+            Default = false,
+            Callback = function(v)
+                local btn = W._FloatButtons and W._FloatButtons.Buttons[item.key]
+                if btn and btn.SetEnabled then btn.SetEnabled(v) end
+            end,
+        })
+    end
+    s2:AddButton({
+        Title = "Show All Troll Buttons",
+        Callback = function()
+            for _, item in ipairs(listTroll) do
+                local btn = W._FloatButtons and W._FloatButtons.Buttons[item.key]
+                if btn and btn.SetEnabled then btn.SetEnabled(true) end
+            end
+            W.W2_Notify("Floating Buttons", "All Troll ON", 2)
+        end,
+    })
+    s2:AddButton({
+        Title = "Hide All Troll Buttons",
+        Callback = function()
+            for _, item in ipairs(listTroll) do
+                local btn = W._FloatButtons and W._FloatButtons.Buttons[item.key]
+                if btn and btn.SetEnabled then btn.SetEnabled(false) end
+            end
+            W.W2_Notify("Floating Buttons", "All Troll OFF", 2)
+        end,
+    })
+
+    -- Global Show/Hide All
+    local s3 = W.T_Exc:AddSection("Floating Buttons — All")
+    s3:AddButton({
+        Title = "Show ALL Floating Buttons (44)",
+        Callback = function()
+            for _, btn in pairs(W._FloatButtons and W._FloatButtons.Buttons or {}) do
+                if btn and btn.SetEnabled then btn.SetEnabled(true) end
+            end
+            W.W2_Notify("Floating Buttons", "ALL 44 Buttons ON", 3)
+        end,
+    })
+    s3:AddButton({
+        Title = "Hide ALL Floating Buttons",
+        Callback = function()
+            for _, btn in pairs(W._FloatButtons and W._FloatButtons.Buttons or {}) do
+                if btn and btn.SetEnabled then btn.SetEnabled(false) end
+            end
+            W.W2_Notify("Floating Buttons", "ALL Buttons OFF", 3)
+        end,
+    })
+end)--====================================================--
+-- PART 9D: CLOSING + LOADER
+--====================================================--
+
+-- ═══════════════════════════════════════════════════
+-- FINAL PRINT & NOTIFY
+-- ═══════════════════════════════════════════════════
+print("[W2] ================================")
+print("[W2] SCRIPT FULLY LOADED!")
+print("[W2] ================================")
+print("[W2] Tab: Exclusive / Survivor / Visuals / Killer / Misc / Troll / Config")
+print("[W2] Total: ~260 fitur + 44 Floating Buttons")
+print("[W2] Free Script - Jangan Dijual!")
+print("[W2] ================================")
+
+W.W2_Notify("W2", "Script FULLY Loaded!", 6)
+W.W2_Notify("W2", "44 Floating Buttons ready", 4)
