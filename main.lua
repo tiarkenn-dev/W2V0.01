@@ -3417,7 +3417,7 @@ do
         Callback = function(v) W.Moonwalk_SetBack(v) end })
     s6:AddSlider({ Title = "Switch Interval", Min = 0.02, Max = 0.5, Default = 0.07, Increment = 0.01,
         Callback = function(v) W.Moonwalk_SetInterval(v) end })
-                        end--====================================================--
+end--====================================================--
 -- PART 8: VISUALS — FULL ESP + ESP STATUS
 --====================================================--
 
@@ -7411,8 +7411,8 @@ end)
 function W.HideIcon_Set(v)
     W.HideIcon.Enabled = v and true or false
     if v then W.HideIcon_Apply() else W.HideIcon_Restore() end
-end--====================================================--
--- PART 16B FIXED: HOOK + FLOATING BUTTONS + BOMBAX UI V3 + FPS + TROLL
+                                                        end--====================================================--
+-- PART 16B FIXED: HOOK + FLOATING BUTTONS + BOMBAX V4 + FPS + TROLL
 --====================================================--
 
 -- === HOOK GLOBAL ===
@@ -7433,9 +7433,7 @@ do
                     local ok, n = pcall(function() return self.Name end)
                     if ok and n == "Fall" then
                         local par = self.Parent
-                        if par and par.Name == "Mechanics" then
-                            return nil
-                        end
+                        if par and par.Name == "Mechanics" then return nil end
                     end
                 end
 
@@ -7450,7 +7448,7 @@ do
                     end
                 end
 
-                -- 3. Silent Flashlight Activate
+                -- 3. Silent Flashlight
                 if method == "FireServer" then
                     local ok, n = pcall(function() return self.Name end)
                     if ok and n == "Activate" then
@@ -7466,7 +7464,7 @@ do
                     end
                 end
 
-                -- 4. Spearthrow (Veil V1 + V2)
+                -- 4. Veil (Spearthrow)
                 if method == "FireServer" then
                     local ok, n = pcall(function() return self.Name end)
                     if ok and n == "Spearthrow" then
@@ -7485,9 +7483,7 @@ do
                             end
                         end
 
-                        if modeV2Block then
-                            return nil
-                        end
+                        if modeV2Block then return nil end
 
                         if modeV2Predict and api then
                             local ac = api.AimConfig
@@ -7573,9 +7569,7 @@ do
                 -- 6. Unlock Skill While Carrying
                 if method == "GetAttribute" and W.CarryCfg and W.CarryCfg.Enabled then
                     local args = {...}
-                    if args[1] == "IsCarrying" then
-                        return false
-                    end
+                    if args[1] == "IsCarrying" then return false end
                 end
 
                 return oldNC(self, ...)
@@ -7585,7 +7579,7 @@ do
 end
 
 --====================================================--
--- FLOATING BUTTONS (10) — ICON BOMBAX
+-- FLOATING BUTTONS (10)
 --====================================================--
 local function CreateFloat(cfg)
     local st = cfg.state
@@ -7868,13 +7862,12 @@ getgenv().W2_PistolBtn_SetEnabled = function(en) PT_Btn.SetEnabled(en) end
 getgenv().W2_PistolBtn_UpdateVisual = function() PT_Btn.Refresh() end
 
 --====================================================--
--- BOMBAX UI V3 — Window Only (Tanpa Tombol Floating)
--- Buka/tutup via toggle UI: Troll → Bombax → Show Bombax Menu
+-- BOMBAX UI V4 — Tombol Floating Kecil + Window Buka/Tutup
 --====================================================--
 do
     local IMG = "rbxassetid://138040631725974"
     local BS = {
-        Gui = nil, Window = nil,
+        Gui = nil, ButtonBox = nil, Window = nil,
         Open = false, Conns = {},
         ProgressFill = nil, TimeLabel = nil, NowLabel = nil,
         PlayBtn = nil, LoopBtn = nil, PickerBtn = nil
@@ -7941,7 +7934,6 @@ do
     end
 
     local function toggleWindow()
-        if not BS.Window then W.BombaxUI_BuildWindow() end
         if not BS.Window then return end
         BS.Open = not BS.Open
         if BS.Open then
@@ -7964,34 +7956,103 @@ do
         end
     end
 
-    function W.BombaxUI_BuildWindow()
+    local function buildButton()
+        if BS.ButtonBox then pcall(function() BS.ButtonBox:Destroy() end); BS.ButtonBox = nil end
+
+        local box = Instance.new("Frame")
+        box.Name = "BombaxToggleBtn"
+        box.Size = UDim2.fromOffset(46, 46)
+        box.Position = UDim2.new(0, 105, 0, 8)
+        box.BackgroundTransparency = 1
+        box.Parent = BS.Gui
+        BS.ButtonBox = box
+
+        local btn = Instance.new("TextButton")
+        btn.Name = "Btn"
+        btn.Size = UDim2.fromScale(1, 1)
+        btn.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+        btn.BorderSizePixel = 0
+        btn.Text = ""
+        btn.AutoButtonColor = false
+        btn.ZIndex = 2
+        btn.Parent = box
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
+        local s = Instance.new("UIStroke", btn)
+        s.Name = "S"
+        s.Color = Color3.fromRGB(255, 255, 255)
+        s.Thickness = 1.5
+        s.Transparency = 0.2
+        s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        local i = Instance.new("ImageLabel", btn)
+        i.Name = "I"
+        i.Size = UDim2.fromScale(0.72, 0.72)
+        i.Position = UDim2.fromScale(0.14, 0.14)
+        i.BackgroundTransparency = 1
+        i.Image = IMG
+        i.ImageColor3 = Color3.fromRGB(255, 255, 255)
+        i.ZIndex = 3
+
+        btn.MouseButton1Click:Connect(function()
+            toggleWindow()
+        end)
+
+        local dragging, dragStart, startPos = false, nil, nil
+        local dDist = 0
+        btn.InputBegan:Connect(function(inp)
+            if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                dragging = true
+                dragStart = inp.Position
+                startPos = box.Position
+                dDist = 0
+            end
+        end)
+        btn.InputEnded:Connect(function(inp)
+            if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                dragging = false
+            end
+        end)
+        table.insert(BS.Conns, UserInputService.InputChanged:Connect(function(inp)
+            if not dragging then return end
+            if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
+                local d = inp.Position - dragStart
+                dDist = math.abs(d.X) + math.abs(d.Y)
+                box.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
+            end
+        end))
+
+        local function recolor()
+            local on = W.Bombax and W.Bombax.Playing
+            if s then
+                TweenService:Create(s, TweenInfo.new(0.3), {
+                    Color = on and Color3.fromRGB(120, 255, 160) or Color3.fromRGB(255, 255, 255),
+                    Transparency = on and 0 or 0.2,
+                    Thickness = on and 2 or 1.5,
+                }):Play()
+            end
+            if i then
+                TweenService:Create(i, TweenInfo.new(0.3), {
+                    ImageColor3 = on and Color3.fromRGB(120, 255, 160) or Color3.fromRGB(255, 255, 255),
+                }):Play()
+            end
+        end
+        getgenv().W2_BombaxRefresh = recolor
+        recolor()
+    end
+
+    local function buildWindow()
         if BS.Window then pcall(function() BS.Window:Destroy() end); BS.Window = nil end
-        if BS.Gui then pcall(function() BS.Gui:Destroy() end); BS.Gui = nil end
-
-        local parent = LP:FindFirstChild("PlayerGui")
-        if gethui then local ok, hui = pcall(gethui); if ok and hui then parent = hui end end
-        if not parent then return end
-
-        local gui = Instance.new("ScreenGui")
-        gui.Name = "W2BombaxUI"
-        gui.ResetOnSpawn = false
-        gui.IgnoreGuiInset = true
-        gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-        gui.DisplayOrder = 999
-        gui.Parent = parent
-        BS.Gui = gui
 
         local win = Instance.new("Frame")
         win.Name = "BombaxWindow"
         win.Size = UDim2.fromOffset(260, 260)
-        win.Position = UDim2.new(0.5, -130, 0.5, -130)
+        win.Position = UDim2.new(0, 105, 0, 62)
         win.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
         win.BackgroundTransparency = 0.05
         win.BorderSizePixel = 0
         win.Visible = false
         win.ZIndex = 50
         win.Active = true
-        win.Parent = gui
+        win.Parent = BS.Gui
         BS.Window = win
         Instance.new("UICorner", win).CornerRadius = UDim.new(0, 14)
         local winStroke = Instance.new("UIStroke", win)
@@ -8000,7 +8061,6 @@ do
         winStroke.Transparency = 0.25
         winStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
-        -- Header
         local header = Instance.new("Frame", win)
         header.Name = "Header"
         header.Size = UDim2.new(1, 0, 0, 40)
@@ -8052,7 +8112,6 @@ do
             if BS.Open then toggleWindow() end
         end)
 
-        -- Now Playing
         local nowCard = Instance.new("Frame", win)
         nowCard.Name = "NowCard"
         nowCard.Size = UDim2.new(1, -20, 0, 46)
@@ -8107,7 +8166,6 @@ do
         timeLabel.TextXAlignment = Enum.TextXAlignment.Right
         BS.TimeLabel = timeLabel
 
-        -- Song picker
         local pick = Instance.new("TextButton", win)
         pick.Name = "Picker"
         pick.Size = UDim2.new(1, -20, 0, 32)
@@ -8132,7 +8190,6 @@ do
             if BX and BX.Enabled then W.Bombax_Play(BX.Selected) end
         end)
 
-        -- Controls
         local ctrl = Instance.new("Frame", win)
         ctrl.Name = "Controls"
         ctrl.Size = UDim2.new(1, -20, 0, 44)
@@ -8164,25 +8221,19 @@ do
         BS.PlayBtn = playB
 
         prevB.MouseButton1Click:Connect(function()
-            W.Bombax_Prev()
-            updateNowLabel(); updatePlayBtn()
+            W.Bombax_Prev(); updateNowLabel(); updatePlayBtn()
         end)
         playB.MouseButton1Click:Connect(function()
             local BX = W.Bombax
             if not BX then return end
-            if BX.Playing then
-                W.Bombax_Stop()
-            else
-                W.Bombax_Play(BX.Selected)
-            end
+            if BX.Playing then W.Bombax_Stop()
+            else W.Bombax_Play(BX.Selected) end
             updatePlayBtn()
         end)
         nextB.MouseButton1Click:Connect(function()
-            W.Bombax_Next()
-            updateNowLabel(); updatePlayBtn()
+            W.Bombax_Next(); updateNowLabel(); updatePlayBtn()
         end)
 
-        -- Volume slider
         local vrow = Instance.new("Frame", win)
         vrow.Name = "VolumeRow"
         vrow.Size = UDim2.new(1, -20, 0, 22)
@@ -8257,7 +8308,6 @@ do
             end
         end))
 
-        -- Loop button
         local loop = Instance.new("TextButton", win)
         loop.Name = "Loop"
         loop.Size = UDim2.new(1, -20, 0, 26)
@@ -8277,7 +8327,6 @@ do
             updateLoopBtn()
         end)
 
-        -- Drag
         local dragging, dragStart, startPos = false, nil, nil
         header.InputBegan:Connect(function(inp)
             if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
@@ -8300,11 +8349,36 @@ do
         end))
     end
 
+    function W.BombaxUI_BuildAll()
+        clean()
+        if BS.Gui then pcall(function() BS.Gui:Destroy() end); BS.Gui = nil end
+        BS.ButtonBox = nil
+        BS.Window = nil
+        BS.Open = false
+
+        local parent = LP:FindFirstChild("PlayerGui")
+        if gethui then local ok, hui = pcall(gethui); if ok and hui then parent = hui end end
+        if not parent then return end
+
+        local gui = Instance.new("ScreenGui")
+        gui.Name = "W2BombaxUI"
+        gui.ResetOnSpawn = false
+        gui.IgnoreGuiInset = true
+        gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        gui.DisplayOrder = 999
+        gui.Parent = parent
+        BS.Gui = gui
+
+        buildButton()
+        buildWindow()
+    end
+
     function W.BombaxUI_Start()
-        if not BS.Window then W.BombaxUI_BuildWindow() end
+        if not BS.Gui then W.BombaxUI_BuildAll() end
     end
     function W.BombaxUI_Stop()
         clean()
+        if BS.ButtonBox then pcall(function() BS.ButtonBox:Destroy() end); BS.ButtonBox = nil end
         if BS.Window then pcall(function() BS.Window:Destroy() end); BS.Window = nil end
         if BS.Gui then pcall(function() BS.Gui:Destroy() end); BS.Gui = nil end
         BS.Open = false
@@ -8320,19 +8394,16 @@ do
     task.spawn(function()
         while true do
             task.wait(0.1)
-            if BS.Window and BS.Open then
-                pcall(updateProgress)
-            end
+            if BS.Window and BS.Open then pcall(updateProgress) end
         end
     end)
     task.spawn(function()
         while true do
             task.wait(0.5)
             if BS.Window and BS.Open then
-                pcall(updateNowLabel)
-                pcall(updatePlayBtn)
-                pcall(updateLoopBtn)
+                pcall(updateNowLabel); pcall(updatePlayBtn); pcall(updateLoopBtn)
             end
+            if getgenv().W2_BombaxRefresh then pcall(getgenv().W2_BombaxRefresh) end
         end
     end)
     task.spawn(function()
@@ -8914,7 +8985,7 @@ function W.Escape_TP()
     W.Escape.Count = W.Escape.Count + 1
     W.W2_Notify("Instant Escape", "Teleported! (#" .. W.Escape.Count .. ")", 2)
     return true
-end    --====================================================--
+                                                            end    --====================================================--
     -- PART 16C FINAL: UI SECTIONS + CONFIG + CLOSING
     --====================================================--
 
@@ -9099,7 +9170,7 @@ end    --====================================================--
         t2:AddButton({ Title = "⏸ Stop", Callback = function() W.Bombax_Stop() end })
         t2:AddButton({ Title = "⏭ Next", Callback = function() W.Bombax_Next() end })
         t2:AddButton({ Title = "⏮ Prev", Callback = function() W.Bombax_Prev() end })
-        t2:AddToggle({ Title = "Show Bombax Menu", Content = "Buka window Bombax Player",
+        t2:AddToggle({ Title = "Show Bombax Button", Content = "Tombol kecil + window toggle",
             Default = false, Callback = function(v)
                 if W.BombaxUI_Set then W.BombaxUI_Set(v) end
             end })
@@ -9283,8 +9354,7 @@ end    --====================================================--
     -- === CLOSING ===
     print("[W2] Loaded OK")
     print("  Tab: Survivor / Visuals / Killer / Misc / Troll / Config")
-    print("  Buttons: 10 floating buttons + FPS Counter")
-    print("  Bombax: Window-only (via Troll → Bombax → Show Bombax Menu)")
+    print("  Buttons: 10 floating buttons + Bombax Toggle + FPS Counter")
     print("  Free Script - Jangan Dijual!")
 
     W.W2_Notify("W2", "Script Loaded!", 6)
