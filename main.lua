@@ -3417,7 +3417,7 @@ do
         Callback = function(v) W.Moonwalk_SetBack(v) end })
     s6:AddSlider({ Title = "Switch Interval", Min = 0.02, Max = 0.5, Default = 0.07, Increment = 0.01,
         Callback = function(v) W.Moonwalk_SetInterval(v) end })
-end--====================================================--
+                        end--====================================================--
 -- PART 8: VISUALS — FULL ESP + ESP STATUS
 --====================================================--
 
@@ -6402,7 +6402,7 @@ do
         end
         W.ForceNotify("Block Vault", "Unblock " .. count .. " vaults!", 3)
     end })
-end--====================================================--
+                                                end--====================================================--
 -- PART 15: KILLER — FLASK + DASH LOCK + INSTANT BUTTONS
 --====================================================--
 
@@ -7412,10 +7412,10 @@ function W.HideIcon_Set(v)
     W.HideIcon.Enabled = v and true or false
     if v then W.HideIcon_Apply() else W.HideIcon_Restore() end
                                                         end--====================================================--
--- PART 16B FIXED: HOOK + FLOATING BUTTONS + BOMBAX V4 + FPS + TROLL
+-- PART 16B: HOOK + FLOATING BUTTONS + BOMBAX V4 (RAYFIELD) + FPS + TROLL
 --====================================================--
 
--- === HOOK GLOBAL ===
+-- === PART 16B-1: HOOK GLOBAL ===
 do
     local installed = false
     if installed then return end
@@ -7579,7 +7579,7 @@ do
 end
 
 --====================================================--
--- FLOATING BUTTONS (10)
+-- PART 16B-2: FLOATING BUTTONS (10)
 --====================================================--
 local function CreateFloat(cfg)
     local st = cfg.state
@@ -7861,8 +7861,34 @@ local PT_Btn = CreateFloat({ id = "PistolTOF", title = "Pistol", state = PT_St,
 getgenv().W2_PistolBtn_SetEnabled = function(en) PT_Btn.SetEnabled(en) end
 getgenv().W2_PistolBtn_UpdateVisual = function() PT_Btn.Refresh() end
 
+-- 2 FLOATING BUTTON BARU: EMOTE + SILENT AIM PISTOL (3 MODE)
+local EM_St = { Enabled = false, DragLocked = false, Gui = nil, SavedPos = UDim2.new(0.03, 0, 0.85, 0), Conns = {} }
+local EM_Btn = CreateFloat({ id = "Emote", title = "Emote", state = EM_St,
+    isOn = function() return W.Emote and W.Emote.Enabled end,
+    onToggle = function(v) W.Emote_Set(v) end, iconRotation = 0 })
+getgenv().W2_EmoteBtn_SetEnabled = function(en) EM_Btn.SetEnabled(en) end
+getgenv().W2_EmoteBtn_UpdateVisual = function() EM_Btn.Refresh() end
+
+local SA_St = { Enabled = false, DragLocked = false, Gui = nil, SavedPos = UDim2.new(0.03, 0, 0.91, 0), Conns = {} }
+local SA_Btn = CreateFloat({ id = "SilentPistol", title = "Pistol", state = SA_St,
+    isOn = function() return W2.TOF_Enabled end,
+    onToggle = function(v)
+        W.SetToFEnabled(v)
+        if v then
+            -- Cycle mode: Killer → Survivors → Zombie
+            local modes = {"Killer", "Survivors", "Zombie"}
+            local cur = W2.TOF_TargetMode or "Killer"
+            local idx = 1
+            for i, m in ipairs(modes) do if m == cur then idx = i; break end end
+            local nxt = modes[(idx % #modes) + 1]
+            W.ToF_SetMode(nxt, true)
+        end
+    end, iconRotation = 90 })
+getgenv().W2_SilentPistolBtn_SetEnabled = function(en) SA_Btn.SetEnabled(en) end
+getgenv().W2_SilentPistolBtn_UpdateVisual = function() SA_Btn.Refresh() end
+
 --====================================================--
--- BOMBAX UI V4 — Tombol Floating Kecil + Window Buka/Tutup
+-- PART 16B-3: BOMBAX UI V4 RAYFIELD-STYLE
 --====================================================--
 do
     local IMG = "rbxassetid://138040631725974"
@@ -7870,7 +7896,8 @@ do
         Gui = nil, ButtonBox = nil, Window = nil,
         Open = false, Conns = {},
         ProgressFill = nil, TimeLabel = nil, NowLabel = nil,
-        PlayBtn = nil, LoopBtn = nil, PickerBtn = nil
+        PlayBtn = nil, LoopBtn = nil, PickerBtn = nil,
+        _ButtonBox = nil,
     }
 
     local function clean()
@@ -7954,98 +7981,210 @@ do
                 if BS.Window then BS.Window.Visible = false end
             end)
         end
+        if getgenv().W2_BombaxRefresh then
+            pcall(getgenv().W2_BombaxRefresh)
+        end
     end
 
+    -- BUILD BUTTON (RAYFIELD STYLE)
     local function buildButton()
         if BS.ButtonBox then pcall(function() BS.ButtonBox:Destroy() end); BS.ButtonBox = nil end
 
         local box = Instance.new("Frame")
-        box.Name = "BombaxToggleBtn"
-        box.Size = UDim2.fromOffset(46, 46)
-        box.Position = UDim2.new(0, 105, 0, 8)
+        box.Name = "W2MenuToggleBtn"
+        box.Size = UDim2.fromOffset(54, 54)
+        box.Position = UDim2.new(0, 20, 0, 20)
         box.BackgroundTransparency = 1
         box.Parent = BS.Gui
         BS.ButtonBox = box
+        BS._ButtonBox = box
+
+        local glow = Instance.new("Frame")
+        glow.Name = "Glow"
+        glow.Size = UDim2.fromScale(1.35, 1.35)
+        glow.Position = UDim2.fromScale(0.5, 0.5)
+        glow.AnchorPoint = Vector2.new(0.5, 0.5)
+        glow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        glow.BackgroundTransparency = 1
+        glow.BorderSizePixel = 0
+        glow.ZIndex = 1
+        glow.Parent = box
+        Instance.new("UICorner", glow).CornerRadius = UDim.new(1, 0)
+        local glowStroke = Instance.new("UIStroke", glow)
+        glowStroke.Color = Color3.fromRGB(255, 255, 255)
+        glowStroke.Thickness = 1
+        glowStroke.Transparency = 1
+        glowStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
         local btn = Instance.new("TextButton")
         btn.Name = "Btn"
         btn.Size = UDim2.fromScale(1, 1)
-        btn.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+        btn.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
+        btn.BackgroundTransparency = 0.08
         btn.BorderSizePixel = 0
         btn.Text = ""
         btn.AutoButtonColor = false
         btn.ZIndex = 2
         btn.Parent = box
         Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
-        local s = Instance.new("UIStroke", btn)
-        s.Name = "S"
-        s.Color = Color3.fromRGB(255, 255, 255)
-        s.Thickness = 1.5
-        s.Transparency = 0.2
-        s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-        local i = Instance.new("ImageLabel", btn)
-        i.Name = "I"
-        i.Size = UDim2.fromScale(0.72, 0.72)
-        i.Position = UDim2.fromScale(0.14, 0.14)
-        i.BackgroundTransparency = 1
-        i.Image = IMG
-        i.ImageColor3 = Color3.fromRGB(255, 255, 255)
-        i.ZIndex = 3
 
-        btn.MouseButton1Click:Connect(function()
-            toggleWindow()
+        local btnStroke = Instance.new("UIStroke", btn)
+        btnStroke.Name = "S"
+        btnStroke.Color = Color3.fromRGB(255, 255, 255)
+        btnStroke.Thickness = 1.5
+        btnStroke.Transparency = 0.35
+        btnStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+        local icon = Instance.new("ImageLabel", btn)
+        icon.Name = "I"
+        icon.Size = UDim2.fromScale(0.62, 0.62)
+        icon.Position = UDim2.fromScale(0.19, 0.19)
+        icon.BackgroundTransparency = 1
+        icon.Image = IMG
+        icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
+        icon.ZIndex = 3
+
+        local hint = Instance.new("TextLabel", box)
+        hint.Name = "Hint"
+        hint.AnchorPoint = Vector2.new(0.5, 0)
+        hint.Position = UDim2.new(0.5, 0, 1, 4)
+        hint.Size = UDim2.fromOffset(60, 12)
+        hint.BackgroundTransparency = 1
+        hint.Font = Enum.Font.GothamBold
+        hint.Text = "MENU"
+        hint.TextColor3 = Color3.fromRGB(180, 180, 200)
+        hint.TextSize = 9
+        hint.TextStrokeTransparency = 0.5
+        hint.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+        hint.ZIndex = 2
+
+        task.spawn(function()
+            while box.Parent do
+                if not BS.Open then
+                    TweenService:Create(glowStroke, TweenInfo.new(1.2, Enum.EasingStyle.Sine), {
+                        Transparency = 0.2,
+                        Thickness = 2.5,
+                    }):Play()
+                    TweenService:Create(glow, TweenInfo.new(1.2, Enum.EasingStyle.Sine), {
+                        Size = UDim2.fromScale(1.45, 1.45),
+                    }):Play()
+                    task.wait(1.2)
+                    TweenService:Create(glowStroke, TweenInfo.new(1.2, Enum.EasingStyle.Sine), {
+                        Transparency = 1,
+                        Thickness = 1,
+                    }):Play()
+                    TweenService:Create(glow, TweenInfo.new(1.2, Enum.EasingStyle.Sine), {
+                        Size = UDim2.fromScale(1.15, 1.15),
+                    }):Play()
+                    task.wait(1.2)
+                else
+                    task.wait(0.3)
+                end
+            end
         end)
+
+        local function refresh()
+            local isOpen = BS.Open
+            local isPlaying = W.Bombax and W.Bombax.Playing
+
+            local strokeColor = Color3.fromRGB(255, 255, 255)
+            local strokeTrans = 0.35
+            local iconColor = Color3.fromRGB(255, 255, 255)
+            local bgColor = Color3.fromRGB(12, 12, 16)
+
+            if isOpen then
+                strokeColor = Color3.fromRGB(120, 200, 255)
+                strokeTrans = 0
+                iconColor = Color3.fromRGB(120, 200, 255)
+                bgColor = Color3.fromRGB(20, 25, 40)
+            elseif isPlaying then
+                strokeColor = Color3.fromRGB(120, 255, 160)
+                strokeTrans = 0
+                iconColor = Color3.fromRGB(120, 255, 160)
+                bgColor = Color3.fromRGB(15, 30, 20)
+            end
+
+            TweenService:Create(btnStroke, TweenInfo.new(0.3), {
+                Color = strokeColor,
+                Transparency = strokeTrans,
+                Thickness = isOpen and 2 or 1.5,
+            }):Play()
+            TweenService:Create(icon, TweenInfo.new(0.3), {
+                ImageColor3 = iconColor,
+            }):Play()
+            TweenService:Create(btn, TweenInfo.new(0.3), {
+                BackgroundColor3 = bgColor,
+            }):Play()
+            TweenService:Create(hint, TweenInfo.new(0.3), {
+                TextColor3 = isOpen and Color3.fromRGB(120, 200, 255) or Color3.fromRGB(180, 180, 200),
+            }):Play()
+        end
+        getgenv().W2_BombaxRefresh = refresh
+        refresh()
 
         local dragging, dragStart, startPos = false, nil, nil
         local dDist = 0
+        local holdStart = 0
+
         btn.InputBegan:Connect(function(inp)
-            if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+            if inp.UserInputType == Enum.UserInputType.MouseButton1
+            or inp.UserInputType == Enum.UserInputType.Touch then
                 dragging = true
                 dragStart = inp.Position
                 startPos = box.Position
                 dDist = 0
+                holdStart = tick()
             end
         end)
+
         btn.InputEnded:Connect(function(inp)
-            if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+            if inp.UserInputType == Enum.UserInputType.MouseButton1
+            or inp.UserInputType == Enum.UserInputType.Touch then
                 dragging = false
+                if dDist < 8 and (tick() - holdStart) < 0.6 then
+                    toggleWindow()
+                    refresh()
+                end
             end
         end)
+
         table.insert(BS.Conns, UserInputService.InputChanged:Connect(function(inp)
             if not dragging then return end
-            if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
+            if inp.UserInputType == Enum.UserInputType.MouseMovement
+            or inp.UserInputType == Enum.UserInputType.Touch then
                 local d = inp.Position - dragStart
                 dDist = math.abs(d.X) + math.abs(d.Y)
-                box.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
+                box.Position = UDim2.new(
+                    startPos.X.Scale, startPos.X.Offset + d.X,
+                    startPos.Y.Scale, startPos.Y.Offset + d.Y
+                )
             end
         end))
 
-        local function recolor()
-            local on = W.Bombax and W.Bombax.Playing
-            if s then
-                TweenService:Create(s, TweenInfo.new(0.3), {
-                    Color = on and Color3.fromRGB(120, 255, 160) or Color3.fromRGB(255, 255, 255),
-                    Transparency = on and 0 or 0.2,
-                    Thickness = on and 2 or 1.5,
+        btn.MouseEnter:Connect(function()
+            if not BS.Open then
+                TweenService:Create(btn, TweenInfo.new(0.15), {
+                    BackgroundTransparency = 0,
                 }):Play()
             end
-            if i then
-                TweenService:Create(i, TweenInfo.new(0.3), {
-                    ImageColor3 = on and Color3.fromRGB(120, 255, 160) or Color3.fromRGB(255, 255, 255),
+        end)
+        btn.MouseLeave:Connect(function()
+            if not BS.Open then
+                TweenService:Create(btn, TweenInfo.new(0.15), {
+                    BackgroundTransparency = 0.08,
                 }):Play()
             end
-        end
-        getgenv().W2_BombaxRefresh = recolor
-        recolor()
+        end)
     end
 
+    -- BUILD WINDOW
     local function buildWindow()
         if BS.Window then pcall(function() BS.Window:Destroy() end); BS.Window = nil end
 
         local win = Instance.new("Frame")
         win.Name = "BombaxWindow"
         win.Size = UDim2.fromOffset(260, 260)
-        win.Position = UDim2.new(0, 105, 0, 62)
+        win.Position = UDim2.new(0, 20, 0, 84)
         win.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
         win.BackgroundTransparency = 0.05
         win.BorderSizePixel = 0
@@ -8354,6 +8493,7 @@ do
         if BS.Gui then pcall(function() BS.Gui:Destroy() end); BS.Gui = nil end
         BS.ButtonBox = nil
         BS.Window = nil
+        BS._ButtonBox = nil
         BS.Open = false
 
         local parent = LP:FindFirstChild("PlayerGui")
@@ -8417,7 +8557,7 @@ do
 end
 
 --====================================================--
--- FPS/PING COUNTER (AUTO-ON)
+-- PART 16B-4: FPS/PING COUNTER (AUTO-ON)
 --====================================================--
 do
     local FpsPingGui = nil
@@ -8527,7 +8667,7 @@ do
 end
 
 --====================================================--
--- TROLL: EMOTE + BOMBAX + AVATAR + KORLESS + HEADER + ESCAPE
+-- PART 16B-5: TROLL (EMOTE + BOMBAX + AVATAR + KORLESS + HEADER + ESCAPE)
 --====================================================--
 W2.Emote_Enabled = W2.Emote_Enabled or false
 W2.Emote_Selected = W2.Emote_Selected or "Friday Night"
@@ -8729,7 +8869,7 @@ function W.Bombax_Prev()
     W.Bombax_Play(l[p].judul)
 end
 
--- FAKE AVATAR (dari ALFzxzzz)
+-- FAKE AVATAR
 W2.FakeAvatar_Enabled = W2.FakeAvatar_Enabled or false
 W2.FakeAvatar_ID = W2.FakeAvatar_ID or 0
 
@@ -8985,7 +9125,11 @@ function W.Escape_TP()
     W.Escape.Count = W.Escape.Count + 1
     W.W2_Notify("Instant Escape", "Teleported! (#" .. W.Escape.Count .. ")", 2)
     return true
-                                                            end    --====================================================--
+end
+
+--====================================================--
+-- END OF PART 16B
+--====================================================--    --====================================================--
     -- PART 16C FINAL: UI SECTIONS + CONFIG + CLOSING
     --====================================================--
 
