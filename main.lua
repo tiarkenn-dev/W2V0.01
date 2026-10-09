@@ -173,7 +173,8 @@ local function __W2_Init__()
     if not uiOK then warn("[W2 Rebuild] UI Error:", uiErr) end
 
     -- ⬇️ PART 2-16 DISISIPKAN DI SINI ⬇️--====================================================--
--- PART 2: SURVIVOR — Self Heal, Swift Vault, Pallet Reflex, Fake Perks
+-- PART 2 FIXED: SURVIVOR — Self Heal, Swift Vault, Pallet Reflex, Fake Perks
+-- FIX: Fake Perks pakai per-buff cooldown (slider "Perk Cooldown" work beneran)
 --====================================================--
 
 function W.HealSelf(v)
@@ -431,9 +432,10 @@ do
     function W.PalletReflex_SetDist(v) W2.PalletReflex_Dist = tonumber(v) or 20 end
 end
 
--- === FAKE PERKS ===
-W.FP = W.FP or { ActiveBuffs = {}, Conns = {}, LastBuffEnd = 0, CooldownTime = 5 }
+-- === FAKE PERKS (FIXED — per-buff cooldown) ===
+W.FP = W.FP or { ActiveBuffs = {}, Conns = {}, LastBuffEnd = 0, CooldownTime = 5, LastBuffTime = {} }
 local FP = W.FP
+if not FP.LastBuffTime then FP.LastBuffTime = {} end
 
 local function FP_Char() return LP.Character end
 local function FP_Hum() local c = FP_Char(); return c and c:FindFirstChildOfClass("Humanoid") end
@@ -461,13 +463,24 @@ local function FP_HB()
         end
     end)
 end
+
+-- ⭐ FIX: Per-buff cooldown — slider "Perk Cooldown" work beneran
 local function FP_Buff(name, amt, dur)
     if FP.ActiveBuffs[name] then return end
-    if tick() - FP.LastBuffEnd < FP.CooldownTime and not next(FP.ActiveBuffs) then return end
-    FP.ActiveBuffs[name] = { amt = amt, endTime = tick() + dur, duration = dur }
+    FP.LastBuffTime = FP.LastBuffTime or {}
+    local now = tick()
+    local lastTime = FP.LastBuffTime[name] or 0
+    local cdTime = tonumber(FP.CooldownTime) or 5
+    if now - lastTime < cdTime then
+        -- Masih cooldown untuk buff ini, skip
+        return
+    end
+    FP.LastBuffTime[name] = now
+    FP.ActiveBuffs[name] = { amt = amt, endTime = now + dur, duration = dur }
     FP_Apply(); FP_HB()
     W.W2_Notify("Fake Perks", name .. " aktif! +" .. amt, 3)
 end
+
 local function FP_Clean(name)
     if FP.Conns[name] then for _, c in ipairs(FP.Conns[name]) do pcall(function() c:Disconnect() end) end FP.Conns[name] = nil end
 end
@@ -600,8 +613,11 @@ do
         if v then W.W2_Notify("Fake Perks", "Adrenaline ON", 2) end
     end })
     s4:AddSlider({ Title = "Perk Cooldown", Min = 0, Max = 75, Default = 5, Increment = 1, Suffix = "s",
-        Callback = function(v) FP.CooldownTime = v end })
-    end--====================================================--
+        Callback = function(v)
+            FP.CooldownTime = tonumber(v) or 5
+            W.W2_Notify("Fake Perks", "Cooldown: " .. tostring(v) .. "s", 2)
+        end })
+end--====================================================--
 -- PART 3: AUTO SKILL CHECK (FIXED) + GEN BYPASS + VAULT
 --====================================================--
 
@@ -2466,7 +2482,7 @@ do
         W.FakeParry_Trigger()
         W.ForceNotify("Fake Parry", "Playing...", 2)
     end })
-                    end--====================================================--
+end--====================================================--
 -- PART 7: MAP PREDICT + SELF UNHOOK + TOF + FLASHLIGHT + GUN + MOONWALK
 --====================================================--
 
@@ -3380,7 +3396,7 @@ do
         Callback = function(v) W.Moonwalk_SetBack(v) end })
     s6:AddSlider({ Title = "Switch Interval", Min = 0.02, Max = 0.5, Default = 0.07, Increment = 0.01,
         Callback = function(v) W.Moonwalk_SetInterval(v) end })
-end--====================================================--
+                        end--====================================================--
 -- PART 8: VISUALS — FULL ESP + ESP STATUS
 --====================================================--
 
@@ -5488,8 +5504,9 @@ do
     s5:AddToggle({ Title = "ESP Tracker", Default = false, Callback = function(v)
         W.W424Veil_API.setTracker(v)
     end })
-                                            end--====================================================--
--- PART 14 FIXED: BYPASS + UNLOCK CARRY + SPEAR AIMBOT + KILLER ABILITIES
+end--====================================================--
+-- PART 14 FIXED v2: BYPASS + UNLOCK CARRY + SPEAR AIMBOT + KILLER ABILITIES
+-- FIX: Killer Abilities gabungan (toggle + instant button dalam 1 section)
 --====================================================--
 
 W2.Bypass_HiddenLeap = W2.Bypass_HiddenLeap or false
@@ -5744,7 +5761,7 @@ function W.SetJeffFrenzy(v)
     if W2.Bypass_JeffFrenzy then W.StartJeffBypass() else W.StopJeffBypass() end
 end
 
--- === UNLOCK SKILL WHILE CARRYING (flag only, hook global di PESAN 16) ===
+-- === UNLOCK SKILL WHILE CARRYING ===
 W.CarryCfg = W.CarryCfg or { Enabled = false }
 function W.SetUnlockCarry(v)
     W2.UnlockCarry_Enabled = v and true or false
@@ -6023,7 +6040,7 @@ do
     function W.SpearAimbot_SetS(v) W2.SpearAimbot_Speed = tonumber(v) or 100 end
 end
 
--- === KILLER ABILITIES — DENGAN TIMER EXPOSE (FIXED) ===
+-- === KILLER ABILITIES — DENGAN TIMER EXPOSE ===
 W.KA = W.KA or {
     AutoStalk = W2.AutoStalk, AutoStalkRange = W2.AutoStalk_Range,
     AutoKillAll = W2.AutoKillAll, DropAllPallet = W2.DropAllPallet,
@@ -6031,7 +6048,6 @@ W.KA = W.KA or {
 }
 local KA = W.KA
 
--- ⭐ FIXED: timer di-expose ke W biar tombol Instant bisa reset
 W._KATimer = W._KATimer or { lastDrop = 0, lastBlock = 0 }
 local _KAtimer = W._KATimer
 
@@ -6109,7 +6125,6 @@ function W.KA_SetAutoKillAll(v)
     if not KA.AutoKillAll then KillAllTarget = nil end
 end
 
--- ⭐ FIXED: pakai _KAtimer (shared ke W)
 function W.KA_DropAllPallets()
     if not KA.DropAllPallet then return end
     if GetRole() ~= "Killer" then return end
@@ -6136,7 +6151,6 @@ function W.KA_SetDropAllPallet(v)
     W2.DropAllPallet = KA.DropAllPallet
 end
 
--- ⭐ FIXED: Force version — bypass timer
 function W.KA_DropAllPallets_Force()
     if GetRole() ~= "Killer" then return end
     _KAtimer.lastDrop = 0
@@ -6165,7 +6179,6 @@ function W.KA_SetBlockAllVault(v)
     W2.BlockAllVault = KA.BlockAllVault
 end
 
--- ⭐ FIXED: Force version — bypass timer
 function W.KA_BlockAllVaults_Force()
     _KAtimer.lastBlock = 0
     pcall(W.KA_BlockAllVaults)
@@ -6293,7 +6306,7 @@ do
     end
 end
 
--- === UI SECTION ===
+-- === UI SECTION: KILLER ABILITIES GABUNGAN ===
 do
     local s = W.T_Kill:AddSection("Bypass No Cooldown")
     s:AddToggle({ Title = "Hidden Leap", Default = false, Callback = function(v) W.SetHiddenLeap(v) end })
@@ -6311,7 +6324,9 @@ do
     s3:AddSlider({ Title = "Gravity", Min = 10, Max = 200, Default = 50, Increment = 1, Callback = function(v) W.SpearAimbot_SetG(v) end })
     s3:AddSlider({ Title = "Speed", Min = 50, Max = 300, Default = 100, Increment = 5, Callback = function(v) W.SpearAimbot_SetS(v) end })
 
+    -- ⭐ FIX: Killer Abilities gabungan — toggle + instant button dalam 1 section
     local s4 = W.T_Kill:AddSection("Killer Abilities")
+
     s4:AddToggle({ Title = "Auto Stalk", Default = false, Callback = function(v) W.KA_SetAutoStalk(v) end })
     s4:AddSlider({ Title = "Stalk Range", Min = 20, Max = 500, Default = 150, Increment = 10, Suffix = " studs",
         Callback = function(v) KA.AutoStalkRange = v; W2.AutoStalk_Range = v end })
@@ -6319,6 +6334,53 @@ do
     s4:AddToggle({ Title = "Drop All Pallet", Default = false, Callback = function(v) W.KA_SetDropAllPallet(v) end })
     s4:AddToggle({ Title = "Block All Vault", Default = false, Callback = function(v) W.KA_SetBlockAllVault(v) end })
     s4:AddToggle({ Title = "Auto Hook", Default = false, Callback = function(v) W.KA_SetAutoHook(v) end })
+
+    s4:AddButton({ Title = "Instant Auto Kill (1x)", Callback = function()
+        if not W.KA then W.W2_Notify("Auto Kill", "KA not ready", 2); return end
+        local saved = W.KA.AutoKillAll
+        W.KA.AutoKillAll = true
+        task.spawn(function()
+            task.wait(0.3)
+            W.KA.AutoKillAll = saved
+        end)
+        W.W2_Notify("Auto Kill", "Triggered once", 2)
+    end })
+    s4:AddButton({ Title = "Instant Drop All Pallet (1x)", Callback = function()
+        if W.KA_DropAllPallets_Force then
+            W.KA_DropAllPallets_Force()
+        else
+            pcall(W.KA_DropAllPallets)
+        end
+        W.W2_Notify("Drop Pallet", "Triggered (bypass cooldown)", 2)
+    end })
+    s4:AddButton({ Title = "Instant Block All Vault (1x)", Callback = function()
+        if W.KA_BlockAllVaults_Force then
+            W.KA_BlockAllVaults_Force()
+        else
+            pcall(W.KA_BlockAllVaults)
+        end
+        W.W2_Notify("Block Vault", "Triggered (bypass cooldown)", 2)
+    end })
+    s4:AddButton({ Title = "Unblock All Vault (1x)", Callback = function()
+        local VaultCompleteEvent = ReplicatedStorage:FindFirstChild("Remotes")
+            and ReplicatedStorage.Remotes:FindFirstChild("Window")
+            and ReplicatedStorage.Remotes.Window:FindFirstChild("VaultCompleteEvent")
+        if not VaultCompleteEvent then return end
+        local count = 0
+        local map = workspace:FindFirstChild("Map"); if not map then return end
+        for _, trigger in ipairs(map:GetDescendants()) do
+            if trigger.Name == "VaultPointInUse" then
+                local vaultParent = trigger.Parent
+                if vaultParent then
+                    pcall(function()
+                        VaultCompleteEvent:FireServer(vaultParent, false)
+                        count = count + 1
+                    end)
+                end
+            end
+        end
+        W.ForceNotify("Block Vault", "Unblock " .. count .. " vaults!", 3)
+    end })
                                                 end--====================================================--
 -- PART 15: KILLER — FLASK + DASH LOCK + INSTANT BUTTONS
 --====================================================--
@@ -7329,10 +7391,11 @@ function W.HideIcon_Set(v)
     W.HideIcon.Enabled = v and true or false
     if v then W.HideIcon_Apply() else W.HideIcon_Restore() end
                                                         end--====================================================--
--- PART 16B: HOOK GLOBAL + FLOATING BUTTONS + TROLL
+-- PART 16B FIXED: HOOK + FLOATING BUTTONS (ICON GAMBAR) + BOMBAX BUTTON + FPS + TROLL
+-- FIX: Icon button pakai ImageLabel, Bombax Button + FPS counter include
 --====================================================--
 
--- === HOOK GLOBAL (FIXED — Veil V1 + V2 dua-duanya jalan) ===
+-- === HOOK GLOBAL (FIXED — Veil V1 + V2) ===
 do
     local installed = false
     if installed then return end
@@ -7383,7 +7446,7 @@ do
                     end
                 end
 
-                -- 4. Spearthrow (Veil V1 + V2) — FIXED HANDLER
+                -- 4. Spearthrow (Veil V1 + V2)
                 if method == "FireServer" then
                     local ok, n = pcall(function() return self.Name end)
                     if ok and n == "Spearthrow" then
@@ -7391,7 +7454,6 @@ do
                         local api = W.W424Veil_API
                         local VeilState = W._VeilV1_State
 
-                        -- Cek apakah ada Veil aktif
                         local modeV1ALF = W2.VeilV1_Enabled and VeilState and typeof(VeilState.lookVector) == "Vector3"
                         local modeV2Block = false
                         local modeV2Predict = false
@@ -7403,12 +7465,10 @@ do
                             end
                         end
 
-                        -- PRIORITAS 1: V2 Block (return nil)
                         if modeV2Block then
                             return nil
                         end
 
-                        -- PRIORITAS 2: V2 Predict (modif args pakai W424 logic)
                         if modeV2Predict and api then
                             local ac = api.AimConfig
                             local cfg = api.Config
@@ -7452,7 +7512,6 @@ do
                             return oldNC(self, unpack(args))
                         end
 
-                        -- PRIORITAS 3: V1 ALF (modif args pakai lookVector)
                         if modeV1ALF then
                             if typeof(args[1]) == "Vector3" then
                                 args[1] = VeilState.lookVector
@@ -7506,7 +7565,7 @@ do
 end
 
 --====================================================--
--- FLOATING BUTTONS (10)
+-- FLOATING BUTTONS (10) — ICON GAMBAR BOMBAX
 --====================================================--
 local function CreateFloat(cfg)
     local st = cfg.state
@@ -7533,7 +7592,7 @@ local function CreateFloat(cfg)
         if on then
             TweenService:Create(main, TweenInfo.new(0.25), { BackgroundColor3 = _G.W2_BG_OFF }):Play()
             if ic then TweenService:Create(ic, TweenInfo.new(0.25), { BackgroundColor3 = _G.W2_ACCENT, BackgroundTransparency = 0.15 }):Play() end
-            if iDot then TweenService:Create(iDot, TweenInfo.new(0.25), { BackgroundColor3 = _G.W2_BG_OFF }):Play() end
+            if iDot then TweenService:Create(iDot, TweenInfo.new(0.25), { ImageColor3 = _G.W2_ACCENT }):Play() end
             if sp then TweenService:Create(sp, TweenInfo.new(0.25), { BackgroundColor3 = _G.W2_BG_OFF }):Play() end
             if sT then sT.Text = "ON"; TweenService:Create(sT, TweenInfo.new(0.25), { TextColor3 = _G.W2_ACCENT }):Play() end
             if sD then TweenService:Create(sD, TweenInfo.new(0.25), { BackgroundColor3 = _G.W2_ACCENT }):Play() end
@@ -7541,7 +7600,7 @@ local function CreateFloat(cfg)
         else
             TweenService:Create(main, TweenInfo.new(0.25), { BackgroundColor3 = _G.W2_BG_OFF }):Play()
             if ic then TweenService:Create(ic, TweenInfo.new(0.25), { BackgroundColor3 = _G.W2_NEUTRAL, BackgroundTransparency = 0.4 }):Play() end
-            if iDot then TweenService:Create(iDot, TweenInfo.new(0.25), { BackgroundColor3 = _G.W2_BG_OFF }):Play() end
+            if iDot then TweenService:Create(iDot, TweenInfo.new(0.25), { ImageColor3 = _G.W2_NEUTRAL }):Play() end
             if sp then TweenService:Create(sp, TweenInfo.new(0.25), { BackgroundColor3 = _G.W2_BG_OFF }):Play() end
             if sT then sT.Text = "OFF"; TweenService:Create(sT, TweenInfo.new(0.25), { TextColor3 = Color3.fromRGB(120, 120, 120) }):Play() end
             if sD then TweenService:Create(sD, TweenInfo.new(0.25), { BackgroundColor3 = _G.W2_NEUTRAL }):Play() end
@@ -7591,14 +7650,16 @@ local function CreateFloat(cfg)
         ic.BackgroundTransparency = 0.4
         ic.BorderSizePixel = 0
         Instance.new("UICorner", ic).CornerRadius = UDim.new(1, 0)
-        local iDot = Instance.new("Frame", ic)
+        -- ⭐ FIX: IconDot pakai ImageLabel dengan ID Bombax
+        local iDot = Instance.new("ImageLabel", ic)
         iDot.Name = "IconDot"
-        iDot.Size = UDim2.fromOffset(10, 10)
-        iDot.Position = UDim2.new(0.5, -5, 0.5, -5)
-        iDot.BackgroundColor3 = _G.W2_BG_OFF
-        iDot.BorderSizePixel = 0
+        iDot.Size = UDim2.fromOffset(16, 16)
+        iDot.Position = UDim2.new(0.5, -8, 0.5, -8)
+        iDot.BackgroundTransparency = 1
+        iDot.Image = "rbxassetid://138040631725974"
+        iDot.ImageColor3 = Color3.fromRGB(255, 255, 255)
         iDot.Rotation = cfg.iconRotation or 0
-        Instance.new("UICorner", iDot).CornerRadius = UDim.new(0, 2)
+        iDot.ZIndex = 3
         local ml = Instance.new("TextLabel", main)
         ml.Size = UDim2.new(1, -70, 1, 0)
         ml.Position = UDim2.new(0, 38, 0, 0)
@@ -7788,6 +7849,465 @@ getgenv().W2_PistolBtn_SetEnabled = function(en) PT_Btn.SetEnabled(en) end
 getgenv().W2_PistolBtn_UpdateVisual = function() PT_Btn.Refresh() end
 
 --====================================================--
+-- BOMBAX BUTTON + BOMBAX UI
+--====================================================--
+do
+    local IMG = "rbxassetid://138040631725974"
+    local BS = { Gui = nil, Box = nil, Panel = nil, Open = false, Conns = {} }
+
+    local function clean()
+        for _, c in ipairs(BS.Conns) do pcall(function() c:Disconnect() end) end
+        BS.Conns = {}
+    end
+
+    local function recolor()
+        if not BS.Box then return end
+        local btn = BS.Box:FindFirstChild("Btn")
+        if not btn then return end
+        local s = btn:FindFirstChild("S")
+        local i = btn:FindFirstChild("I")
+        local on = W.Bombax and W.Bombax.Playing
+        if s then
+            TweenService:Create(s, TweenInfo.new(0.3), {
+                Color = on and Color3.fromRGB(120, 255, 160) or Color3.fromRGB(255, 255, 255),
+                Transparency = on and 0 or 0.2,
+                Thickness = on and 2 or 1.5,
+            }):Play()
+        end
+        if i then
+            TweenService:Create(i, TweenInfo.new(0.3), {
+                ImageColor3 = on and Color3.fromRGB(120, 255, 160) or Color3.fromRGB(255, 255, 255),
+            }):Play()
+        end
+    end
+    getgenv().W2_BombaxRefresh = recolor
+
+    local function killPanel()
+        if BS.Panel then pcall(function() BS.Panel:Destroy() end); BS.Panel = nil end
+        BS.Open = false
+    end
+
+    local function buildPanel()
+        killPanel()
+        if not BS.Box or not W.Bombax then return end
+        local BX = W.Bombax
+        local p = Instance.new("Frame")
+        p.Name = "Panel"
+        p.Size = UDim2.fromOffset(230, 208)
+        p.Position = UDim2.new(0, 0, 1, 8)
+        p.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+        p.BackgroundTransparency = 0.05
+        p.BorderSizePixel = 0
+        p.ZIndex = 50
+        p.Parent = BS.Box
+        Instance.new("UICorner", p).CornerRadius = UDim.new(0, 12)
+        local ps = Instance.new("UIStroke", p)
+        ps.Color = Color3.fromRGB(255, 255, 255)
+        ps.Thickness = 1.2
+        ps.Transparency = 0.25
+        ps.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+        local ttl = Instance.new("TextLabel", p)
+        ttl.Size = UDim2.new(1, -20, 0, 20)
+        ttl.Position = UDim2.fromOffset(12, 8)
+        ttl.BackgroundTransparency = 1
+        ttl.Font = Enum.Font.GothamBold
+        ttl.Text = "BOMBAX"
+        ttl.TextColor3 = Color3.fromRGB(255, 255, 255)
+        ttl.TextSize = 12
+        ttl.TextXAlignment = Enum.TextXAlignment.Left
+
+        local now = Instance.new("TextLabel", p)
+        now.Name = "Now"
+        now.Size = UDim2.new(1, -20, 0, 14)
+        now.Position = UDim2.fromOffset(12, 26)
+        now.BackgroundTransparency = 1
+        now.Font = Enum.Font.GothamMedium
+        now.Text = "▶ " .. tostring(BX.Selected)
+        now.TextColor3 = Color3.fromRGB(150, 200, 255)
+        now.TextSize = 10
+        now.TextXAlignment = Enum.TextXAlignment.Left
+        now.TextTruncate = Enum.TextTruncate.AtEnd
+
+        local dv = Instance.new("Frame", p)
+        dv.Size = UDim2.new(1, -24, 0, 1)
+        dv.Position = UDim2.fromOffset(12, 44)
+        dv.BackgroundColor3 = Color3.fromRGB(60, 60, 72)
+        dv.BorderSizePixel = 0
+
+        local pick = Instance.new("TextButton", p)
+        pick.Name = "Picker"
+        pick.Size = UDim2.new(1, -24, 0, 30)
+        pick.Position = UDim2.fromOffset(12, 52)
+        pick.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
+        pick.BorderSizePixel = 0
+        pick.Text = "SONG: " .. tostring(BX.Selected)
+        pick.TextColor3 = Color3.fromRGB(230, 230, 245)
+        pick.Font = Enum.Font.GothamBold
+        pick.TextSize = 11
+        pick.TextTruncate = Enum.TextTruncate.AtEnd
+        Instance.new("UICorner", pick).CornerRadius = UDim.new(0, 8)
+        local pk = Instance.new("UIStroke", pick)
+        pk.Color = Color3.fromRGB(80, 80, 100)
+        pk.Thickness = 1
+
+        local ctrl = Instance.new("Frame", p)
+        ctrl.Size = UDim2.new(1, -24, 0, 36)
+        ctrl.Position = UDim2.fromOffset(12, 92)
+        ctrl.BackgroundTransparency = 1
+
+        local function mkCtrl(name, txt, x, bg)
+            local b = Instance.new("TextButton", ctrl)
+            b.Name = name
+            b.Size = UDim2.fromOffset(64, 36)
+            b.Position = UDim2.fromOffset(x, 0)
+            b.BackgroundColor3 = bg
+            b.BorderSizePixel = 0
+            b.Text = txt
+            b.TextColor3 = Color3.fromRGB(255, 255, 255)
+            b.Font = Enum.Font.GothamBold
+            b.TextSize = 16
+            Instance.new("UICorner", b).CornerRadius = UDim.new(0, 10)
+            local s = Instance.new("UIStroke", b)
+            s.Color = Color3.fromRGB(255, 255, 255)
+            s.Thickness = 1
+            s.Transparency = 0.5
+            return b
+        end
+
+        local prevB = mkCtrl("Prev", "⏮", 0, Color3.fromRGB(45, 45, 58))
+        local playB = mkCtrl("Play", "▶", 70, Color3.fromRGB(30, 70, 40))
+        local nextB = mkCtrl("Next", "⏭", 140, Color3.fromRGB(45, 45, 58))
+
+        local vrow = Instance.new("Frame", p)
+        vrow.Size = UDim2.new(1, -24, 0, 22)
+        vrow.Position = UDim2.fromOffset(12, 138)
+        vrow.BackgroundTransparency = 1
+
+        local vi = Instance.new("TextLabel", vrow)
+        vi.Size = UDim2.fromOffset(24, 22)
+        vi.BackgroundTransparency = 1
+        vi.Font = Enum.Font.GothamBold
+        vi.Text = "🔊"
+        vi.TextColor3 = Color3.fromRGB(200, 200, 220)
+        vi.TextSize = 13
+        vi.TextXAlignment = Enum.TextXAlignment.Left
+
+        local vbar = Instance.new("Frame", vrow)
+        vbar.Name = "Bar"
+        vbar.Size = UDim2.new(1, -70, 0, 8)
+        vbar.Position = UDim2.new(0, 28, 0.5, -4)
+        vbar.BackgroundColor3 = Color3.fromRGB(45, 45, 58)
+        vbar.BorderSizePixel = 0
+        Instance.new("UICorner", vbar).CornerRadius = UDim.new(1, 0)
+        local vfill = Instance.new("Frame", vbar)
+        vfill.Name = "Fill"
+        vfill.Size = UDim2.new(BX.Volume / 10, 0, 1, 0)
+        vfill.BackgroundColor3 = Color3.fromRGB(120, 255, 160)
+        vfill.BorderSizePixel = 0
+        Instance.new("UICorner", vfill).CornerRadius = UDim.new(1, 0)
+
+        local vval = Instance.new("TextLabel", vrow)
+        vval.Name = "Val"
+        vval.AnchorPoint = Vector2.new(1, 0.5)
+        vval.Size = UDim2.fromOffset(38, 22)
+        vval.Position = UDim2.new(1, 0, 0.5, 0)
+        vval.BackgroundTransparency = 1
+        vval.Font = Enum.Font.GothamBold
+        vval.Text = string.format("%.1f", BX.Volume)
+        vval.TextColor3 = Color3.fromRGB(255, 255, 255)
+        vval.TextSize = 11
+        vval.TextXAlignment = Enum.TextXAlignment.Right
+
+        local vhit = Instance.new("TextButton", vbar)
+        vhit.Size = UDim2.fromScale(1, 1)
+        vhit.BackgroundTransparency = 1
+        vhit.Text = ""
+
+        local loop = Instance.new("TextButton", p)
+        loop.Name = "Loop"
+        loop.Size = UDim2.new(1, -24, 0, 26)
+        loop.Position = UDim2.fromOffset(12, 168)
+        loop.BackgroundColor3 = BX.Looped and Color3.fromRGB(30, 70, 40) or Color3.fromRGB(45, 45, 58)
+        loop.BorderSizePixel = 0
+        loop.Text = "LOOP: " .. (BX.Looped and "ON" or "OFF")
+        loop.TextColor3 = Color3.fromRGB(255, 255, 255)
+        loop.Font = Enum.Font.GothamBold
+        loop.TextSize = 11
+        Instance.new("UICorner", loop).CornerRadius = UDim.new(0, 8)
+
+        local function sync()
+            if now then now.Text = "▶ " .. tostring(BX.Selected) end
+            if pick then pick.Text = "SONG: " .. tostring(BX.Selected) end
+        end
+
+        prevB.MouseButton1Click:Connect(function() W.Bombax_Prev(); sync(); recolor() end)
+        playB.MouseButton1Click:Connect(function()
+            if BX.Playing then
+                W.Bombax_Stop()
+                playB.Text = "▶"
+                playB.BackgroundColor3 = Color3.fromRGB(30, 70, 40)
+            else
+                W.Bombax_Play(BX.Selected)
+                playB.Text = "⏸"
+                playB.BackgroundColor3 = Color3.fromRGB(70, 30, 30)
+            end
+            recolor()
+        end)
+        nextB.MouseButton1Click:Connect(function() W.Bombax_Next(); sync(); recolor() end)
+        pick.MouseButton1Click:Connect(function()
+            W.Bombax_Next(); sync()
+            if BX.Enabled then W.Bombax_Play(BX.Selected) end
+            recolor()
+        end)
+        loop.MouseButton1Click:Connect(function()
+            W.Bombax_SetLoop(not BX.Looped)
+            loop.BackgroundColor3 = BX.Looped and Color3.fromRGB(30, 70, 40) or Color3.fromRGB(45, 45, 58)
+            loop.Text = "LOOP: " .. (BX.Looped and "ON" or "OFF")
+        end)
+
+        local vDrag = false
+        local function applyV(x)
+            local ax = vbar.AbsolutePosition.X
+            local aw = vbar.AbsoluteSize.X
+            local pct = math.clamp((x - ax) / math.max(aw, 1), 0, 1)
+            local nv = math.floor(pct * 20 + 0.5) / 2
+            W.Bombax_SetVol(nv)
+            vval.Text = string.format("%.1f", nv)
+            vfill.Size = UDim2.new(nv / 10, 0, 1, 0)
+        end
+        vhit.InputBegan:Connect(function(inp)
+            if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                vDrag = true
+                applyV(inp.Position.X)
+            end
+        end)
+        table.insert(BS.Conns, UserInputService.InputChanged:Connect(function(inp)
+            if not vDrag then return end
+            if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
+                applyV(inp.Position.X)
+            end
+        end))
+        table.insert(BS.Conns, UserInputService.InputEnded:Connect(function(inp)
+            if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                vDrag = false
+            end
+        end))
+
+        BS.Panel = p
+        BS.Open = true
+    end
+
+    local function build()
+        clean()
+        if BS.Gui then pcall(function() BS.Gui:Destroy() end); BS.Gui = nil end
+        BS.Box = nil
+        BS.Panel = nil
+        BS.Open = false
+        local parent = LP:FindFirstChild("PlayerGui")
+        if gethui then local ok, hui = pcall(gethui); if ok and hui then parent = hui end end
+        if not parent then return end
+        local gui = Instance.new("ScreenGui")
+        gui.Name = "W2BombaxUI"
+        gui.ResetOnSpawn = false
+        gui.IgnoreGuiInset = true
+        gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        gui.DisplayOrder = 999
+        gui.Parent = parent
+        BS.Gui = gui
+        local box = Instance.new("Frame")
+        box.Name = "Box"
+        box.Size = UDim2.fromOffset(46, 46)
+        box.Position = UDim2.new(0, 105, 0, 8)
+        box.BackgroundTransparency = 1
+        box.Parent = gui
+        BS.Box = box
+        local btn = Instance.new("TextButton")
+        btn.Name = "Btn"
+        btn.Size = UDim2.fromScale(1, 1)
+        btn.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+        btn.BorderSizePixel = 0
+        btn.Text = ""
+        btn.AutoButtonColor = false
+        btn.ZIndex = 2
+        btn.Parent = box
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
+        local s = Instance.new("UIStroke", btn)
+        s.Name = "S"
+        s.Color = Color3.fromRGB(255, 255, 255)
+        s.Thickness = 1.5
+        s.Transparency = 0.2
+        s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        local i = Instance.new("ImageLabel", btn)
+        i.Name = "I"
+        i.Size = UDim2.fromScale(0.72, 0.72)
+        i.Position = UDim2.fromScale(0.14, 0.14)
+        i.BackgroundTransparency = 1
+        i.Image = IMG
+        i.ImageColor3 = Color3.fromRGB(255, 255, 255)
+        i.ZIndex = 3
+        local drag, dStart, sPos = false, nil, nil
+        local dDist = 0
+        table.insert(BS.Conns, btn.InputBegan:Connect(function(inp)
+            if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                drag = true; dStart = inp.Position; sPos = box.Position; dDist = 0
+            end
+        end))
+        table.insert(BS.Conns, btn.InputEnded:Connect(function(inp)
+            if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                drag = false
+                if dDist < 8 then
+                    if BS.Open then killPanel() else buildPanel() end
+                end
+            end
+        end))
+        table.insert(BS.Conns, UserInputService.InputChanged:Connect(function(inp)
+            if not drag then return end
+            if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
+                local d = inp.Position - dStart
+                dDist = math.abs(d.X) + math.abs(d.Y)
+                box.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + d.X, sPos.Y.Scale, sPos.Y.Offset + d.Y)
+            end
+        end))
+        recolor()
+    end
+
+    function W.BombaxUI_Start()
+        if not W2.Bombax_ButtonEnabled then return end
+        build()
+    end
+    function W.BombaxUI_Stop()
+        clean()
+        killPanel()
+        if BS.Gui then pcall(function() BS.Gui:Destroy() end); BS.Gui = nil end
+        BS.Box = nil
+    end
+    function W.BombaxUI_Set(v)
+        W2.Bombax_ButtonEnabled = v and true or false
+        if W2.Bombax_ButtonEnabled then W.BombaxUI_Start()
+        else W.BombaxUI_Stop() end
+    end
+    task.spawn(function()
+        task.wait(2)
+        if W2.Bombax_ButtonEnabled then W.BombaxUI_Start() end
+    end)
+    LP.CharacterAdded:Connect(function()
+        task.wait(1.5)
+        if W2.Bombax_ButtonEnabled then W.BombaxUI_Start() end
+    end)
+end
+
+--====================================================--
+-- FPS/PING COUNTER (AUTO-ON)
+--====================================================--
+do
+    local FpsPingGui = nil
+    local FpsLabel = nil
+    local PingLabel = nil
+    local FrameCount = 0
+    local LastTime = tick()
+    local FpsValue = 0
+
+    local function GetPing()
+        local ok, v = pcall(function()
+            return math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
+        end)
+        return ok and v or 0
+    end
+
+    local function BuildUI()
+        if FpsPingGui then pcall(function() FpsPingGui:Destroy() end) end
+        local parent = LP:FindFirstChild("PlayerGui")
+        if gethui then
+            local ok, hui = pcall(gethui)
+            if ok and hui then parent = hui end
+        end
+        if not parent then return end
+        local gui = Instance.new("ScreenGui")
+        gui.Name = "W2FpsPing"
+        gui.ResetOnSpawn = false
+        gui.IgnoreGuiInset = true
+        gui.DisplayOrder = 9999
+        gui.Parent = parent
+        FpsPingGui = gui
+        local frame = Instance.new("Frame")
+        frame.Name = "Box"
+        frame.AnchorPoint = Vector2.new(0.5, 1)
+        frame.Position = UDim2.new(0.5, 0, 1, -10)
+        frame.Size = UDim2.fromOffset(200, 30)
+        frame.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
+        frame.BackgroundTransparency = 0.15
+        frame.BorderSizePixel = 0
+        frame.Parent = gui
+        Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+        local stroke = Instance.new("UIStroke", frame)
+        stroke.Color = Color3.fromRGB(255, 255, 255)
+        stroke.Thickness = 1
+        stroke.Transparency = 0.5
+        stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        local layout = Instance.new("UIListLayout", frame)
+        layout.FillDirection = Enum.FillDirection.Horizontal
+        layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+        layout.VerticalAlignment = Enum.VerticalAlignment.Center
+        layout.Padding = UDim.new(0, 12)
+        layout.SortOrder = Enum.SortOrder.LayoutOrder
+        FpsLabel = Instance.new("TextLabel")
+        FpsLabel.Name = "FPS"
+        FpsLabel.Size = UDim2.fromOffset(70, 20)
+        FpsLabel.BackgroundTransparency = 1
+        FpsLabel.Font = Enum.Font.GothamBold
+        FpsLabel.Text = "FPS: --"
+        FpsLabel.TextColor3 = Color3.fromRGB(120, 255, 160)
+        FpsLabel.TextSize = 12
+        FpsLabel.LayoutOrder = 1
+        FpsLabel.Parent = frame
+        local sep = Instance.new("Frame")
+        sep.Size = UDim2.fromOffset(1, 14)
+        sep.BackgroundColor3 = Color3.fromRGB(80, 80, 90)
+        sep.BorderSizePixel = 0
+        sep.LayoutOrder = 2
+        sep.Parent = frame
+        PingLabel = Instance.new("TextLabel")
+        PingLabel.Name = "PING"
+        PingLabel.Size = UDim2.fromOffset(70, 20)
+        PingLabel.BackgroundTransparency = 1
+        PingLabel.Font = Enum.Font.GothamBold
+        PingLabel.Text = "PING: --"
+        PingLabel.TextColor3 = Color3.fromRGB(120, 200, 255)
+        PingLabel.TextSize = 12
+        PingLabel.LayoutOrder = 3
+        PingLabel.Parent = frame
+    end
+    BuildUI()
+    RunService.RenderStepped:Connect(function()
+        FrameCount = FrameCount + 1
+        local now = tick()
+        if now - LastTime >= 0.5 then
+            FpsValue = math.floor(FrameCount / (now - LastTime) + 0.5)
+            FrameCount = 0
+            LastTime = now
+            if FpsLabel and FpsLabel.Parent then
+                FpsLabel.Text = "FPS: " .. tostring(FpsValue)
+                if FpsValue >= 50 then FpsLabel.TextColor3 = Color3.fromRGB(120, 255, 160)
+                elseif FpsValue >= 30 then FpsLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
+                else FpsLabel.TextColor3 = Color3.fromRGB(255, 100, 100) end
+            end
+            if PingLabel and PingLabel.Parent then
+                local ping = GetPing()
+                PingLabel.Text = "PING: " .. tostring(ping)
+                if ping < 100 then PingLabel.TextColor3 = Color3.fromRGB(120, 200, 255)
+                elseif ping < 200 then PingLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
+                else PingLabel.TextColor3 = Color3.fromRGB(255, 100, 100) end
+            end
+        end
+    end)
+    LP.CharacterAdded:Connect(function()
+        task.wait(1)
+        if not FpsPingGui or not FpsPingGui.Parent then BuildUI() end
+    end)
+end
+
+--====================================================--
 -- TROLL: EMOTE + BOMBAX + AVATAR + KORLESS + HEADER + ESCAPE
 --====================================================--
 W2.Emote_Enabled = W2.Emote_Enabled or false
@@ -7802,6 +8322,7 @@ W2.Bombax_Enabled = W2.Bombax_Enabled or false
 W2.Bombax_Selected = W2.Bombax_Selected or "One"
 W2.Bombax_Volume = W2.Bombax_Volume or 2
 W2.Bombax_Looped = W2.Bombax_Looped ~= false
+W2.Bombax_ButtonEnabled = W2.Bombax_ButtonEnabled or false
 W2.Escape_Enabled = W2.Escape_Enabled or false
 
 -- EMOTE
@@ -7933,6 +8454,7 @@ function W.Bombax_Stop()
         BX.Current = nil
     end
     BX.Playing = false
+    if getgenv().W2_BombaxRefresh then pcall(getgenv().W2_BombaxRefresh) end
 end
 function W.Bombax_Play(t)
     W.Bombax_Stop()
@@ -7955,6 +8477,7 @@ function W.Bombax_Play(t)
     BX.Selected = t
     W2.Bombax_Selected = t
     W.W2_Notify("Bombax", "▶ " .. t, 3)
+    if getgenv().W2_BombaxRefresh then pcall(getgenv().W2_BombaxRefresh) end
 end
 function W.Bombax_Set(v)
     BX.Enabled = v
@@ -8159,9 +8682,9 @@ function W.Escape_TP()
     W.Escape.Count = W.Escape.Count + 1
     W.W2_Notify("Instant Escape", "Teleported! (#" .. W.Escape.Count .. ")", 2)
     return true
-                                                            end    --====================================================--
+end    --====================================================--
     -- PART 16C FINAL: UI SECTIONS + CONFIG + CLOSING
-    -- Include 4 FIX kritis (SI_SoundId, SI, Emote, BX)
+    -- FIX: SI/Emote/BX reference (via W.table), hapus duplikat Killer Abilities
     --====================================================--
 
     -- === UI SECTION: MISC ===
@@ -8309,57 +8832,6 @@ function W.Escape_TP()
         end })
     end
 
-    -- === UI SECTION: KILLER — INSTANT BUTTONS ===
-    do
-        local s10 = W.T_Kill:AddSection("Killer Abilities — Instant")
-        s10:AddButton({ Title = "Instant Auto Kill (1x)", Callback = function()
-            if not W.KA then W.W2_Notify("Auto Kill", "KA not ready", 2); return end
-            local saved = W.KA.AutoKillAll
-            W.KA.AutoKillAll = true
-            task.spawn(function()
-                task.wait(0.3)
-                W.KA.AutoKillAll = saved
-            end)
-            W.W2_Notify("Auto Kill", "Triggered once", 2)
-        end })
-        s10:AddButton({ Title = "Instant Drop All Pallet (1x)", Callback = function()
-            if W.KA_DropAllPallets_Force then
-                W.KA_DropAllPallets_Force()
-            else
-                pcall(W.KA_DropAllPallets)
-            end
-            W.W2_Notify("Drop Pallet", "Triggered (bypass cooldown)", 2)
-        end })
-        s10:AddButton({ Title = "Instant Block All Vault (1x)", Callback = function()
-            if W.KA_BlockAllVaults_Force then
-                W.KA_BlockAllVaults_Force()
-            else
-                pcall(W.KA_BlockAllVaults)
-            end
-            W.W2_Notify("Block Vault", "Triggered (bypass cooldown)", 2)
-        end })
-        s10:AddButton({ Title = "Unblock All Vault (1x)", Callback = function()
-            local VaultCompleteEvent = ReplicatedStorage:FindFirstChild("Remotes")
-                and ReplicatedStorage.Remotes:FindFirstChild("Window")
-                and ReplicatedStorage.Remotes.Window:FindFirstChild("VaultCompleteEvent")
-            if not VaultCompleteEvent then return end
-            local count = 0
-            local map = workspace:FindFirstChild("Map"); if not map then return end
-            for _, trigger in ipairs(map:GetDescendants()) do
-                if trigger.Name == "VaultPointInUse" then
-                    local vaultParent = trigger.Parent
-                    if vaultParent then
-                        pcall(function()
-                            VaultCompleteEvent:FireServer(vaultParent, false)
-                            count = count + 1
-                        end)
-                    end
-                end
-            end
-            W.ForceNotify("Block Vault", "Unblock " .. count .. " vaults!", 3)
-        end })
-    end
-
     -- === UI SECTION: TROLL ===
     do
         local t1 = W.T_Troll:AddSection("Emote")
@@ -8396,6 +8868,10 @@ function W.Escape_TP()
         t2:AddButton({ Title = "⏸ Stop", Callback = function() W.Bombax_Stop() end })
         t2:AddButton({ Title = "⏭ Next", Callback = function() W.Bombax_Next() end })
         t2:AddButton({ Title = "⏮ Prev", Callback = function() W.Bombax_Prev() end })
+        t2:AddToggle({ Title = "Show Bombax Button", Content = "Floating button mini player di layar",
+            Default = false, Callback = function(v)
+                if W.BombaxUI_Set then W.BombaxUI_Set(v) end
+            end })
 
         local t3 = W.T_Troll:AddSection("Fake Avatar")
         t3:AddDropdown({ Title = "Preset",
@@ -8571,16 +9047,18 @@ function W.Escape_TP()
     end
 
     -- === CLOSING ===
-    print("[W2 Rebuild FIXED v1.3] Loaded OK")
+    print("[W2 Rebuild FIXED v1.4] Loaded OK")
     print("  Tab: Survivor / Visuals / Killer / Misc / Troll / Config")
-    print("  Buttons: 10 floating buttons")
+    print("  Buttons: 10 floating buttons (icon Bombax)")
+    print("  Bombax Button: AKTIF")
+    print("  FPS/Ping Counter: AKTIF")
     print("  Auto Skill Check: FIXED")
-    print("  Veil V1 + V2 Hook: FIXED (3 mode priorities)")
-    print("  Instant Buttons Timer: FIXED")
-    print("  SI/Emote/BX reference: FIXED (via W.table)")
+    print("  Veil V1 + V2: FIXED")
+    print("  Fake Perks Cooldown: FIXED (per-buff)")
+    print("  Killer Abilities: FIXED (1 section gabungan)")
     print("  Free Script - Jangan Dijual!")
 
-    W.W2_Notify("W2 Rebuild FIXED v1.3", "Free Script | All references FIXED", 6)
+    W.W2_Notify("W2 Rebuild FIXED v1.4", "Free Script | Semua FIXED!", 6)
 
 end  -- PENUTUP __W2_Init__()
 
