@@ -1,6 +1,6 @@
 --========================================================--
--- W2 REBUILD — FIXED v1.0
--- Bertahap. Jangan execute sebelum semua part lengkap.
+-- W2 REBUILD — BASE SKELETON v1.1 FIXED
+-- Judul "W2" | Logo + Banner + Notify pakai ID Bombax
 --========================================================--
 
 getgenv().W2 = getgenv().W2 or {}
@@ -51,7 +51,7 @@ local function __W2_Init__()
         UILib = loadstring(game:HttpGet("https://glutofree.vercel.app/library"))()
     end)
     if not ok or not UILib then
-        warn("[W2 Rebuild] UILib gagal load:", err)
+        warn("[W2] UILib gagal load:", err)
         return
     end
     W.UILib = UILib
@@ -90,7 +90,7 @@ local function __W2_Init__()
                 Color = NotifyColor,
                 Time = 0.4,
                 Delay = dur or 2,
-                Icon = "92826170205694"
+                Icon = "138040631725974"
             })
         end)
     end
@@ -142,9 +142,9 @@ local function __W2_Init__()
 
     local uiOK, uiErr = pcall(function()
         local Window = UILib:Window({
-            Title          = "W2 Rebuild",
+            Title          = "W2",
             LogoButtonSize = 52,
-            Image          = "92826170205694",
+            Image          = "138040631725974",
             Footer         = "Free Script",
             Color          = NotifyColor,
             ShowInfo       = true,
@@ -156,7 +156,7 @@ local function __W2_Init__()
             Name         = "Information",
             Icon         = "lightbulb",
             SectionTitle = "Information",
-            Banner       = "rbxassetid://92826170205694",
+            Banner       = "rbxassetid://138040631725974",
             Cards = {
                 { Title = "⚠️ INFO", Description = "Script ini GRATIS!\n\n❌ JANGAN DIJUAL\n\nYang jual = SCAMMER!" }
             }
@@ -170,7 +170,7 @@ local function __W2_Init__()
         W.T_Cfg   = Window:AddTab({ Name = "Config",    Icon = "save"         })
     end)
 
-    if not uiOK then warn("[W2 Rebuild] UI Error:", uiErr) end
+    if not uiOK then warn("[W2] UI Error:", uiErr) end
 
     -- ⬇️ PART 2-16 DISISIPKAN DI SINI ⬇️--====================================================--
 -- PART 2 FIXED: SURVIVOR — Self Heal, Swift Vault, Pallet Reflex, Fake Perks
@@ -617,7 +617,7 @@ do
             FP.CooldownTime = tonumber(v) or 5
             W.W2_Notify("Fake Perks", "Cooldown: " .. tostring(v) .. "s", 2)
         end })
-end--====================================================--
+    end--====================================================--
 -- PART 3: AUTO SKILL CHECK (FIXED) + GEN BYPASS + VAULT
 --====================================================--
 
@@ -3396,7 +3396,7 @@ do
         Callback = function(v) W.Moonwalk_SetBack(v) end })
     s6:AddSlider({ Title = "Switch Interval", Min = 0.02, Max = 0.5, Default = 0.07, Increment = 0.01,
         Callback = function(v) W.Moonwalk_SetInterval(v) end })
-                        end--====================================================--
+end--====================================================--
 -- PART 8: VISUALS — FULL ESP + ESP STATUS
 --====================================================--
 
@@ -6381,7 +6381,7 @@ do
         end
         W.ForceNotify("Block Vault", "Unblock " .. count .. " vaults!", 3)
     end })
-                                                end--====================================================--
+end--====================================================--
 -- PART 15: KILLER — FLASK + DASH LOCK + INSTANT BUTTONS
 --====================================================--
 
@@ -7390,12 +7390,12 @@ end)
 function W.HideIcon_Set(v)
     W.HideIcon.Enabled = v and true or false
     if v then W.HideIcon_Apply() else W.HideIcon_Restore() end
-                                                        end--====================================================--
--- PART 16B FIXED: HOOK + FLOATING BUTTONS (ICON GAMBAR) + BOMBAX BUTTON + FPS + TROLL
--- FIX: Icon button pakai ImageLabel, Bombax Button + FPS counter include
+end--====================================================--
+-- PART 16B FIXED: HOOK + FLOATING BUTTONS + BOMBAX BUTTON + FPS + TROLL
+-- FIX: iDot pakai ImageLabel (ikon Bombax), Bombax Button + FPS counter
 --====================================================--
 
--- === HOOK GLOBAL (FIXED — Veil V1 + V2) ===
+-- === HOOK GLOBAL ===
 do
     local installed = false
     if installed then return end
@@ -7565,7 +7565,7 @@ do
 end
 
 --====================================================--
--- FLOATING BUTTONS (10) — ICON GAMBAR BOMBAX
+-- FLOATING BUTTONS (10) — ICON BOMBAX
 --====================================================--
 local function CreateFloat(cfg)
     local st = cfg.state
@@ -7650,7 +7650,7 @@ local function CreateFloat(cfg)
         ic.BackgroundTransparency = 0.4
         ic.BorderSizePixel = 0
         Instance.new("UICorner", ic).CornerRadius = UDim.new(1, 0)
-        -- ⭐ FIX: IconDot pakai ImageLabel dengan ID Bombax
+        -- ⭐ FIX: iDot pakai ImageLabel dengan ID Bombax
         local iDot = Instance.new("ImageLabel", ic)
         iDot.Name = "IconDot"
         iDot.Size = UDim2.fromOffset(16, 16)
@@ -8684,7 +8684,6 @@ function W.Escape_TP()
     return true
 end    --====================================================--
     -- PART 16C FINAL: UI SECTIONS + CONFIG + CLOSING
-    -- FIX: SI/Emote/BX reference (via W.table), hapus duplikat Killer Abilities
     --====================================================--
 
     -- === UI SECTION: MISC ===
@@ -9047,18 +9046,12 @@ end    --====================================================--
     end
 
     -- === CLOSING ===
-    print("[W2 Rebuild FIXED v1.4] Loaded OK")
+    print("[W2] Loaded OK")
     print("  Tab: Survivor / Visuals / Killer / Misc / Troll / Config")
-    print("  Buttons: 10 floating buttons (icon Bombax)")
-    print("  Bombax Button: AKTIF")
-    print("  FPS/Ping Counter: AKTIF")
-    print("  Auto Skill Check: FIXED")
-    print("  Veil V1 + V2: FIXED")
-    print("  Fake Perks Cooldown: FIXED (per-buff)")
-    print("  Killer Abilities: FIXED (1 section gabungan)")
+    print("  Buttons: 10 floating buttons + Bombax Button + FPS Counter")
     print("  Free Script - Jangan Dijual!")
 
-    W.W2_Notify("W2 Rebuild FIXED v1.4", "Free Script | Semua FIXED!", 6)
+    W.W2_Notify("W2", "Script Loaded!", 6)
 
 end  -- PENUTUP __W2_Init__()
 
