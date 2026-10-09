@@ -1,5 +1,5 @@
 --========================================================--
--- W2 — BASE SKELETON v1.3 FIXED
+-- W2 — BASE SKELETON v1.5 FIXED
 -- Judul "W2" | Logo + Banner + Notify pakai ID Bombax
 --========================================================--
 
@@ -141,7 +141,7 @@ local function __W2_Init__()
     end
 
     local uiOK, uiErr = pcall(function()
-        -- ⭐ Title "W2", Logo pakai ID Bombax
+        -- ⭐ Title "W2", Logo + Banner pakai ID Bombax
         local Window = UILib:Window({
             Title          = "W2",
             LogoButtonSize = 52,
@@ -153,7 +153,6 @@ local function __W2_Init__()
         })
         W.Window = Window
 
-        -- ⭐ Banner pakai ID Bombax
         Window:InfoTab({
             Name         = "Information",
             Icon         = "lightbulb",
@@ -176,7 +175,7 @@ local function __W2_Init__()
 
     -- ⬇️ PART 2-16 DISISIPKAN DI SINI ⬇️--====================================================--
 -- PART 2 FIXED: SURVIVOR — Self Heal, Swift Vault, Pallet Reflex, Fake Perks
--- FIX: Fake Perks per-buff cooldown + Flowstate + QuickRec digabung
+-- Fake Perks pakai Cooldown 40s (kaya aslinya)
 --====================================================--
 
 function W.HealSelf(v)
@@ -434,13 +433,8 @@ do
     function W.PalletReflex_SetDist(v) W2.PalletReflex_Dist = tonumber(v) or 20 end
 end
 
--- === FAKE PERKS (FIXED — per-buff cooldown) ===
-W.FP = W.FP or {
-    ActiveBuffs = {}, Conns = {}, LastBuffTime = {},
-    CooldownTime = 60,
-    BuffSpeed = 40,
-    BuffDuration = 3,
-}
+-- === FAKE PERKS (Cooldown 40s seperti aslinya) ===
+W.FP = W.FP or { ActiveBuffs = {}, Conns = {}, LastBuffTime = {}, CooldownTime = 40 }
 local FP = W.FP
 if not FP.LastBuffTime then FP.LastBuffTime = {} end
 
@@ -448,60 +442,52 @@ local function FP_Char() return LP.Character end
 local function FP_Hum() local c = FP_Char(); return c and c:FindFirstChildOfClass("Humanoid") end
 local function FP_Total()
     local t = 0
-    for _, b in pairs(FP.ActiveBuffs) do
-        if tick() < b.endTime then t = t + b.amt end
-    end
+    for _, b in pairs(FP.ActiveBuffs) do if tick() < b.endTime then t = t + b.amt end end
     return t
 end
 local function FP_Apply()
     local c = FP_Char(); local tb = FP_Total(); local h = FP_Hum()
-    if c then c:SetAttribute("speedboost", tb > 0 and (1 + tb / 14) or 1) end
+    if c then c:SetAttribute("speedboost", tb > 0 and (1 + tb/14) or 1) end
     if h and tb > 0 then h.WalkSpeed = 16 + tb end
 end
 local function FP_HB()
     if FP.HB then return end
     FP.HB = RunService.Heartbeat:Connect(function()
         local exp = {}
-        for n, b in pairs(FP.ActiveBuffs) do
-            if tick() >= b.endTime then table.insert(exp, n) end
-        end
+        for n, b in pairs(FP.ActiveBuffs) do if tick() >= b.endTime then table.insert(exp, n) end end
         for _, n in ipairs(exp) do FP.ActiveBuffs[n] = nil end
         FP_Apply()
         if FP_Total() <= 0 and not next(FP.ActiveBuffs) then
             if FP.HB then FP.HB:Disconnect(); FP.HB = nil end
-            local c = FP_Char()
-            if c then c:SetAttribute("speedboost", 1) end
-            local h = FP_Hum()
-            if h then h.WalkSpeed = 16 end
+            local c = FP_Char(); if c then c:SetAttribute("speedboost", 1) end
+            local h = FP_Hum(); if h then h.WalkSpeed = 16 end
         end
     end)
 end
 
+-- ⭐ Cooldown 40s per-buff
 local function FP_Buff(name, amt, dur)
     if FP.ActiveBuffs[name] then return end
     FP.LastBuffTime = FP.LastBuffTime or {}
     local now = tick()
     local lastTime = FP.LastBuffTime[name] or 0
-    local cdTime = tonumber(FP.CooldownTime) or 60
+    local cdTime = tonumber(FP.CooldownTime) or 40
     if now - lastTime < cdTime then return end
     FP.LastBuffTime[name] = now
-    FP.ActiveBuffs[name] = { amt = amt or 40, endTime = now + (dur or 3), duration = dur or 3 }
+    FP.ActiveBuffs[name] = { amt = amt, endTime = now + (dur or 3), duration = dur or 3 }
     FP_Apply(); FP_HB()
-    W.W2_Notify("Fake Perks", name .. " +" .. (amt or 40) .. " (" .. (dur or 3) .. "s)", 3)
+    W.W2_Notify("Fake Perks", name .. " +" .. amt .. " (CD 40s)", 3)
 end
 
 local function FP_Clean(name)
-    if FP.Conns[name] then
-        for _, c in ipairs(FP.Conns[name]) do pcall(function() c:Disconnect() end) end
-        FP.Conns[name] = nil
-    end
+    if FP.Conns[name] then for _, c in ipairs(FP.Conns[name]) do pcall(function() c:Disconnect() end) end FP.Conns[name] = nil end
 end
 local function FP_Reg(name, conn)
     FP.Conns[name] = FP.Conns[name] or {}
     table.insert(FP.Conns[name], conn)
 end
 
--- FLOWSTATE + QUICK RECOVERY digabung
+-- FLOWSTATE (+5 speed, 3s, CD 40s)
 function W.FP_Flowstate(v)
     FP.FlowstateOn = v
     local c = FP_Char()
@@ -510,72 +496,48 @@ function W.FP_Flowstate(v)
         local r = ReplicatedStorage:FindFirstChild("Remotes")
         local w = r and r:FindFirstChild("Window")
         local p = r and r:FindFirstChild("Pallet")
-        local hf = r and r:FindFirstChild("Healing")
-
-        local function onVault()
-            if not FP.FlowstateOn then return end
-            task.delay(0.5, function()
-                if FP.FlowstateOn then
-                    FP_Buff("Flowstate", FP.BuffSpeed or 40, FP.BuffDuration or 3)
-                end
-            end)
+        local function on()
+            if FP.FlowstateOn then
+                task.delay(0.5, function()
+                    if FP.FlowstateOn then FP_Buff("Flowstate", 5, 3) end
+                end)
+            end
         end
-        local function onHeal()
-            if not FP.FlowstateOn then return end
-            task.delay(0.5, function()
-                if FP.FlowstateOn then
-                    FP_Buff("Flowstate", FP.BuffSpeed or 40, FP.BuffDuration or 3)
-                end
-            end)
-        end
-
         if w then
             local vb = w:FindFirstChild("Vaultbindable")
-            if vb and vb:IsA("BindableEvent") then
-                FP_Reg("Flowstate", vb.Event:Connect(onVault))
-            end
+            if vb and vb:IsA("BindableEvent") then FP_Reg("Flowstate", vb.Event:Connect(on)) end
         end
         if p then
             local sb = p:FindFirstChild("Slidebindable")
-            if sb and sb:IsA("BindableEvent") then
-                FP_Reg("Flowstate", sb.Event:Connect(onVault))
-            end
+            if sb and sb:IsA("BindableEvent") then FP_Reg("Flowstate", sb.Event:Connect(on)) end
         end
-        if hf then
-            local hd = hf:FindFirstChild("Healdone")
-            if hd and hd:IsA("BindableEvent") then
-                FP_Reg("Flowstate", hd.Event:Connect(onHeal))
-            end
-        end
-
-        local function hookH(c)
-            if not c then return end
-            local hum = c:FindFirstChildOfClass("Humanoid")
-            if not hum then return end
-            local lastHP = hum.Health
-            FP_Reg("Flowstate", hum.HealthChanged:Connect(function(nh)
-                if not FP.FlowstateOn then return end
-                if nh > lastHP and (nh >= hum.MaxHealth or (nh - lastHP) >= 15) then
-                    onHeal()
-                end
-                lastHP = nh
-            end))
-        end
-        hookH(LP.Character)
-        FP_Reg("Flowstate", LP.CharacterAdded:Connect(hookH))
     else
-        FP_Clean("Flowstate")
-        FP.ActiveBuffs["Flowstate"] = nil
-        local c2 = FP_Char()
-        if c2 then c2:SetAttribute("Flowstate", false) end
+        FP_Clean("Flowstate"); FP.ActiveBuffs["Flowstate"] = nil
+        local c2 = FP_Char(); if c2 then c2:SetAttribute("Flowstate", false) end
     end
 end
 
+-- QUICK RECOVERY (+6 speed, 3s, CD 40s)
 function W.FP_QuickRec(v)
-    W.FP_Flowstate(v)
+    FP.QuickRecOn = v
+    if v then
+        local function on()
+            if FP.QuickRecOn then FP_Buff("QuickRecovery", 6, 3) end
+        end
+        local r = ReplicatedStorage:FindFirstChild("Remotes")
+        local hf = r and r:FindFirstChild("Healing")
+        if hf then
+            local hd = hf:FindFirstChild("Healdone")
+            if hd and hd:IsA("BindableEvent") then
+                FP_Reg("QuickRecovery", hd.Event:Connect(on))
+            end
+        end
+    else
+        FP_Clean("QuickRecovery"); FP.ActiveBuffs["QuickRecovery"] = nil
+    end
 end
 
--- PERFECT LANDING — jatuh dari ketinggian
+-- PERFECT LANDING (+8 speed, 3s, CD 40s)
 function W.FP_PerfLand(v)
     FP.PerfLandOn = v
     if v then
@@ -583,32 +545,43 @@ function W.FP_PerfLand(v)
             if not c then return end
             local h = c:FindFirstChildOfClass("Humanoid")
             if not h then return end
-            local wasFreefall, fallStart = false, 0
+            local wf, fs = false, 0
             FP_Reg("PerfectLanding", h.StateChanged:Connect(function(_, n)
                 if not FP.PerfLandOn then return end
-                if n == Enum.HumanoidStateType.Freefall then
-                    wasFreefall = true
-                    fallStart = tick()
-                end
-                if wasFreefall and (n == Enum.HumanoidStateType.Landed or n == Enum.HumanoidStateType.Running) then
-                    local fallTime = tick() - fallStart
-                    wasFreefall = false
-                    if fallTime >= 0.3 then
-                        FP_Buff("PerfectLanding", FP.BuffSpeed or 40, FP.BuffDuration or 3)
-                    end
+                if n == Enum.HumanoidStateType.Freefall then wf = true; fs = tick() end
+                if wf and (n == Enum.HumanoidStateType.Landed or n == Enum.HumanoidStateType.Running) then
+                    local ft = tick() - fs; wf = false
+                    if ft >= 0.25 then FP_Buff("PerfectLanding", 8, 3) end
                 end
             end))
         end
         hook(LP.Character)
         FP_Reg("PerfectLanding", LP.CharacterAdded:Connect(hook))
     else
-        FP_Clean("PerfectLanding")
-        FP.ActiveBuffs["PerfectLanding"] = nil
+        FP_Clean("PerfectLanding"); FP.ActiveBuffs["PerfectLanding"] = nil
     end
 end
 
+-- ADRENALINE RUSH (+4 speed, 5s, CD 40s)
 function W.FP_Adrenaline(v)
-    -- Gak dipakai
+    FP.AdrenalineOn = v
+    if v then
+        local function hook(c)
+            if not c then return end
+            local h = c:FindFirstChildOfClass("Humanoid")
+            if not h then return end
+            local lh = h.Health
+            FP_Reg("AdrenalineRush", h.HealthChanged:Connect(function(nh)
+                if not FP.AdrenalineOn then return end
+                if nh < lh and nh <= 50 and nh > 0 then FP_Buff("AdrenalineRush", 4, 5) end
+                lh = nh
+            end))
+        end
+        hook(LP.Character)
+        FP_Reg("AdrenalineRush", LP.CharacterAdded:Connect(hook))
+    else
+        FP_Clean("AdrenalineRush"); FP.ActiveBuffs["AdrenalineRush"] = nil
+    end
 end
 
 -- === UI SECTION: SURVIVOR PART 1 ===
@@ -644,40 +617,25 @@ do
         Callback = function(v) W.PalletReflex_SetDist(v) end })
 
     local s4 = W.T_Surv:AddSection("Fake Perks")
-
-    s4:AddToggle({ Title = "Flowstate (Window/Heal)", Content = "Aktif saat vault jendela / heal",
-        Default = false, Callback = function(v)
-            W.FP_Flowstate(v)
-            if v then W.W2_Notify("Fake Perks", "Flowstate ON", 2) end
-        end })
-
-    s4:AddToggle({ Title = "Quick Recovery (= Flowstate)", Content = "Digabung ke Flowstate",
-        Default = false, Callback = function(v)
-            W.FP_QuickRec(v)
-            if v then W.W2_Notify("Fake Perks", "QuickRec ON", 2) end
-        end })
-
-    s4:AddToggle({ Title = "Perfect Landing (Fall)", Content = "Aktif saat jatoh dari ketinggian",
-        Default = false, Callback = function(v)
-            W.FP_PerfLand(v)
-            if v then W.W2_Notify("Fake Perks", "Perfect Landing ON", 2) end
-        end })
-
-    s4:AddSlider({ Title = "Buff Speed", Min = 10, Max = 100, Default = 40, Increment = 5, Suffix = "+",
+    s4:AddToggle({ Title = "Flowstate", Default = false, Callback = function(v)
+        W.FP_Flowstate(v)
+        if v then W.W2_Notify("Fake Perks", "Flowstate ON (CD 40s)", 2) end
+    end })
+    s4:AddToggle({ Title = "Quick Recovery", Default = false, Callback = function(v)
+        W.FP_QuickRec(v)
+        if v then W.W2_Notify("Fake Perks", "Quick Recovery ON (CD 40s)", 2) end
+    end })
+    s4:AddToggle({ Title = "Perfect Landing", Default = false, Callback = function(v)
+        W.FP_PerfLand(v)
+        if v then W.W2_Notify("Fake Perks", "Perfect Landing ON (CD 40s)", 2) end
+    end })
+    s4:AddToggle({ Title = "Adrenaline Rush", Default = false, Callback = function(v)
+        W.FP_Adrenaline(v)
+        if v then W.W2_Notify("Fake Perks", "Adrenaline ON (CD 40s)", 2) end
+    end })
+    s4:AddSlider({ Title = "Perk Cooldown", Min = 0, Max = 120, Default = 40, Increment = 5, Suffix = "s",
         Callback = function(v)
-            FP.BuffSpeed = tonumber(v) or 40
-            W.W2_Notify("Fake Perks", "Speed: +" .. tostring(v), 2)
-        end })
-
-    s4:AddSlider({ Title = "Buff Duration", Min = 1, Max = 10, Default = 3, Increment = 1, Suffix = "s",
-        Callback = function(v)
-            FP.BuffDuration = tonumber(v) or 3
-            W.W2_Notify("Fake Perks", "Duration: " .. tostring(v) .. "s", 2)
-        end })
-
-    s4:AddSlider({ Title = "Perk Cooldown", Min = 0, Max = 180, Default = 60, Increment = 5, Suffix = "s",
-        Callback = function(v)
-            FP.CooldownTime = tonumber(v) or 60
+            FP.CooldownTime = tonumber(v) or 40
             W.W2_Notify("Fake Perks", "Cooldown: " .. tostring(v) .. "s", 2)
         end })
     end--====================================================--
@@ -6444,7 +6402,7 @@ do
         end
         W.ForceNotify("Block Vault", "Unblock " .. count .. " vaults!", 3)
     end })
-                                                end--====================================================--
+end--====================================================--
 -- PART 15: KILLER — FLASK + DASH LOCK + INSTANT BUTTONS
 --====================================================--
 
@@ -7454,7 +7412,7 @@ function W.HideIcon_Set(v)
     W.HideIcon.Enabled = v and true or false
     if v then W.HideIcon_Apply() else W.HideIcon_Restore() end
 end--====================================================--
--- PART 16B FIXED: HOOK + FLOATING BUTTONS + BOMBAX UI V2 + FPS + TROLL
+-- PART 16B FIXED: HOOK + FLOATING BUTTONS + BOMBAX UI V3 + FPS + TROLL
 --====================================================--
 
 -- === HOOK GLOBAL ===
@@ -7910,12 +7868,13 @@ getgenv().W2_PistolBtn_SetEnabled = function(en) PT_Btn.SetEnabled(en) end
 getgenv().W2_PistolBtn_UpdateVisual = function() PT_Btn.Refresh() end
 
 --====================================================--
--- BOMBAX UI V2 — Window Toggle + Progress Bar
+-- BOMBAX UI V3 — Window Only (Tanpa Tombol Floating)
+-- Buka/tutup via toggle UI: Troll → Bombax → Show Bombax Menu
 --====================================================--
 do
     local IMG = "rbxassetid://138040631725974"
     local BS = {
-        Gui = nil, ButtonBox = nil, Window = nil,
+        Gui = nil, Window = nil,
         Open = false, Conns = {},
         ProgressFill = nil, TimeLabel = nil, NowLabel = nil,
         PlayBtn = nil, LoopBtn = nil, PickerBtn = nil
@@ -7925,28 +7884,6 @@ do
         for _, c in ipairs(BS.Conns) do pcall(function() c:Disconnect() end) end
         BS.Conns = {}
     end
-
-    local function recolor()
-        if not BS.ButtonBox then return end
-        local btn = BS.ButtonBox:FindFirstChild("Btn")
-        if not btn then return end
-        local s = btn:FindFirstChild("S")
-        local i = btn:FindFirstChild("I")
-        local on = W.Bombax and W.Bombax.Playing
-        if s then
-            TweenService:Create(s, TweenInfo.new(0.3), {
-                Color = on and Color3.fromRGB(120, 255, 160) or Color3.fromRGB(255, 255, 255),
-                Transparency = on and 0 or 0.2,
-                Thickness = on and 2 or 1.5,
-            }):Play()
-        end
-        if i then
-            TweenService:Create(i, TweenInfo.new(0.3), {
-                ImageColor3 = on and Color3.fromRGB(120, 255, 160) or Color3.fromRGB(255, 255, 255),
-            }):Play()
-        end
-    end
-    getgenv().W2_BombaxRefresh = recolor
 
     local function updateProgress()
         if not BS.ProgressFill or not BS.TimeLabel then return end
@@ -8004,6 +7941,7 @@ do
     end
 
     local function toggleWindow()
+        if not BS.Window then W.BombaxUI_BuildWindow() end
         if not BS.Window then return end
         BS.Open = not BS.Open
         if BS.Open then
@@ -8026,20 +7964,34 @@ do
         end
     end
 
-    local function buildWindow()
+    function W.BombaxUI_BuildWindow()
         if BS.Window then pcall(function() BS.Window:Destroy() end); BS.Window = nil end
+        if BS.Gui then pcall(function() BS.Gui:Destroy() end); BS.Gui = nil end
+
+        local parent = LP:FindFirstChild("PlayerGui")
+        if gethui then local ok, hui = pcall(gethui); if ok and hui then parent = hui end end
+        if not parent then return end
+
+        local gui = Instance.new("ScreenGui")
+        gui.Name = "W2BombaxUI"
+        gui.ResetOnSpawn = false
+        gui.IgnoreGuiInset = true
+        gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        gui.DisplayOrder = 999
+        gui.Parent = parent
+        BS.Gui = gui
 
         local win = Instance.new("Frame")
         win.Name = "BombaxWindow"
         win.Size = UDim2.fromOffset(260, 260)
-        win.Position = UDim2.new(0, 105, 0, 62)
+        win.Position = UDim2.new(0.5, -130, 0.5, -130)
         win.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
         win.BackgroundTransparency = 0.05
         win.BorderSizePixel = 0
         win.Visible = false
         win.ZIndex = 50
         win.Active = true
-        win.Parent = BS.Gui
+        win.Parent = gui
         BS.Window = win
         Instance.new("UICorner", win).CornerRadius = UDim.new(0, 14)
         local winStroke = Instance.new("UIStroke", win)
@@ -8048,6 +8000,7 @@ do
         winStroke.Transparency = 0.25
         winStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
+        -- Header
         local header = Instance.new("Frame", win)
         header.Name = "Header"
         header.Size = UDim2.new(1, 0, 0, 40)
@@ -8099,6 +8052,7 @@ do
             if BS.Open then toggleWindow() end
         end)
 
+        -- Now Playing
         local nowCard = Instance.new("Frame", win)
         nowCard.Name = "NowCard"
         nowCard.Size = UDim2.new(1, -20, 0, 46)
@@ -8153,6 +8107,7 @@ do
         timeLabel.TextXAlignment = Enum.TextXAlignment.Right
         BS.TimeLabel = timeLabel
 
+        -- Song picker
         local pick = Instance.new("TextButton", win)
         pick.Name = "Picker"
         pick.Size = UDim2.new(1, -20, 0, 32)
@@ -8172,11 +8127,12 @@ do
         BS.PickerBtn = pick
         pick.MouseButton1Click:Connect(function()
             W.Bombax_Next()
-            updateNowLabel(); updatePlayBtn(); recolor()
+            updateNowLabel(); updatePlayBtn()
             local BX = W.Bombax
             if BX and BX.Enabled then W.Bombax_Play(BX.Selected) end
         end)
 
+        -- Controls
         local ctrl = Instance.new("Frame", win)
         ctrl.Name = "Controls"
         ctrl.Size = UDim2.new(1, -20, 0, 44)
@@ -8209,7 +8165,7 @@ do
 
         prevB.MouseButton1Click:Connect(function()
             W.Bombax_Prev()
-            updateNowLabel(); updatePlayBtn(); recolor()
+            updateNowLabel(); updatePlayBtn()
         end)
         playB.MouseButton1Click:Connect(function()
             local BX = W.Bombax
@@ -8219,13 +8175,14 @@ do
             else
                 W.Bombax_Play(BX.Selected)
             end
-            updatePlayBtn(); recolor()
+            updatePlayBtn()
         end)
         nextB.MouseButton1Click:Connect(function()
             W.Bombax_Next()
-            updateNowLabel(); updatePlayBtn(); recolor()
+            updateNowLabel(); updatePlayBtn()
         end)
 
+        -- Volume slider
         local vrow = Instance.new("Frame", win)
         vrow.Name = "VolumeRow"
         vrow.Size = UDim2.new(1, -20, 0, 22)
@@ -8300,6 +8257,7 @@ do
             end
         end))
 
+        -- Loop button
         local loop = Instance.new("TextButton", win)
         loop.Name = "Loop"
         loop.Size = UDim2.new(1, -20, 0, 26)
@@ -8319,6 +8277,7 @@ do
             updateLoopBtn()
         end)
 
+        -- Drag
         local dragging, dragStart, startPos = false, nil, nil
         header.InputBegan:Connect(function(inp)
             if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
@@ -8341,63 +8300,21 @@ do
         end))
     end
 
-    local function buildButton()
+    function W.BombaxUI_Start()
+        if not BS.Window then W.BombaxUI_BuildWindow() end
+    end
+    function W.BombaxUI_Stop()
         clean()
+        if BS.Window then pcall(function() BS.Window:Destroy() end); BS.Window = nil end
         if BS.Gui then pcall(function() BS.Gui:Destroy() end); BS.Gui = nil end
-        BS.ButtonBox = nil
-        BS.Window = nil
         BS.Open = false
-        local parent = LP:FindFirstChild("PlayerGui")
-        if gethui then local ok, hui = pcall(gethui); if ok and hui then parent = hui end end
-        if not parent then return end
-        local gui = Instance.new("ScreenGui")
-        gui.Name = "W2BombaxUI"
-        gui.ResetOnSpawn = false
-        gui.IgnoreGuiInset = true
-        gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-        gui.DisplayOrder = 999
-        gui.Parent = parent
-        BS.Gui = gui
-
-        local box = Instance.new("Frame")
-        box.Name = "Box"
-        box.Size = UDim2.fromOffset(46, 46)
-        box.Position = UDim2.new(0, 105, 0, 8)
-        box.BackgroundTransparency = 1
-        box.Parent = gui
-        BS.ButtonBox = box
-
-        local btn = Instance.new("TextButton")
-        btn.Name = "Btn"
-        btn.Size = UDim2.fromScale(1, 1)
-        btn.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
-        btn.BorderSizePixel = 0
-        btn.Text = ""
-        btn.AutoButtonColor = false
-        btn.ZIndex = 2
-        btn.Parent = box
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
-        local s = Instance.new("UIStroke", btn)
-        s.Name = "S"
-        s.Color = Color3.fromRGB(255, 255, 255)
-        s.Thickness = 1.5
-        s.Transparency = 0.2
-        s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-        local i = Instance.new("ImageLabel", btn)
-        i.Name = "I"
-        i.Size = UDim2.fromScale(0.72, 0.72)
-        i.Position = UDim2.fromScale(0.14, 0.14)
-        i.BackgroundTransparency = 1
-        i.Image = IMG
-        i.ImageColor3 = Color3.fromRGB(255, 255, 255)
-        i.ZIndex = 3
-
-        btn.MouseButton1Click:Connect(function()
-            toggleWindow()
-        end)
-
-        buildWindow()
-        recolor()
+    end
+    function W.BombaxUI_Set(v)
+        W2.Bombax_ButtonEnabled = v and true or false
+        if v then W.BombaxUI_Start() else W.BombaxUI_Stop() end
+    end
+    function W.BombaxUI_Toggle()
+        toggleWindow()
     end
 
     task.spawn(function()
@@ -8408,7 +8325,6 @@ do
             end
         end
     end)
-
     task.spawn(function()
         while true do
             task.wait(0.5)
@@ -8417,25 +8333,8 @@ do
                 pcall(updatePlayBtn)
                 pcall(updateLoopBtn)
             end
-            pcall(recolor)
         end
     end)
-
-    function W.BombaxUI_Start()
-        if not W2.Bombax_ButtonEnabled then return end
-        buildButton()
-    end
-    function W.BombaxUI_Stop()
-        clean()
-        if BS.Gui then pcall(function() BS.Gui:Destroy() end); BS.Gui = nil end
-        BS.ButtonBox = nil
-        BS.Window = nil
-    end
-    function W.BombaxUI_Set(v)
-        W2.Bombax_ButtonEnabled = v and true or false
-        if W2.Bombax_ButtonEnabled then W.BombaxUI_Start()
-        else W.BombaxUI_Stop() end
-    end
     task.spawn(function()
         task.wait(2)
         if W2.Bombax_ButtonEnabled then W.BombaxUI_Start() end
@@ -8726,7 +8625,6 @@ function W.Bombax_Play(t)
     BX.Selected = t
     W2.Bombax_Selected = t
     W.W2_Notify("Bombax", "▶ " .. t, 3)
-    if getgenv().W2_BombaxRefresh then pcall(getgenv().W2_BombaxRefresh) end
 end
 function W.Bombax_Set(v)
     BX.Enabled = v
@@ -9201,9 +9099,13 @@ end    --====================================================--
         t2:AddButton({ Title = "⏸ Stop", Callback = function() W.Bombax_Stop() end })
         t2:AddButton({ Title = "⏭ Next", Callback = function() W.Bombax_Next() end })
         t2:AddButton({ Title = "⏮ Prev", Callback = function() W.Bombax_Prev() end })
-        t2:AddToggle({ Title = "Show Bombax Button", Content = "Floating button mini player di layar",
+        t2:AddToggle({ Title = "Show Bombax Menu", Content = "Buka window Bombax Player",
             Default = false, Callback = function(v)
                 if W.BombaxUI_Set then W.BombaxUI_Set(v) end
+            end })
+        t2:AddButton({ Title = "Toggle Bombax Window", Content = "Buka/tutup window",
+            Callback = function()
+                if W.BombaxUI_Toggle then W.BombaxUI_Toggle() end
             end })
 
         local t3 = W.T_Troll:AddSection("Fake Avatar")
@@ -9381,7 +9283,8 @@ end    --====================================================--
     -- === CLOSING ===
     print("[W2] Loaded OK")
     print("  Tab: Survivor / Visuals / Killer / Misc / Troll / Config")
-    print("  Buttons: 10 floating buttons + Bombax Button + FPS Counter")
+    print("  Buttons: 10 floating buttons + FPS Counter")
+    print("  Bombax: Window-only (via Troll → Bombax → Show Bombax Menu)")
     print("  Free Script - Jangan Dijual!")
 
     W.W2_Notify("W2", "Script Loaded!", 6)
