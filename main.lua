@@ -1,11 +1,10 @@
 --========================================================--
--- W2 — BASE SKELETON v1.5 FIXED
--- Judul "W2" | Logo + Banner + Notify pakai ID Bombax
+-- W2 — BASE SKELETON v2.0 FIXED
+-- Judul "W2" | Logo + Banner + Notify pakai ID
 --========================================================--
 
 getgenv().W2 = getgenv().W2 or {}
 local W = getgenv()
-
 W2.NotifyEnabled = W2.NotifyEnabled ~= false
 
 _G.W2_ACCENT    = Color3.fromRGB(255, 255, 255)
@@ -14,20 +13,49 @@ _G.W2_NEUTRAL   = Color3.fromRGB(90, 90, 90)
 _G.W2_STROKE_OFF= Color3.fromRGB(25, 25, 25)
 _G.W2_BG_OFF    = Color3.fromRGB(0, 0, 0)
 
+-- ═══════════════════════════════════════════════════
+-- FIX: SERVICE GLOBAL
+-- ═══════════════════════════════════════════════════
+local Players           = game:GetService("Players")
+local RunService        = game:GetService("RunService")
+local UserInputService  = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace         = game:GetService("Workspace")
+local CoreGui           = game:GetService("CoreGui")
+local CollectionService = game:GetService("CollectionService")
+local TweenService      = game:GetService("TweenService")
+local HttpService       = game:GetService("HttpService")
+local Lighting          = game:GetService("Lighting")
+local GuiService        = game:GetService("GuiService")
+local LP                = Players.LocalPlayer
+
+-- ═══════════════════════════════════════════════════
+-- FIX: UI QUEUE SYSTEM
+-- ═══════════════════════════════════════════════════
+W._uiQueue = W._uiQueue or {}
+W._uiReady = W._uiReady or false
+
+function W.OnUIReady(fn)
+    if type(fn) ~= "function" then return end
+    if W._uiReady then pcall(fn)
+    else table.insert(W._uiQueue, fn) end
+end
+
+function W._FlushUIQueue()
+    for _, fn in ipairs(W._uiQueue) do pcall(fn) end
+    W._uiQueue = {}
+    W._uiReady = true
+end
+
+-- ═══════════════════════════════════════════════════
+-- HOOK GUARD
+-- ═══════════════════════════════════════════════════
+if getgenv().W2_HookInstalled == nil then
+    getgenv().W2_HookInstalled = false
+end
+
 local function __W2_Init__()
-    local Players           = game:GetService("Players")
-    local RunService        = game:GetService("RunService")
-    local UserInputService  = game:GetService("UserInputService")
-    local ReplicatedStorage = game:GetService("ReplicatedStorage")
-    local Workspace         = game:GetService("Workspace")
-    local CoreGui           = game:GetService("CoreGui")
-    local CollectionService = game:GetService("CollectionService")
-    local TweenService      = game:GetService("TweenService")
-    local GuiService        = game:GetService("GuiService")
-    local HttpService       = game:GetService("HttpService")
-    local Lighting          = game:GetService("Lighting")
-    local LP                = Players.LocalPlayer
-    local isMobile          = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+    local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
     local VIM = nil
     pcall(function() VIM = game:GetService("VirtualInputManager") end)
 
@@ -56,6 +84,7 @@ local function __W2_Init__()
     end
     W.UILib = UILib
 
+    -- Fix Gluto Text
     do
         local function Fix(inst)
             if not inst then return end
@@ -141,7 +170,6 @@ local function __W2_Init__()
     end
 
     local uiOK, uiErr = pcall(function()
-        -- ⭐ Title "W2", Logo + Banner pakai ID Bombax
         local Window = UILib:Window({
             Title          = "W2",
             LogoButtonSize = 52,
@@ -169,13 +197,12 @@ local function __W2_Init__()
         W.T_Misc  = Window:AddTab({ Name = "Misc",      Icon = "settings-2"   })
         W.T_Troll = Window:AddTab({ Name = "Troll",     Icon = "ghost"        })
         W.T_Cfg   = Window:AddTab({ Name = "Config",    Icon = "save"         })
+
+        W._FlushUIQueue()
     end)
 
-    if not uiOK then warn("[W2] UI Error:", uiErr) end
-
-    -- ⬇️ PART 2-16 DISISIPKAN DI SINI ⬇️--====================================================--
--- PART 2 FIXED: SURVIVOR — Self Heal, Swift Vault, Pallet Reflex, Fake Perks
--- Fake Perks pakai Cooldown 40s (kaya aslinya)
+    if not uiOK then warn("[W2] UI Error:", uiErr) end--====================================================--
+-- PART 2: SURVIVOR — Self Heal, Swift Vault, Pallet Reflex, Fake Perks
 --====================================================--
 
 function W.HealSelf(v)
@@ -433,7 +460,7 @@ do
     function W.PalletReflex_SetDist(v) W2.PalletReflex_Dist = tonumber(v) or 20 end
 end
 
--- === FAKE PERKS (Cooldown 40s seperti aslinya) ===
+-- === FAKE PERKS ===
 W.FP = W.FP or { ActiveBuffs = {}, Conns = {}, LastBuffTime = {}, CooldownTime = 40 }
 local FP = W.FP
 if not FP.LastBuffTime then FP.LastBuffTime = {} end
@@ -465,7 +492,6 @@ local function FP_HB()
     end)
 end
 
--- ⭐ Cooldown 40s per-buff
 local function FP_Buff(name, amt, dur)
     if FP.ActiveBuffs[name] then return end
     FP.LastBuffTime = FP.LastBuffTime or {}
@@ -487,7 +513,6 @@ local function FP_Reg(name, conn)
     table.insert(FP.Conns[name], conn)
 end
 
--- FLOWSTATE (+5 speed, 3s, CD 40s)
 function W.FP_Flowstate(v)
     FP.FlowstateOn = v
     local c = FP_Char()
@@ -517,7 +542,6 @@ function W.FP_Flowstate(v)
     end
 end
 
--- QUICK RECOVERY (+6 speed, 3s, CD 40s)
 function W.FP_QuickRec(v)
     FP.QuickRecOn = v
     if v then
@@ -537,7 +561,6 @@ function W.FP_QuickRec(v)
     end
 end
 
--- PERFECT LANDING (+8 speed, 3s, CD 40s)
 function W.FP_PerfLand(v)
     FP.PerfLandOn = v
     if v then
@@ -562,7 +585,6 @@ function W.FP_PerfLand(v)
     end
 end
 
--- ADRENALINE RUSH (+4 speed, 5s, CD 40s)
 function W.FP_Adrenaline(v)
     FP.AdrenalineOn = v
     if v then
@@ -585,7 +607,7 @@ function W.FP_Adrenaline(v)
 end
 
 -- === UI SECTION: SURVIVOR PART 1 ===
-do
+W.OnUIReady(function()
     local s = W.T_Surv:AddSection("Self Heal")
     s:AddToggle({ Title = "Enable Self Heal", Default = false, Callback = function(v)
         W.setSelfHeal(v)
@@ -638,11 +660,14 @@ do
             FP.CooldownTime = tonumber(v) or 40
             W.W2_Notify("Fake Perks", "Cooldown: " .. tostring(v) .. "s", 2)
         end })
-end--====================================================--
--- PART 3: AUTO SKILL CHECK (FIXED) + GEN BYPASS + VAULT
+end)--====================================================--
+-- PART 3 FINAL: SKILL CHECK (2 MODE) + GENT BOOST
+--              + FLOAT GENT + UNLIMITED VAULT + ANTI SLOW VAULT
 --====================================================--
 
--- === AUTO SKILL CHECK (FIXED) ===
+-- ═══════════════════════════════════════════════════
+-- AUTO SKILL CHECK (2 MODE: LEGIT / INSTANT)
+-- ═══════════════════════════════════════════════════
 W.SC = W.SC or { Enabled = false, Mode = "Legit", Busy = false, Conn = nil }
 local SC = W.SC
 
@@ -650,8 +675,8 @@ local function SC_FindPrompt()
     local pg = LP:FindFirstChildOfClass("PlayerGui")
     if not pg then return nil end
     for _, name in ipairs({
-        "SkillCheckPromptGui", "SkillCheck", "SkillcheckGui",
-        "SkillCheckGui", "SkillcheckPrompt", "CheckPrompt"
+        "SkillCheckPromptGui","SkillCheck","SkillcheckGui",
+        "SkillCheckGui","SkillcheckPrompt","CheckPrompt"
     }) do
         local g = pg:FindFirstChild(name)
         if g then return g end
@@ -712,7 +737,7 @@ local function SC_Press()
     local mob = pg and pg:FindFirstChild("Survivor-mob")
     local ctrl = mob and mob:FindFirstChild("Controls")
     if ctrl then
-        for _, n in ipairs({"action", "Gui-mob", "Parry", "attack"}) do
+        for _, n in ipairs({"action","Gui-mob","Parry","attack"}) do
             local btn = ctrl:FindFirstChild(n)
             if btn and btn:IsA("GuiButton") and firesignal then
                 pcall(function() firesignal(btn.MouseButton1Click) end)
@@ -721,6 +746,19 @@ local function SC_Press()
         end
     end
     return false
+end
+
+local function SC_InstantHit(check, pointer, target)
+    if not pointer or not target then return false end
+    pcall(function()
+        if pointer:IsA("Frame") or pointer:IsA("ImageLabel") then
+            pointer.Rotation = target.Rotation
+        end
+        if pointer:IsA("GuiObject") and target:IsA("GuiObject") then
+            pointer.Position = target.Position
+        end
+    end)
+    return SC_Press()
 end
 
 function W.SC_Set(v)
@@ -739,7 +777,8 @@ function W.SC_Set(v)
         if SC.Mode == "Instant" then
             SC.Busy = true
             task.spawn(function()
-                SC_Press()
+                if pointer and target then SC_InstantHit(check, pointer, target)
+                else SC_Press() end
                 task.wait(0.25)
                 SC.Busy = false
             end)
@@ -750,7 +789,7 @@ function W.SC_Set(v)
             local pr = pointer.Rotation % 360
             local tr = target.Rotation % 360
             local diff = math.abs((pr - tr + 180) % 360 - 180)
-            if diff <= 12 then
+            if diff <= 15 then
                 SC.Busy = true
                 task.spawn(function()
                     SC_Press()
@@ -760,7 +799,7 @@ function W.SC_Set(v)
             end
         elseif pointer then
             local r = pointer.Rotation % 360
-            if r > 100 and r < 130 then
+            if r > 90 and r < 130 then
                 SC.Busy = true
                 task.spawn(function()
                     SC_Press()
@@ -772,11 +811,22 @@ function W.SC_Set(v)
     end)
 end
 
--- === BYPASS GENERATOR ===
-W.GB = W.GB or { Enabled = false, Cache = {}, Timer = 0, Processed = {}, Hotkey = Enum.KeyCode.B, Range = 8 }
+function W.SC_SetMode(mode)
+    if mode == "Legit" or mode == "Instant" then
+        SC.Mode = mode
+        W.W2_Notify("Skill Check", "Mode: " .. mode, 2)
+    end
+end
+
+-- ═══════════════════════════════════════════════════
+-- GENT BOOST — CORE
+-- ═══════════════════════════════════════════════════
+W.GB = W.GB or {
+    Enabled = false, Range = 8, Hotkey = Enum.KeyCode.B,
+    Cache = {}, Timer = 0, Processed = {}
+}
 local GB = W.GB
 W2.GenBypass_Enabled = W2.GenBypass_Enabled or false
-W2.GenBypass_Range   = W2.GenBypass_Range   or 8
 
 function W.GB_Cached()
     local now = tick()
@@ -840,16 +890,6 @@ function W.GB_Repair(tp)
     pcall(function() re:FireServer(tp, false) end)
 end
 
-UserInputService.InputBegan:Connect(function(input, gp)
-    if gp or isMobile then return end
-    if input.KeyCode == GB.Hotkey and GB.Enabled then
-        local bp, bd = W.GB_Nearest()
-        if not bp or bd > GB.Range then return end
-        if GB.Processed[bp.Parent] then return end
-        W.GB_Repair(bp)
-    end
-end)
-
 task.spawn(function()
     while true do
         task.wait(2)
@@ -868,7 +908,245 @@ task.spawn(function()
     end
 end)
 
--- === UNLIMITED VAULT ===
+function W.GB_Set(v)
+    GB.Enabled = v and true or false
+    W2.GenBypass_Enabled = GB.Enabled
+    if W.GenFloat_Refresh then pcall(W.GenFloat_Refresh) end
+    W.W2_Notify("Gent Boost", v and "Enabled" or "Disabled", 2)
+end
+
+function W.GB_TriggerRepair()
+    local bp, bd = W.GB_Nearest()
+    if bp and bd <= (GB.Range or 8) then
+        W.GB_Repair(bp)
+        W.W2_Notify("Gent Boost", "Repairing...", 2)
+    else
+        W.W2_Notify("Gent Boost", "Generator terlalu jauh", 2)
+    end
+end
+
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp or isMobile then return end
+    if input.KeyCode == (GB.Hotkey or Enum.KeyCode.B) and GB.Enabled then
+        W.GB_TriggerRepair()
+        if W.GenFloat_Refresh then pcall(W.GenFloat_Refresh) end
+    end
+end)
+
+-- ═══════════════════════════════════════════════════
+-- FLOATING BUTTON GENT
+-- ═══════════════════════════════════════════════════
+do
+    local FS = { Gui = nil, Container = nil, Enabled = false, Conns = {},
+                 SavedPos = UDim2.new(0.05, 0, 0.4, 0), DragLocked = false }
+
+    local function refreshVisual()
+        if not FS.Container then return end
+        local main = FS.Container:FindFirstChild("MainBtn")
+        if not main then return end
+        local on = GB.Enabled
+        local sp = main:FindFirstChild("StatusPill")
+        local st = sp and sp:FindFirstChild("StatusText")
+        local sd = sp and sp:FindFirstChild("StatusDot")
+        local str = main:FindFirstChild("MainStroke")
+        local ic = main:FindFirstChild("IconCircle")
+        local idot = ic and ic:FindFirstChild("IconDot")
+        if on then
+            if ic then TweenService:Create(ic, TweenInfo.new(0.25), { BackgroundColor3 = Color3.fromRGB(255,255,255), BackgroundTransparency = 0.15 }):Play() end
+            if idot then TweenService:Create(idot, TweenInfo.new(0.25), { BackgroundColor3 = Color3.fromRGB(0,0,0) }):Play() end
+            if st then st.Text = "ON"; TweenService:Create(st, TweenInfo.new(0.25), { TextColor3 = Color3.fromRGB(255,255,255) }):Play() end
+            if sd then TweenService:Create(sd, TweenInfo.new(0.25), { BackgroundColor3 = Color3.fromRGB(255,255,255) }):Play() end
+            if str then TweenService:Create(str, TweenInfo.new(0.25), { Color = Color3.fromRGB(120,255,160) }):Play() end
+        else
+            if ic then TweenService:Create(ic, TweenInfo.new(0.25), { BackgroundColor3 = Color3.fromRGB(90,90,90), BackgroundTransparency = 0.4 }):Play() end
+            if idot then TweenService:Create(idot, TweenInfo.new(0.25), { BackgroundColor3 = Color3.fromRGB(0,0,0) }):Play() end
+            if st then st.Text = "OFF"; TweenService:Create(st, TweenInfo.new(0.25), { TextColor3 = Color3.fromRGB(120,120,120) }):Play() end
+            if sd then TweenService:Create(sd, TweenInfo.new(0.25), { BackgroundColor3 = Color3.fromRGB(90,90,90) }):Play() end
+            if str then TweenService:Create(str, TweenInfo.new(0.25), { Color = Color3.fromRGB(25,25,25) }):Play() end
+        end
+    end
+
+    local function onFloatingClick()
+        if not GB.Enabled then
+            W.GB_Set(true)
+            if W._SyncGenToggle then pcall(W._SyncGenToggle, true) end
+        end
+        W.GB_TriggerRepair()
+        refreshVisual()
+    end
+
+    local function destroyBtn()
+        for _, c in ipairs(FS.Conns) do pcall(function() c:Disconnect() end) end
+        FS.Conns = {}
+        if FS.Gui then pcall(function() FS.Gui:Destroy() end); FS.Gui = nil end
+        FS.Container = nil
+    end
+
+    local function buildBtn()
+        destroyBtn()
+        local parent = LP:FindFirstChild("PlayerGui")
+        if gethui then local ok2, hui = pcall(gethui); if ok2 and hui then parent = hui end end
+        if not parent then return end
+
+        local gui = Instance.new("ScreenGui")
+        gui.Name = "W2GentBoostBtn"
+        gui.ResetOnSpawn = false
+        gui.IgnoreGuiInset = true
+        gui.DisplayOrder = 999
+        gui.Parent = parent
+        FS.Gui = gui
+
+        local cont = Instance.new("Frame", gui)
+        cont.Name = "Container"
+        cont.Size = UDim2.fromOffset(180, 40)
+        cont.Position = FS.SavedPos
+        cont.BackgroundTransparency = 1
+        FS.Container = cont
+
+        local main = Instance.new("Frame", cont)
+        main.Name = "MainBtn"
+        main.Size = UDim2.fromOffset(132, 40)
+        main.BackgroundColor3 = Color3.fromRGB(0,0,0)
+        main.BorderSizePixel = 0
+        Instance.new("UICorner", main).CornerRadius = UDim.new(1, 0)
+        local ms = Instance.new("UIStroke", main)
+        ms.Name = "MainStroke"; ms.Color = Color3.fromRGB(25,25,25); ms.Thickness = 1.2; ms.Transparency = 0.2
+
+        local ic = Instance.new("Frame", main)
+        ic.Name = "IconCircle"
+        ic.Size = UDim2.fromOffset(24, 24)
+        ic.Position = UDim2.new(0, 8, 0.5, -12)
+        ic.BackgroundColor3 = Color3.fromRGB(90,90,90)
+        ic.BackgroundTransparency = 0.4
+        ic.BorderSizePixel = 0
+        Instance.new("UICorner", ic).CornerRadius = UDim.new(1, 0)
+        local idot = Instance.new("Frame", ic)
+        idot.Name = "IconDot"
+        idot.Size = UDim2.fromOffset(10, 10)
+        idot.Position = UDim2.new(0.5, -5, 0.5, -5)
+        idot.BackgroundColor3 = Color3.fromRGB(0,0,0)
+        idot.BorderSizePixel = 0
+        Instance.new("UICorner", idot).CornerRadius = UDim.new(1, 0)
+
+        local ml = Instance.new("TextLabel", main)
+        ml.Name = "MainLabel"
+        ml.Size = UDim2.new(1, -70, 1, 0)
+        ml.Position = UDim2.new(0, 38, 0, 0)
+        ml.BackgroundTransparency = 1
+        ml.Font = Enum.Font.GothamBold
+        ml.Text = "Gent"
+        ml.TextColor3 = Color3.fromRGB(240,240,245)
+        ml.TextSize = 13
+        ml.TextXAlignment = Enum.TextXAlignment.Left
+
+        local sp = Instance.new("Frame", main)
+        sp.Name = "StatusPill"
+        sp.AnchorPoint = Vector2.new(1, 0.5)
+        sp.Size = UDim2.fromOffset(42, 20)
+        sp.Position = UDim2.new(1, -8, 0.5, 0)
+        sp.BackgroundColor3 = Color3.fromRGB(0,0,0)
+        sp.BorderSizePixel = 0
+        Instance.new("UICorner", sp).CornerRadius = UDim.new(1, 0)
+        local sd = Instance.new("Frame", sp)
+        sd.Name = "StatusDot"
+        sd.Size = UDim2.fromOffset(6, 6)
+        sd.Position = UDim2.new(0, 7, 0.5, -3)
+        sd.BackgroundColor3 = Color3.fromRGB(90,90,90)
+        sd.BorderSizePixel = 0
+        Instance.new("UICorner", sd).CornerRadius = UDim.new(1, 0)
+        local st = Instance.new("TextLabel", sp)
+        st.Name = "StatusText"
+        st.Size = UDim2.new(1, -18, 1, 0)
+        st.Position = UDim2.new(0, 16, 0, 0)
+        st.BackgroundTransparency = 1
+        st.Font = Enum.Font.GothamBold
+        st.Text = "OFF"
+        st.TextColor3 = Color3.fromRGB(140,140,152)
+        st.TextSize = 10
+        st.TextXAlignment = Enum.TextXAlignment.Center
+
+        local lock = Instance.new("TextButton", cont)
+        lock.Name = "LockBtn"
+        lock.Size = UDim2.fromOffset(40, 40)
+        lock.Position = UDim2.new(1, -44, 0, 0)
+        lock.BackgroundColor3 = Color3.fromRGB(0,0,0)
+        lock.BorderSizePixel = 0
+        lock.Text = ""
+        lock.AutoButtonColor = false
+        Instance.new("UICorner", lock).CornerRadius = UDim.new(1, 0)
+        local ls = Instance.new("UIStroke", lock)
+        ls.Color = Color3.fromRGB(25,25,25); ls.Thickness = 1.2; ls.Transparency = 0.2
+        local li = Instance.new("TextLabel", lock)
+        li.Size = UDim2.fromScale(1, 1)
+        li.BackgroundTransparency = 1
+        li.Font = Enum.Font.GothamBold
+        li.Text = "🔓"
+        li.TextColor3 = Color3.fromRGB(180,180,190)
+        li.TextSize = 16
+
+        local function updateLock()
+            if FS.DragLocked then
+                li.Text = "🔒"
+                TweenService:Create(ls, TweenInfo.new(0.2), { Color = Color3.fromRGB(255,255,255), Transparency = 0, Thickness = 1.5 }):Play()
+            else
+                li.Text = "🔓"
+                TweenService:Create(ls, TweenInfo.new(0.2), { Color = Color3.fromRGB(25,25,25), Transparency = 0.2, Thickness = 1.2 }):Play()
+            end
+        end
+
+        local cd = Instance.new("TextButton", main)
+        cd.Name = "ClickDetect"
+        cd.Size = UDim2.fromScale(1, 1)
+        cd.BackgroundTransparency = 1
+        cd.Text = ""
+        cd.AutoButtonColor = false
+        cd.ZIndex = 5
+
+        local drag, dStart, sPos, dDist = false, nil, nil, 0
+        table.insert(FS.Conns, cd.InputBegan:Connect(function(inp)
+            if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                dStart = inp.Position; sPos = cont.Position; dDist = 0
+                if not FS.DragLocked then drag = true end
+            end
+        end))
+        table.insert(FS.Conns, cd.InputEnded:Connect(function(inp)
+            if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                if drag then drag = false; FS.SavedPos = cont.Position end
+                if dDist < 8 then onFloatingClick() end
+            end
+        end))
+        table.insert(FS.Conns, UserInputService.InputChanged:Connect(function(inp)
+            if not drag then return end
+            if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
+                local d = inp.Position - dStart
+                dDist = math.abs(d.X) + math.abs(d.Y)
+                cont.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + d.X, sPos.Y.Scale, sPos.Y.Offset + d.Y)
+            end
+        end))
+        table.insert(FS.Conns, lock.MouseButton1Click:Connect(function()
+            FS.DragLocked = not FS.DragLocked
+            if FS.DragLocked then drag = false end
+            updateLock()
+        end))
+
+        refreshVisual()
+        updateLock()
+    end
+
+    function W.GenFloat_Set(v)
+        FS.Enabled = v and true or false
+        if FS.Enabled then buildBtn() else destroyBtn() end
+    end
+    function W.GenFloat_Refresh()
+        if not FS.Container then return end
+        refreshVisual()
+    end
+    W.GenFloatBtn = FS
+end
+
+-- ═══════════════════════════════════════════════════
+-- UNLIMITED VAULT + ANTI SLOW VAULT
+-- ═══════════════════════════════════════════════════
 local UVOn, UVConn = false, nil
 function W.UV_Set(v)
     W2.UnlimitedVault = v
@@ -887,7 +1165,6 @@ function W.UV_Set(v)
     end
 end
 
--- === ANTI SLOW VAULT ===
 local ASVOn, ASVConn = false, nil
 function W.ASV_Set(v)
     W2.AntiSlowVault = v
@@ -906,29 +1183,36 @@ function W.ASV_Set(v)
     end
 end
 
--- === UI SECTION ===
-do
-    local s = W.T_Surv:AddSection("Auto Skill Check")
-    s:AddToggle({ Title = "Enable Auto Skill Check", Default = false, Callback = function(v)
-        W.SC_Set(v)
-        W.W2_Notify("Auto Skill Check", v and "Enabled" or "Disabled", 2)
-    end })
-    s:AddDropdown({ Title = "Mode", Options = {"Legit", "Instant"}, Default = "Legit",
-        Callback = function(v) SC.Mode = v end })
-
-    local s2 = W.T_Surv:AddSection("Bypass Generator")
-    s2:AddToggle({ Title = "Enable Bypass Generator", Content = "Hotkey B",
-        Default = false, Callback = function(v)
-            GB.Enabled = v; W2.GenBypass_Enabled = v
-            if v then W.W2_Notify("Bypass Generator", "Enabled (Hotkey: B)", 3) end
+-- ═══════════════════════════════════════════════════
+-- UI SECTION
+-- ═══════════════════════════════════════════════════
+W.OnUIReady(function()
+    local s1 = W.T_Surv:AddSection("Auto Skill Check")
+    s1:AddToggle({ Title = "Enable Auto Skill Check", Default = false, Callback = function(v) W.SC_Set(v) end })
+    s1:AddDropdown({ Title = "Mode", Options = { "Legit", "Instant" }, Default = "Legit", Multi = false,
+        Callback = function(v)
+            local val = type(v) == "table" and v[1] or v
+            W.SC_SetMode(val)
         end })
+    s1:AddParagraph({ Title = "Info Mode",
+        Content = "• Legit = Timing manual (zona ±15°)\n• Instant = Paksa pointer ke target" })
+
+    local s2 = W.T_Surv:AddSection("Gent Boost")
+    local genToggle = s2:AddToggle({ Title = "Enable Gent Boost",
+        Content = "Auto repair generator (Hotkey: B)", Default = false,
+        Callback = function(v) W.GB_Set(v); if W.GenFloat_Refresh then W.GenFloat_Refresh() end end })
+    W._SyncGenToggle = function(state)
+        if genToggle and genToggle.Set then pcall(function() genToggle:Set(state) end) end
+    end
     s2:AddSlider({ Title = "Trigger Range", Min = 3, Max = 20, Default = 8, Increment = 1, Suffix = " studs",
-        Callback = function(v) GB.Range = v; W2.GenBypass_Range = v end })
-    s2:AddButton({ Title = "Force Repair Nearest Generator", Callback = function()
-        local bp, bd = W.GB_Nearest()
-        if bp and bd <= GB.Range then W.GB_Repair(bp); W.ForceNotify("Bypass Generator", "Forcing repair...", 2)
-        else W.ForceNotify("Bypass Generator", "Terlalu jauh", 2) end
-    end })
+        Callback = function(v) GB.Range = v end })
+    s2:AddButton({ Title = "Force Repair Nearest Generator",
+        Callback = function() W.GB_TriggerRepair() end })
+    s2:AddToggle({ Title = "Show Floating Button",
+        Content = "Klik tombol = langsung repair generator terdekat", Default = false,
+        Callback = function(v) W.GenFloat_Set(v); W2.GenFloatBtn = v end })
+    s2:AddParagraph({ Title = "Cara Pakai Gent Boost",
+        Content = "• Dekat generator → tekan B (PC)\n• Klik floating button 'Gent' → langsung repair\n• Enable toggle dulu biar hotkey B aktif\n• Floating button otomatis enable + repair" })
 
     local s3 = W.T_Surv:AddSection("Unlimited Vault")
     s3:AddToggle({ Title = "Unlimited Vault", Content = "Remove 'Blocked' tag",
@@ -943,7 +1227,545 @@ do
             W.ASV_Set(v)
             W.W2_Notify("Anti Slow Vault", v and "Enabled" or "Disabled", 2)
         end })
-        end--====================================================--
+end)--====================================================--
+-- PART 3C: FLOAT EMOTE + FLOAT SILENT AIM TOF (3 MODE)
+--====================================================--
+
+-- ═══════════════════════════════════════════════════
+-- FLOAT EMOTE
+-- ═══════════════════════════════════════════════════
+do
+    local FE = { Gui = nil, Container = nil, Enabled = false, Conns = {},
+                 SavedPos = UDim2.new(0.05, 0, 0.55, 0), DragLocked = false,
+                 Track = nil, Sound = nil, Playing = false, Selected = "Friday Night" }
+
+    FE.Data = {
+        ["Friday Night"]       = { Anim = "rbxassetid://83229063951016", Sound = "rbxassetid://85355610204255" },
+        ["WarCry"]             = { Anim = "rbxassetid://82600868380136", Sound = "rbxassetid://120101930689931" },
+        ["24 Hour Cinderella"] = { Anim = "rbxassetid://137195203725366", Sound = "rbxassetid://121099446613414" },
+        ["Applause"]           = { Anim = "rbxassetid://96328361165090", Sound = "rbxassetid://115490787020749" },
+        ["Backflip"]           = { Anim = "rbxassetid://74705617908505" },
+        ["Griddy"]             = { Anim = "rbxassetid://75586690784894" },
+        ["Ghoul"]              = { Anim = "rbxassetid://130415594909401", Sound = "rbxassetid://123004139176580" },
+        ["Kyoufuu"]            = { Anim = "rbxassetid://137322894494527", Sound = "rbxassetid://129064643026442" },
+    }
+
+    function W.FE_Stop()
+        if FE.Track then pcall(function() FE.Track:Stop() end); FE.Track = nil end
+        if FE.Sound then pcall(function() FE.Sound:Destroy() end); FE.Sound = nil end
+        FE.Playing = false
+        if W.FE_Refresh then pcall(W.FE_Refresh) end
+    end
+
+    function W.FE_Play()
+        W.FE_Stop()
+        local c = LP.Character
+        if not c then return end
+        local h = c:FindFirstChildOfClass("Humanoid")
+        local r = c:FindFirstChild("HumanoidRootPart")
+        if not h or not r then return end
+        local d = FE.Data[FE.Selected]
+        if not d then return end
+        if d.Anim then
+            local a = Instance.new("Animation")
+            a.AnimationId = d.Anim
+            local t = h:LoadAnimation(a)
+            t.Looped = true
+            t.Priority = Enum.AnimationPriority.Action
+            t:Play()
+            FE.Track = t
+        end
+        if d.Sound then
+            local s = Instance.new("Sound")
+            s.SoundId = d.Sound; s.Looped = true; s.Volume = 2
+            s.Parent = r; s:Play()
+            FE.Sound = s
+        end
+        FE.Playing = true
+        if W.FE_Refresh then pcall(W.FE_Refresh) end
+    end
+
+    function W.FE_Set(name)
+        if FE.Data[name] then
+            FE.Selected = name
+            if FE.Playing then W.FE_Play() end
+        end
+    end
+
+    local function refreshVisual()
+        if not FE.Container then return end
+        local main = FE.Container:FindFirstChild("MainBtn")
+        if not main then return end
+        local on = FE.Playing
+        local sp = main:FindFirstChild("StatusPill")
+        local st = sp and sp:FindFirstChild("StatusText")
+        local sd = sp and sp:FindFirstChild("StatusDot")
+        local str = main:FindFirstChild("MainStroke")
+        local ic = main:FindFirstChild("IconCircle")
+        if on then
+            if st then st.Text = "ON" end
+            if sd then TweenService:Create(sd, TweenInfo.new(0.25), { BackgroundColor3 = Color3.fromRGB(255,255,255) }):Play() end
+            if st then TweenService:Create(st, TweenInfo.new(0.25), { TextColor3 = Color3.fromRGB(255,255,255) }):Play() end
+            if str then TweenService:Create(str, TweenInfo.new(0.25), { Color = Color3.fromRGB(255,200,100) }):Play() end
+            if ic then TweenService:Create(ic, TweenInfo.new(0.25), { BackgroundColor3 = Color3.fromRGB(255,200,100) }):Play() end
+        else
+            if st then st.Text = "OFF" end
+            if sd then TweenService:Create(sd, TweenInfo.new(0.25), { BackgroundColor3 = Color3.fromRGB(90,90,90) }):Play() end
+            if st then TweenService:Create(st, TweenInfo.new(0.25), { TextColor3 = Color3.fromRGB(120,120,120) }):Play() end
+            if str then TweenService:Create(str, TweenInfo.new(0.25), { Color = Color3.fromRGB(25,25,25) }):Play() end
+            if ic then TweenService:Create(ic, TweenInfo.new(0.25), { BackgroundColor3 = Color3.fromRGB(90,90,90) }):Play() end
+        end
+    end
+    W.FE_Refresh = refreshVisual
+
+    local function destroyBtn()
+        for _, c in ipairs(FE.Conns) do pcall(function() c:Disconnect() end) end
+        FE.Conns = {}
+        if FE.Gui then pcall(function() FE.Gui:Destroy() end); FE.Gui = nil end
+        FE.Container = nil
+    end
+
+    local function buildBtn()
+        destroyBtn()
+        local parent = LP:FindFirstChild("PlayerGui")
+        if gethui then local ok2, hui = pcall(gethui); if ok2 and hui then parent = hui end end
+        if not parent then return end
+
+        local gui = Instance.new("ScreenGui")
+        gui.Name = "W2EmoteFloatBtn"
+        gui.ResetOnSpawn = false
+        gui.IgnoreGuiInset = true
+        gui.DisplayOrder = 999
+        gui.Parent = parent
+        FE.Gui = gui
+
+        local cont = Instance.new("Frame", gui)
+        cont.Name = "Container"
+        cont.Size = UDim2.fromOffset(180, 40)
+        cont.Position = FE.SavedPos
+        cont.BackgroundTransparency = 1
+        FE.Container = cont
+
+        local main = Instance.new("Frame", cont)
+        main.Name = "MainBtn"
+        main.Size = UDim2.fromOffset(132, 40)
+        main.BackgroundColor3 = Color3.fromRGB(0,0,0)
+        main.BorderSizePixel = 0
+        Instance.new("UICorner", main).CornerRadius = UDim.new(1, 0)
+        local ms = Instance.new("UIStroke", main)
+        ms.Name = "MainStroke"; ms.Color = Color3.fromRGB(25,25,25); ms.Thickness = 1.2; ms.Transparency = 0.2
+
+        local ic = Instance.new("Frame", main)
+        ic.Name = "IconCircle"
+        ic.Size = UDim2.fromOffset(24, 24)
+        ic.Position = UDim2.new(0, 8, 0.5, -12)
+        ic.BackgroundColor3 = Color3.fromRGB(90,90,90)
+        ic.BackgroundTransparency = 0.4
+        ic.BorderSizePixel = 0
+        Instance.new("UICorner", ic).CornerRadius = UDim.new(1, 0)
+        local idot = Instance.new("TextLabel", ic)
+        idot.Name = "IconDot"
+        idot.Size = UDim2.fromScale(1, 1)
+        idot.BackgroundTransparency = 1
+        idot.Font = Enum.Font.GothamBold
+        idot.Text = "💃"
+        idot.TextSize = 14
+        idot.TextColor3 = Color3.fromRGB(255,255,255)
+
+        local ml = Instance.new("TextLabel", main)
+        ml.Name = "MainLabel"
+        ml.Size = UDim2.new(1, -70, 1, 0)
+        ml.Position = UDim2.new(0, 38, 0, 0)
+        ml.BackgroundTransparency = 1
+        ml.Font = Enum.Font.GothamBold
+        ml.Text = "Emote"
+        ml.TextColor3 = Color3.fromRGB(240,240,245)
+        ml.TextSize = 13
+        ml.TextXAlignment = Enum.TextXAlignment.Left
+
+        local sp = Instance.new("Frame", main)
+        sp.Name = "StatusPill"
+        sp.AnchorPoint = Vector2.new(1, 0.5)
+        sp.Size = UDim2.fromOffset(42, 20)
+        sp.Position = UDim2.new(1, -8, 0.5, 0)
+        sp.BackgroundColor3 = Color3.fromRGB(0,0,0)
+        sp.BorderSizePixel = 0
+        Instance.new("UICorner", sp).CornerRadius = UDim.new(1, 0)
+        local sd = Instance.new("Frame", sp)
+        sd.Name = "StatusDot"
+        sd.Size = UDim2.fromOffset(6, 6)
+        sd.Position = UDim2.new(0, 7, 0.5, -3)
+        sd.BackgroundColor3 = Color3.fromRGB(90,90,90)
+        sd.BorderSizePixel = 0
+        Instance.new("UICorner", sd).CornerRadius = UDim.new(1, 0)
+        local st = Instance.new("TextLabel", sp)
+        st.Name = "StatusText"
+        st.Size = UDim2.new(1, -18, 1, 0)
+        st.Position = UDim2.new(0, 16, 0, 0)
+        st.BackgroundTransparency = 1
+        st.Font = Enum.Font.GothamBold
+        st.Text = "OFF"
+        st.TextColor3 = Color3.fromRGB(140,140,152)
+        st.TextSize = 10
+        st.TextXAlignment = Enum.TextXAlignment.Center
+
+        local lock = Instance.new("TextButton", cont)
+        lock.Name = "LockBtn"
+        lock.Size = UDim2.fromOffset(40, 40)
+        lock.Position = UDim2.new(1, -44, 0, 0)
+        lock.BackgroundColor3 = Color3.fromRGB(0,0,0)
+        lock.BorderSizePixel = 0
+        lock.Text = ""
+        lock.AutoButtonColor = false
+        Instance.new("UICorner", lock).CornerRadius = UDim.new(1, 0)
+        local ls = Instance.new("UIStroke", lock)
+        ls.Color = Color3.fromRGB(25,25,25); ls.Thickness = 1.2; ls.Transparency = 0.2
+        local li = Instance.new("TextLabel", lock)
+        li.Size = UDim2.fromScale(1, 1)
+        li.BackgroundTransparency = 1
+        li.Font = Enum.Font.GothamBold
+        li.Text = "🔓"
+        li.TextColor3 = Color3.fromRGB(180,180,190)
+        li.TextSize = 16
+
+        local function updateLock()
+            if FE.DragLocked then
+                li.Text = "🔒"
+                TweenService:Create(ls, TweenInfo.new(0.2), { Color = Color3.fromRGB(255,255,255), Transparency = 0, Thickness = 1.5 }):Play()
+            else
+                li.Text = "🔓"
+                TweenService:Create(ls, TweenInfo.new(0.2), { Color = Color3.fromRGB(25,25,25), Transparency = 0.2, Thickness = 1.2 }):Play()
+            end
+        end
+
+        local cd = Instance.new("TextButton", main)
+        cd.Name = "ClickDetect"
+        cd.Size = UDim2.fromScale(1, 1)
+        cd.BackgroundTransparency = 1
+        cd.Text = ""
+        cd.AutoButtonColor = false
+        cd.ZIndex = 5
+
+        local drag, dStart, sPos, dDist = false, nil, nil, 0
+        table.insert(FE.Conns, cd.InputBegan:Connect(function(inp)
+            if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                dStart = inp.Position; sPos = cont.Position; dDist = 0
+                if not FE.DragLocked then drag = true end
+            end
+        end))
+        table.insert(FE.Conns, cd.InputEnded:Connect(function(inp)
+            if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                if drag then drag = false; FE.SavedPos = cont.Position end
+                if dDist < 8 then
+                    local keys = {}
+                    for k in pairs(FE.Data) do table.insert(keys, k) end
+                    table.sort(keys)
+                    if not FE.Playing then
+                        W.FE_Play()
+                    else
+                        local idx = 1
+                        for i, k in ipairs(keys) do if k == FE.Selected then idx = i; break end end
+                        local nxt = keys[(idx % #keys) + 1]
+                        W.FE_Set(nxt)
+                        W.FE_Play()
+                    end
+                    refreshVisual()
+                end
+            end
+        end))
+        table.insert(FE.Conns, UserInputService.InputChanged:Connect(function(inp)
+            if not drag then return end
+            if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
+                local d = inp.Position - dStart
+                dDist = math.abs(d.X) + math.abs(d.Y)
+                cont.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + d.X, sPos.Y.Scale, sPos.Y.Offset + d.Y)
+            end
+        end))
+        table.insert(FE.Conns, lock.MouseButton1Click:Connect(function()
+            FE.DragLocked = not FE.DragLocked
+            if FE.DragLocked then drag = false end
+            updateLock()
+        end))
+
+        refreshVisual()
+        updateLock()
+    end
+
+    function W.FloatEmote_Set(v)
+        FE.Enabled = v and true or false
+        if FE.Enabled then buildBtn() else destroyBtn() end
+    end
+    function W.FloatEmote_Refresh()
+        if not FE.Container then return end
+        refreshVisual()
+    end
+    W.FloatEmoteBtn = FE
+end
+
+-- ═══════════════════════════════════════════════════
+-- FLOAT SILENT AIM TOF (3 MODE)
+-- ═══════════════════════════════════════════════════
+do
+    local FT = { Gui = nil, Container = nil, Enabled = false, Conns = {},
+                 SavedPos = UDim2.new(0.05, 0, 0.61, 0), DragLocked = false }
+
+    local MODES = { "Killer", "Survivors", "Zombie" }
+    local MODE_LABEL = { ["Killer"] = "KLR", ["Survivors"] = "SURV", ["Zombie"] = "SCP" }
+    local MODE_COLOR = {
+        ["Killer"] = Color3.fromRGB(255, 80, 80),
+        ["Survivors"] = Color3.fromRGB(80, 160, 255),
+        ["Zombie"] = Color3.fromRGB(80, 255, 120),
+    }
+
+    local function currentMode()
+        local m = W2.TOF_TargetMode or "Killer"
+        for _, v in ipairs(MODES) do if v == m then return m end end
+        return "Killer"
+    end
+
+    local function refreshVisual()
+        if not FT.Container then return end
+        local main = FT.Container:FindFirstChild("MainBtn")
+        if not main then return end
+        local on = W2.TOF_Enabled
+        local m = currentMode()
+        local color = MODE_COLOR[m] or Color3.fromRGB(255,255,255)
+        local sp = main:FindFirstChild("StatusPill")
+        local st = sp and sp:FindFirstChild("StatusText")
+        local sd = sp and sp:FindFirstChild("StatusDot")
+        local str = main:FindFirstChild("MainStroke")
+        local ic = main:FindFirstChild("IconCircle")
+        local ml = main:FindFirstChild("MainLabel")
+        if on then
+            if st then st.Text = MODE_LABEL[m] or "ON"; TweenService:Create(st, TweenInfo.new(0.25), { TextColor3 = color }):Play() end
+            if sd then TweenService:Create(sd, TweenInfo.new(0.25), { BackgroundColor3 = color }):Play() end
+            if str then TweenService:Create(str, TweenInfo.new(0.25), { Color = color }):Play() end
+            if ic then TweenService:Create(ic, TweenInfo.new(0.25), { BackgroundColor3 = color, BackgroundTransparency = 0.2 }):Play() end
+            if ml then ml.Text = "TOF " .. (MODE_LABEL[m] or "") end
+        else
+            if st then st.Text = "OFF"; TweenService:Create(st, TweenInfo.new(0.25), { TextColor3 = Color3.fromRGB(120,120,120) }):Play() end
+            if sd then TweenService:Create(sd, TweenInfo.new(0.25), { BackgroundColor3 = Color3.fromRGB(90,90,90) }):Play() end
+            if str then TweenService:Create(str, TweenInfo.new(0.25), { Color = Color3.fromRGB(25,25,25) }):Play() end
+            if ic then TweenService:Create(ic, TweenInfo.new(0.25), { BackgroundColor3 = Color3.fromRGB(90,90,90), BackgroundTransparency = 0.4 }):Play() end
+            if ml then ml.Text = "TOF" end
+        end
+    end
+    FT.Refresh = refreshVisual
+
+    local function onFloatingClick()
+        local m = currentMode()
+        local idx = 1
+        for i, v in ipairs(MODES) do if v == m then idx = i; break end end
+        local nxt = MODES[(idx % #MODES) + 1]
+
+        if not W2.TOF_Enabled then
+            W2.TOF_TargetMode = "Killer"
+            if W.SetToFEnabled then W.SetToFEnabled(true) end
+            W.W2_Notify("TOF Float", "ON — Killer", 2)
+        else
+            if W.ToF_SetMode then W.ToF_SetMode(nxt, true) end
+        end
+        refreshVisual()
+    end
+
+    local function destroyBtn()
+        for _, c in ipairs(FT.Conns) do pcall(function() c:Disconnect() end) end
+        FT.Conns = {}
+        if FT.Gui then pcall(function() FT.Gui:Destroy() end); FT.Gui = nil end
+        FT.Container = nil
+    end
+
+    local function buildBtn()
+        destroyBtn()
+        local parent = LP:FindFirstChild("PlayerGui")
+        if gethui then local ok2, hui = pcall(gethui); if ok2 and hui then parent = hui end end
+        if not parent then return end
+
+        local gui = Instance.new("ScreenGui")
+        gui.Name = "W2TOFFloatBtn"
+        gui.ResetOnSpawn = false
+        gui.IgnoreGuiInset = true
+        gui.DisplayOrder = 999
+        gui.Parent = parent
+        FT.Gui = gui
+
+        local cont = Instance.new("Frame", gui)
+        cont.Name = "Container"
+        cont.Size = UDim2.fromOffset(180, 40)
+        cont.Position = FT.SavedPos
+        cont.BackgroundTransparency = 1
+        FT.Container = cont
+
+        local main = Instance.new("Frame", cont)
+        main.Name = "MainBtn"
+        main.Size = UDim2.fromOffset(132, 40)
+        main.BackgroundColor3 = Color3.fromRGB(0,0,0)
+        main.BorderSizePixel = 0
+        Instance.new("UICorner", main).CornerRadius = UDim.new(1, 0)
+        local ms = Instance.new("UIStroke", main)
+        ms.Name = "MainStroke"; ms.Color = Color3.fromRGB(25,25,25); ms.Thickness = 1.2; ms.Transparency = 0.2
+
+        local ic = Instance.new("Frame", main)
+        ic.Name = "IconCircle"
+        ic.Size = UDim2.fromOffset(24, 24)
+        ic.Position = UDim2.new(0, 8, 0.5, -12)
+        ic.BackgroundColor3 = Color3.fromRGB(90,90,90)
+        ic.BackgroundTransparency = 0.4
+        ic.BorderSizePixel = 0
+        Instance.new("UICorner", ic).CornerRadius = UDim.new(1, 0)
+        local idot = Instance.new("TextLabel", ic)
+        idot.Name = "IconDot"
+        idot.Size = UDim2.fromScale(1, 1)
+        idot.BackgroundTransparency = 1
+        idot.Font = Enum.Font.GothamBold
+        idot.Text = "🎯"
+        idot.TextSize = 14
+        idot.TextColor3 = Color3.fromRGB(255,255,255)
+
+        local ml = Instance.new("TextLabel", main)
+        ml.Name = "MainLabel"
+        ml.Size = UDim2.new(1, -70, 1, 0)
+        ml.Position = UDim2.new(0, 38, 0, 0)
+        ml.BackgroundTransparency = 1
+        ml.Font = Enum.Font.GothamBold
+        ml.Text = "TOF"
+        ml.TextColor3 = Color3.fromRGB(240,240,245)
+        ml.TextSize = 13
+        ml.TextXAlignment = Enum.TextXAlignment.Left
+
+        local sp = Instance.new("Frame", main)
+        sp.Name = "StatusPill"
+        sp.AnchorPoint = Vector2.new(1, 0.5)
+        sp.Size = UDim2.fromOffset(46, 20)
+        sp.Position = UDim2.new(1, -8, 0.5, 0)
+        sp.BackgroundColor3 = Color3.fromRGB(0,0,0)
+        sp.BorderSizePixel = 0
+        Instance.new("UICorner", sp).CornerRadius = UDim.new(1, 0)
+        local sd = Instance.new("Frame", sp)
+        sd.Name = "StatusDot"
+        sd.Size = UDim2.fromOffset(6, 6)
+        sd.Position = UDim2.new(0, 6, 0.5, -3)
+        sd.BackgroundColor3 = Color3.fromRGB(90,90,90)
+        sd.BorderSizePixel = 0
+        Instance.new("UICorner", sd).CornerRadius = UDim.new(1, 0)
+        local st = Instance.new("TextLabel", sp)
+        st.Name = "StatusText"
+        st.Size = UDim2.new(1, -16, 1, 0)
+        st.Position = UDim2.new(0, 14, 0, 0)
+        st.BackgroundTransparency = 1
+        st.Font = Enum.Font.GothamBold
+        st.Text = "OFF"
+        st.TextColor3 = Color3.fromRGB(140,140,152)
+        st.TextSize = 9
+        st.TextXAlignment = Enum.TextXAlignment.Center
+
+        local lock = Instance.new("TextButton", cont)
+        lock.Name = "LockBtn"
+        lock.Size = UDim2.fromOffset(40, 40)
+        lock.Position = UDim2.new(1, -44, 0, 0)
+        lock.BackgroundColor3 = Color3.fromRGB(0,0,0)
+        lock.BorderSizePixel = 0
+        lock.Text = ""
+        lock.AutoButtonColor = false
+        Instance.new("UICorner", lock).CornerRadius = UDim.new(1, 0)
+        local ls = Instance.new("UIStroke", lock)
+        ls.Color = Color3.fromRGB(25,25,25); ls.Thickness = 1.2; ls.Transparency = 0.2
+        local li = Instance.new("TextLabel", lock)
+        li.Size = UDim2.fromScale(1, 1)
+        li.BackgroundTransparency = 1
+        li.Font = Enum.Font.GothamBold
+        li.Text = "🔓"
+        li.TextColor3 = Color3.fromRGB(180,180,190)
+        li.TextSize = 16
+
+        local function updateLock()
+            if FT.DragLocked then
+                li.Text = "🔒"
+                TweenService:Create(ls, TweenInfo.new(0.2), { Color = Color3.fromRGB(255,255,255), Transparency = 0, Thickness = 1.5 }):Play()
+            else
+                li.Text = "🔓"
+                TweenService:Create(ls, TweenInfo.new(0.2), { Color = Color3.fromRGB(25,25,25), Transparency = 0.2, Thickness = 1.2 }):Play()
+            end
+        end
+
+        local cd = Instance.new("TextButton", main)
+        cd.Name = "ClickDetect"
+        cd.Size = UDim2.fromScale(1, 1)
+        cd.BackgroundTransparency = 1
+        cd.Text = ""
+        cd.AutoButtonColor = false
+        cd.ZIndex = 5
+
+        local drag, dStart, sPos, dDist = false, nil, nil, 0
+        table.insert(FT.Conns, cd.InputBegan:Connect(function(inp)
+            if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                dStart = inp.Position; sPos = cont.Position; dDist = 0
+                if not FT.DragLocked then drag = true end
+            end
+        end))
+        table.insert(FT.Conns, cd.InputEnded:Connect(function(inp)
+            if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                if drag then drag = false; FT.SavedPos = cont.Position end
+                if dDist < 8 then onFloatingClick() end
+            end
+        end))
+        table.insert(FT.Conns, UserInputService.InputChanged:Connect(function(inp)
+            if not drag then return end
+            if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
+                local d = inp.Position - dStart
+                dDist = math.abs(d.X) + math.abs(d.Y)
+                cont.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + d.X, sPos.Y.Scale, sPos.Y.Offset + d.Y)
+            end
+        end))
+        table.insert(FT.Conns, lock.MouseButton1Click:Connect(function()
+            FT.DragLocked = not FT.DragLocked
+            if FT.DragLocked then drag = false end
+            updateLock()
+        end))
+
+        refreshVisual()
+        updateLock()
+
+        if not FT._watchThread then
+            FT._watchThread = task.spawn(function()
+                local lastMode, lastOn = nil, nil
+                while FT.Enabled do
+                    task.wait(0.25)
+                    local m = currentMode()
+                    local on = W2.TOF_Enabled
+                    if m ~= lastMode or on ~= lastOn then
+                        lastMode = m; lastOn = on
+                        refreshVisual()
+                    end
+                end
+                FT._watchThread = nil
+            end)
+        end
+    end
+
+    function W.FloatTOF_Set(v)
+        FT.Enabled = v and true or false
+        if FT.Enabled then buildBtn() else destroyBtn() end
+    end
+    function W.FloatTOF_Refresh()
+        if not FT.Container then return end
+        refreshVisual()
+    end
+    W.FloatTOFBtn = FT
+end
+
+-- ═══════════════════════════════════════════════════
+-- UI SECTION — New Float Buttons
+-- ═══════════════════════════════════════════════════
+W.OnUIReady(function()
+    local s = W.T_Misc:AddSection("New Float Buttons")
+    s:AddToggle({ Title = "Float Emote Button",
+        Content = "Klik = toggle emote + cycle preset", Default = false,
+        Callback = function(v) W.FloatEmote_Set(v) end })
+    s:AddToggle({ Title = "Float Silent Aim TOF (3 Mode)",
+        Content = "Klik = cycle Killer → Survivor → SCP", Default = false,
+        Callback = function(v) W.FloatTOF_Set(v) end })
+end)--====================================================--
 -- PART 4: AUTO RUN + CROUCH + FLEE + NO FALL + TROLL TP + GOD
 --====================================================--
 
@@ -1151,10 +1973,6 @@ task.spawn(function()
     end
 end)
 
--- === NO FALL DAMAGE (flag only, hook digabung di PART 16) ===
--- Fungsi NoFallDamage di-handle oleh hook handler global di PART 16
--- Cuma perlu flag W2.NoFallDamage
-
 -- === TROLL TELEPORT ===
 W.TT = W.TT or {
     Enabled = false, Processing = false, Count = 0,
@@ -1225,7 +2043,7 @@ function W.God_Set(v)
 end
 
 -- === UI SECTION ===
-do
+W.OnUIReady(function()
     local s = W.T_Surv:AddSection("Auto Run")
     s:AddToggle({ Title = "Auto Run [PC]", Default = false, Callback = function(v)
         W.AutoRunPC(v); W.W2_Notify("Auto Run PC", v and "Enabled" or "Disabled", 2)
@@ -1267,7 +2085,7 @@ do
         W.God_Set(v)
         W.W2_Notify("God Mode", v and "Enabled" or "Disabled", 2)
     end })
-            end--====================================================--
+end)--====================================================--
 -- PART 5: MANUAL GENERATOR + AUTO GENERATOR
 --====================================================--
 
@@ -1521,7 +2339,7 @@ do
 end
 
 -- === UI SECTION ===
-do
+W.OnUIReady(function()
     local s = W.T_Surv:AddSection("Manual Generator")
     s:AddToggle({ Title = "Enable Manual Generator",
         Content = "Auto repair gen in reach. Release when killer near.",
@@ -1539,7 +2357,7 @@ do
             W.AutoGen_Set(v)
             W.W2_Notify("Auto Gen", v and "Enabled" or "Disabled", 2)
         end })
-                end--====================================================--
+end)--====================================================--
 -- PART 6: PARRY V1 + PARRY V2 + FAKE PARRY
 --====================================================--
 
@@ -1577,9 +2395,9 @@ local KillerAttackAnims = {
 }
 W.KillerAttackAnims = KillerAttackAnims
 
---====================================================--
+-- ═══════════════════════════════════════════════════
 -- PARRY V1
---====================================================--
+-- ═══════════════════════════════════════════════════
 do
     local ParryState = {
         LastParry = 0, ActiveAttackers = {},
@@ -2061,9 +2879,9 @@ do
     end)
 end
 
---====================================================--
--- PARRY V2 (Wisnu style)
---====================================================--
+-- ═══════════════════════════════════════════════════
+-- PARRY V2
+-- ═══════════════════════════════════════════════════
 do
     local ValidIDs = {
         ["122812055447896"]="Veil lunge",["133963973694098"]="Mayers Basic",
@@ -2252,9 +3070,9 @@ do
     end)
 end
 
---====================================================--
+-- ═══════════════════════════════════════════════════
 -- FAKE PARRY
---====================================================--
+-- ═══════════════════════════════════════════════════
 do
     local FakeParryTrack = nil
     local FakeParryLast  = 0
@@ -2449,7 +3267,7 @@ do
 end
 
 -- === UI SECTION ===
-do
+W.OnUIReady(function()
     local s = W.T_Surv:AddSection("Auto Parry V1")
     s:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
         W2.ParryV1_Enabled = v
@@ -2503,7 +3321,7 @@ do
         W.FakeParry_Trigger()
         W.ForceNotify("Fake Parry", "Playing...", 2)
     end })
-                    end--====================================================--
+end)--====================================================--
 -- PART 7: MAP PREDICT + SELF UNHOOK + TOF + FLASHLIGHT + GUN + MOONWALK
 --====================================================--
 
@@ -2834,7 +3652,7 @@ local function ToF_Visible(op, tp, tc)
     local d = tp - op
     local dist = d.Magnitude
     if dist < 0.1 then return true end
-    local rp = RaycastParams.new(); rp.FilterType = Enum.RaycastFilterType.Exclude
+    local rp = RaycastParams.new(); rp.FilterType = Enum.RaycastFilterType.Exclude or Enum.RaycastFilterType.Blacklist
     local ex = {}
     local lc = LP.Character
     if lc then table.insert(ex, lc) end
@@ -3181,16 +3999,6 @@ do
         elseif not FS.Active then FS.Part = nil end
         if not FS.Active and FS.Laser then FS.Laser.Transparency = 1 end
     end
-    task.spawn(function()
-        pcall(function()
-            local r = actRemote()
-            if not r then return end
-            if typeof(hookmetamethod) ~= "function" or FS.Hooked then return end
-            FS.Hooked = true
-            -- PENTING: hook Flashlight Activate di-handle PART 16 (hook global)
-            -- Cuma set flag di sini, hook digabung di PART 16
-        end)
-    end)
 end
 
 -- === AIM LOCK GUN ===
@@ -3207,7 +4015,7 @@ do
         local cam = Workspace.CurrentCamera
         if not cam then return true end
         local rp = RaycastParams.new()
-        rp.FilterType = Enum.RaycastFilterType.Exclude
+        rp.FilterType = Enum.RaycastFilterType.Exclude or Enum.RaycastFilterType.Blacklist
         rp.FilterDescendantsInstances = { LP.Character }
         local o = cam.CFrame.Position
         local d = part.Position - o
@@ -3350,7 +4158,7 @@ do
 end
 
 -- === UI SECTION ===
-do
+W.OnUIReady(function()
     local s = W.T_Surv:AddSection("Next Map Prediction")
     s:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
         if v then W.MapPredict_Start() else W.MapPredict_Stop() end
@@ -3417,7 +4225,7 @@ do
         Callback = function(v) W.Moonwalk_SetBack(v) end })
     s6:AddSlider({ Title = "Switch Interval", Min = 0.02, Max = 0.5, Default = 0.07, Increment = 0.01,
         Callback = function(v) W.Moonwalk_SetInterval(v) end })
-end--====================================================--
+end)--====================================================--
 -- PART 8: VISUALS — FULL ESP + ESP STATUS
 --====================================================--
 
@@ -3931,7 +4739,7 @@ do
 end
 
 -- === UI SECTION ===
-do
+W.OnUIReady(function()
     local s = W.T_Vis:AddSection("Full ESP System")
     s:AddToggle({ Title = "ESP Survivor", Default = false, Callback = function(v) FESP.Survivor = v end })
     s:AddColorPicker({ Title = "Survivor Color", Default = FESPC.Survivor, Save = false, Callback = function(c) FESPC.Survivor = c end })
@@ -3959,7 +4767,7 @@ do
     s2:AddToggle({ Title = "Show Health", Default = false, Callback = function(v) FESPS.ShowHealth = v end })
     s2:AddSlider({ Title = "Status Radius", Min = 20, Max = 1000, Default = 500, Increment = 10,
         Callback = function(v) FESPS.Radius = v end })
-                            end--====================================================--
+end)--====================================================--
 -- PART 9: VISUALS — HITBOX + GRAPHICS
 --====================================================--
 
@@ -4375,7 +5183,7 @@ LP.CharacterAdded:Connect(function()
 end)
 
 -- === UI SECTION ===
-do
+W.OnUIReady(function()
     local s = W.T_Vis:AddSection("Hitbox")
     s:AddToggle({ Title = "Enable Hitbox", Default = false, Callback = function(v) W2.Hitbox_Enabled = v end })
     s:AddColorPicker({ Title = "Hitbox Color", Default = Color3.fromRGB(255, 0, 0), Save = false, Callback = function(c) W2.Hitbox_Color = c end })
@@ -4399,7 +5207,7 @@ do
     end })
     s2:AddToggle({ Title = "Grafik HD Ringan", Default = false, Callback = function(v) G.HDRingan = v; applyHDRingan() end })
     s2:AddToggle({ Title = "Grafik HD Kincolong", Default = false, Callback = function(v) G.HDKincolong = v; applyHDKincolong() end })
-                                end--====================================================--
+end)--====================================================--
 -- PART 10: VISUALS — CLOCK + ZOOM + POV + CAMERA DBD
 --====================================================--
 
@@ -4494,7 +5302,7 @@ do
 end
 
 -- === UI SECTION ===
-do
+W.OnUIReady(function()
     local s = W.T_Vis:AddSection("Clock & Ambient")
     s:AddToggle({ Title = "Enable Clock Override", Default = false, Callback = function(v)
         G.ClockTimeEnabled = v; W.Graphics_Apply()
@@ -4551,10 +5359,10 @@ do
     s4:AddSlider({ Title = "Deadzone", Min = 0, Max = 50, Default = 10, Increment = 1,
         Callback = function(v) W2.CamDBD_Deadzone = v end })
     s4:AddButton({ Title = "Reset to Default", Callback = function() W.CamDBD_Reset() end })
-end
+end)
 
 --====================================================--
--- PART 11 prep: KILLER FLAGS (biar bisa diakses part selanjutnya)
+-- PART 11 prep: KILLER FLAGS
 --====================================================--
 W2.InfLunge_Enabled     = W2.InfLunge_Enabled     or false
 W2.CounterParry_Enabled = W2.CounterParry_Enabled or false
@@ -4658,7 +5466,7 @@ task.spawn(function()
 end)
 
 -- === UI SECTION ===
-do
+W.OnUIReady(function()
     local s = W.T_Kill:AddSection("Auto Attack")
     s:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
         W2.AutoAttack_Enabled = v
@@ -4681,8 +5489,8 @@ do
             W2.CounterParry_Enabled = v
             W.W2_Notify("Counter Parry", v and "Enabled" or "Disabled", 2)
         end })
-                                    end--====================================================--
--- PART 12: KILLER — AIM LOCK HIDDEN + AIM LOCK ATTACK + AIMBOT ZOMBIE
+end)--====================================================--
+-- PART 12: KILLER — AIM LOCK HIDDEN + ATTACK + ZOMBIE
 --====================================================--
 
 W2.AimbotZombie_Enabled = W2.AimbotZombie_Enabled or false
@@ -4690,7 +5498,7 @@ W2.AimHidden_Enabled    = W2.AimHidden_Enabled    or false
 W2.AimHidden_Key        = W2.AimHidden_Key        or "E"
 W2.AimAttack_Enabled    = W2.AimAttack_Enabled    or false
 
--- === AIM LOCK HIDDEN (Aim semua musuh) ===
+-- === AIM LOCK HIDDEN ===
 do
     local thread = nil
     local aiming = false
@@ -4772,7 +5580,7 @@ do
     local currBtn = nil
     local paths = { "Slasher-mob.Controls.attack", "Masked-mob.Controls.attack", "Killer-mob.Controls.attack" }
     local rp = RaycastParams.new()
-    rp.FilterType = Enum.RaycastFilterType.Exclude
+    rp.FilterType = Enum.RaycastFilterType.Exclude or Enum.RaycastFilterType.Blacklist
 
     local function visible(part)
         local cam = Workspace.CurrentCamera
@@ -4870,7 +5678,7 @@ do
         local cam = Workspace.CurrentCamera
         if not cam then return true end
         local rp = RaycastParams.new()
-        rp.FilterType = Enum.RaycastFilterType.Exclude
+        rp.FilterType = Enum.RaycastFilterType.Exclude or Enum.RaycastFilterType.Blacklist
         rp.FilterDescendantsInstances = { LP.Character }
         local o = cam.CFrame.Position
         local d = part.Position - o
@@ -4942,7 +5750,7 @@ do
 end
 
 -- === UI SECTION ===
-do
+W.OnUIReady(function()
     local s = W.T_Kill:AddSection("Aim Lock Hidden")
     s:AddToggle({ Title = "Enable (Hold M2/E)", Default = false, Callback = function(v)
         W.AimHidden_Set(v)
@@ -4977,8 +5785,8 @@ do
         Callback = function(v)
             if W.ZombieAim_Cfg then W.ZombieAim_Cfg.FOV = v end
         end })
-                                        end--====================================================--
--- PART 13: KILLER — ANTI BLIND + DESTROY PALLET + MASKED + VEIL V1/V2
+end)--====================================================--
+-- PART 13: KILLER — ANTI BLIND + PALLET + MASKED + VEIL
 --====================================================--
 
 W2.AntiBlind_Enabled = W2.AntiBlind_Enabled or false
@@ -4994,9 +5802,6 @@ W2.VeilV1_MaxDist     = W2.VeilV1_MaxDist     or 280
 W2.VeilV1_SpearSpeed  = W2.VeilV1_SpearSpeed  or 165
 W2.VeilV1_Gravity     = W2.VeilV1_Gravity     or 103
 W2.VeilV1_Lead        = W2.VeilV1_Lead        or 1.4
-
--- === ANTI BLIND (flag only, hook digabung di PART 16) ===
--- Cuma set flag, hook __namecall global ada di PART 16
 
 -- === DESTROY PALLET ===
 getgenv().W2_BreakingPallet = false
@@ -5194,12 +5999,11 @@ do
         end
     end
 
-    -- Simpan referensi lookVector ke W biar bisa diakses hook global di PART 16
     W._VeilV1_State = VeilState
     RunService.RenderStepped:Connect(function() pcall(Veil_Update) end)
 end
 
--- === SILENT SPEAR VEIL V2 (W424 style) ===
+-- === SILENT SPEAR VEIL V2 ===
 do
     local Config = {}
     local Camera = Workspace.CurrentCamera
@@ -5304,7 +6108,6 @@ do
         stk.Thickness = 1.5
     end
 
-    -- Setup input handler dulu (bukan hook)
     UserInputService.InputBegan:Connect(function(inp, gp)
         local isTouch = (inp.UserInputType == Enum.UserInputType.Touch)
         if gp and not isTouch then return end
@@ -5469,7 +6272,7 @@ do
 end
 
 -- === UI SECTION ===
-do
+W.OnUIReady(function()
     local s = W.T_Kill:AddSection("Anti Blind")
     s:AddToggle({ Title = "Enable", Content = "Block efek pusing dari flashlight survivor",
         Default = false, Callback = function(v)
@@ -5525,9 +6328,8 @@ do
     s5:AddToggle({ Title = "ESP Tracker", Default = false, Callback = function(v)
         W.W424Veil_API.setTracker(v)
     end })
-                                            end--====================================================--
--- PART 14 FIXED v2: BYPASS + UNLOCK CARRY + SPEAR AIMBOT + KILLER ABILITIES
--- FIX: Killer Abilities gabungan (toggle + instant button dalam 1 section)
+end)--====================================================--
+-- PART 14: KILLER — BYPASS + UNLOCK CARRY + SPEAR AIMBOT + ABILITIES
 --====================================================--
 
 W2.Bypass_HiddenLeap = W2.Bypass_HiddenLeap or false
@@ -5713,13 +6515,17 @@ end
 -- === BYPASS: ABYSS ===
 getgenv().W2_AbyssConn = nil
 getgenv().W2_CorruptFn = nil
+local function __hasVal(t, v)
+    for _, x in ipairs(t) do if x == v then return true end end
+    return false
+end
 function W.StartAbyssBypass()
     if not getgenv().W2_CorruptFn then
         pcall(function()
             for _, v in pairs(getgc(true)) do
                 if type(v) == "function" and islclosure(v) then
                     local cs = debug.getconstants(v)
-                    if table.find(cs, "corrupt") and table.find(cs, "Immobile") then
+                    if __hasVal(cs, "corrupt") and __hasVal(cs, "Immobile") then
                         getgenv().W2_CorruptFn = v
                         break
                     end
@@ -6061,7 +6867,7 @@ do
     function W.SpearAimbot_SetS(v) W2.SpearAimbot_Speed = tonumber(v) or 100 end
 end
 
--- === KILLER ABILITIES — DENGAN TIMER EXPOSE ===
+-- === KILLER ABILITIES ===
 W.KA = W.KA or {
     AutoStalk = W2.AutoStalk, AutoStalkRange = W2.AutoStalk_Range,
     AutoKillAll = W2.AutoKillAll, DropAllPallet = W2.DropAllPallet,
@@ -6327,8 +7133,8 @@ do
     end
 end
 
--- === UI SECTION: KILLER ABILITIES GABUNGAN ===
-do
+-- === UI SECTION ===
+W.OnUIReady(function()
     local s = W.T_Kill:AddSection("Bypass No Cooldown")
     s:AddToggle({ Title = "Hidden Leap", Default = false, Callback = function(v) W.SetHiddenLeap(v) end })
     s:AddToggle({ Title = "Myers Grab (H)", Default = false, Callback = function(v) W.Myers_Set(v) end })
@@ -6345,9 +7151,7 @@ do
     s3:AddSlider({ Title = "Gravity", Min = 10, Max = 200, Default = 50, Increment = 1, Callback = function(v) W.SpearAimbot_SetG(v) end })
     s3:AddSlider({ Title = "Speed", Min = 50, Max = 300, Default = 100, Increment = 5, Callback = function(v) W.SpearAimbot_SetS(v) end })
 
-    -- ⭐ FIX: Killer Abilities gabungan — toggle + instant button dalam 1 section
     local s4 = W.T_Kill:AddSection("Killer Abilities")
-
     s4:AddToggle({ Title = "Auto Stalk", Default = false, Callback = function(v) W.KA_SetAutoStalk(v) end })
     s4:AddSlider({ Title = "Stalk Range", Min = 20, Max = 500, Default = 150, Increment = 10, Suffix = " studs",
         Callback = function(v) KA.AutoStalkRange = v; W2.AutoStalk_Range = v end })
@@ -6367,19 +7171,11 @@ do
         W.W2_Notify("Auto Kill", "Triggered once", 2)
     end })
     s4:AddButton({ Title = "Instant Drop All Pallet (1x)", Callback = function()
-        if W.KA_DropAllPallets_Force then
-            W.KA_DropAllPallets_Force()
-        else
-            pcall(W.KA_DropAllPallets)
-        end
+        if W.KA_DropAllPallets_Force then W.KA_DropAllPallets_Force() end
         W.W2_Notify("Drop Pallet", "Triggered (bypass cooldown)", 2)
     end })
     s4:AddButton({ Title = "Instant Block All Vault (1x)", Callback = function()
-        if W.KA_BlockAllVaults_Force then
-            W.KA_BlockAllVaults_Force()
-        else
-            pcall(W.KA_BlockAllVaults)
-        end
+        if W.KA_BlockAllVaults_Force then W.KA_BlockAllVaults_Force() end
         W.W2_Notify("Block Vault", "Triggered (bypass cooldown)", 2)
     end })
     s4:AddButton({ Title = "Unblock All Vault (1x)", Callback = function()
@@ -6402,7 +7198,7 @@ do
         end
         W.ForceNotify("Block Vault", "Unblock " .. count .. " vaults!", 3)
     end })
-end--====================================================--
+end)--====================================================--
 -- PART 15: KILLER — FLASK + DASH LOCK + INSTANT BUTTONS
 --====================================================--
 
@@ -6539,7 +7335,6 @@ do
         FS.LandingRing.Transparency = 0.35
     end
 
-    -- Simpan referensi ke W biar bisa diakses hook global di PART 16
     W._Flask_FS = FS
 
     RunService.RenderStepped:Connect(function()
@@ -6656,7 +7451,7 @@ do
 end
 
 -- === UI SECTION ===
-do
+W.OnUIReady(function()
     local s = W.T_Kill:AddSection("Silent Flask (The Cure)")
     s:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
         W.Flask_Set(v)
@@ -6699,12 +7494,12 @@ do
         W.W2_Notify("Auto Kill", "Triggered once", 2)
     end })
     s3:AddButton({ Title = "Instant Drop All Pallet (1x)", Callback = function()
-        lastDrop = 0
+        _KAtimer.lastDrop = 0
         pcall(W.KA_DropAllPallets)
         W.W2_Notify("Drop Pallet", "Triggered", 2)
     end })
     s3:AddButton({ Title = "Instant Block All Vault (1x)", Callback = function()
-        lastBlock = 0
+        _KAtimer.lastBlock = 0
         pcall(W.KA_BlockAllVaults)
         W.W2_Notify("Block Vault", "Triggered", 2)
     end })
@@ -6728,698 +7523,12 @@ do
         end
         W.ForceNotify("Block Vault", "Unblock " .. count .. " vaults!", 3)
     end })
-                                                    end--====================================================--
--- PART 16A: MISC (Stun, Invis, Utility, SpeedBoost, Cursor, Spectator)
+end)--====================================================--
+-- PART 16B-1: HOOK GLOBAL
 --====================================================--
-
-W2.Stun_Enabled    = W2.Stun_Enabled    or false
-W2.Stun_Sound      = W2.Stun_Sound      or "Default"
-W2.Stun_SoundAlert = W2.Stun_SoundAlert ~= false
-W2.Stun_Range      = W2.Stun_Range      or 500
-W2.Stun_Volume     = W2.Stun_Volume     or 1.5
-W2.Invis_Enabled   = W2.Invis_Enabled   or false
-W2.Invis_Hotkey    = W2.Invis_Hotkey    or "G"
-W2.PU_SpeedEnabled = W2.PU_SpeedEnabled or false
-W2.PU_SpeedValue   = W2.PU_SpeedValue   or 16
-W2.PU_ShiftLock    = W2.PU_ShiftLock    or false
-W2.PU_UnlimitedZoom= W2.PU_UnlimitedZoom or false
-W2.PU_Noclip       = W2.PU_Noclip       or false
-W2.SpeedBoost_Enabled = W2.SpeedBoost_Enabled or false
-W2.SpeedBoost_Value   = W2.SpeedBoost_Value   or 30
-W2.Cursor_Enabled  = W2.Cursor_Enabled  or false
-W2.Spectator_Enabled = W2.Spectator_Enabled or false
-
--- === STUN INDICATOR ===
-W.StunSounds = W.StunSounds or {
-    ["Default"]="18843924331",["Clash Royale"]="114072050006157",["Blash"]="89068385567682",
-    ["Coin"]="75510526696824",["Kururin Kuru"]="119896940405402",["Spongebob"]="6835794541",
-    ["Fahhhh"]="123562480982353",["Cave"]="3173566193",["Aughhh"]="9095205664",
-    ["Samsung"]="6879335951",["iPhone"]="4203251375",["Siren"]="130677853589923",
-}
-W.StunInd = W.StunInd or {
-    Enabled = false, Cache = {}, Conn = nil, Range = 500,
-    SoundEnabled = true, SoundId = "18843924331",
-    Volume = 1.5, SoundRange = 500, SelectedSound = "Default",
-}
-local SI = W.StunInd
-SI.SelectedSound = SI.SelectedSound or "Default"
-
-local function SI_SoundId()
-    return W.StunSounds[SI.SelectedSound] or SI.SoundId
-end
-local function SI_Stunned(char)
-    if not char then return false end
-    if char:GetAttribute("IsStunned") or char:GetAttribute("isStunned") or char:GetAttribute("Stunned")
-        or char:GetAttribute("stunned") or char:GetAttribute("IsStun") or char:GetAttribute("Stun") then return true end
-    local ci = char:FindFirstChild("CheckInterractable")
-    if ci and (ci:GetAttribute("isStunned") or ci:GetAttribute("Stunned")) then return true end
-    local h = char:FindFirstChildOfClass("Humanoid")
-    if h then
-        local sv = h:FindFirstChild("StunValue")
-        if sv and sv.Value > 0 then return true end
-    end
-    return false
-end
-local function SI_Remove(char)
-    local d = SI.Cache[char]
-    if d then
-        pcall(function() if d.Gui then d.Gui:Destroy() end end)
-        SI.Cache[char] = nil
-    end
-end
-local function SI_Play(char)
-    if not SI.SoundEnabled then return end
-    pcall(function()
-        local head = char and char:FindFirstChild("Head")
-        local hrp = char and char:FindFirstChild("HumanoidRootPart")
-        local att = head or hrp
-        if not att then return end
-        local s = Instance.new("Sound")
-        s.Name = "W2StunSound"
-        s.SoundId = "rbxassetid://" .. tostring(SI_SoundId())
-        s.Volume = SI.Volume or 1.5
-        s.RollOffMaxDistance = SI.SoundRange or 500
-        s.RollOffMinDistance = 10
-        s.RollOffMode = Enum.RollOffMode.InverseTapered
-        s.Parent = att
-        s:Play()
-        s.Ended:Connect(function() pcall(function() s:Destroy() end) end)
-        task.delay(5, function() pcall(function() if s and s.Parent then s:Destroy() end end) end)
-    end)
-end
-local function SI_Create(char)
-    if SI.Cache[char] then return SI.Cache[char] end
-    local head = char:FindFirstChild("Head")
-    if not head then return nil end
-    local bbg = Instance.new("BillboardGui")
-    bbg.Name = "W2StunIndicator"
-    bbg.Size = UDim2.fromOffset(140, 42)
-    bbg.StudsOffset = Vector3.new(0, 3, 0)
-    bbg.AlwaysOnTop = true
-    bbg.LightInfluence = 0
-    bbg.MaxDistance = 500
-    bbg.Adornee = head
-    bbg.Parent = char
-    local main = Instance.new("Frame")
-    main.Name = "Main"
-    main.Size = UDim2.new(0, 140, 0, 34)
-    main.Position = UDim2.new(0, 0, 0, 4)
-    main.BackgroundColor3 = Color3.fromRGB(12, 12, 15)
-    main.BackgroundTransparency = 0.05
-    main.BorderSizePixel = 0
-    main.Parent = bbg
-    Instance.new("UICorner", main).CornerRadius = UDim.new(0, 9)
-    local t = Instance.new("TextLabel")
-    t.Size = UDim2.new(1, -42, 0, 12)
-    t.Position = UDim2.new(0, 34, 0, 4)
-    t.BackgroundTransparency = 1
-    t.Font = Enum.Font.GothamBlack
-    t.Text = "STUNNED"
-    t.TextColor3 = Color3.fromRGB(255, 255, 255)
-    t.TextSize = 11
-    t.TextXAlignment = Enum.TextXAlignment.Left
-    t.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-    t.TextStrokeTransparency = 0.5
-    t.Parent = main
-    SI.Cache[char] = { Gui = bbg, Main = main }
-    return SI.Cache[char]
-end
-
-function W.SInd_Set(v)
-    SI.Enabled = v and true or false
-    W2.Stun_Enabled = SI.Enabled
-    if SI.Enabled then
-        if SI.Conn then return end
-        SI.Conn = RunService.Heartbeat:Connect(function()
-            if not SI.Enabled then return end
-            local myRoot = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
-            if not myRoot then return end
-            for _, p in ipairs(Players:GetPlayers()) do
-                if p ~= LP and TeamIs(p, "Killer") and p.Character then
-                    local char = p.Character
-                    local hrp = char:FindFirstChild("HumanoidRootPart")
-                    if hrp then
-                        local d = (hrp.Position - myRoot.Position).Magnitude
-                        local stun = SI_Stunned(char)
-                        local data = SI.Cache[char]
-                        local wasStun = data ~= nil
-                        if stun and d <= SI.Range then
-                            if not wasStun then SI_Play(char); SI_Create(char) end
-                        else
-                            if wasStun then SI_Remove(char) end
-                        end
-                    end
-                end
-            end
-        end)
-    else
-        if SI.Conn then SI.Conn:Disconnect(); SI.Conn = nil end
-        for _, d in pairs(SI.Cache) do
-            pcall(function() if d.Gui then d.Gui:Destroy() end end)
-        end
-        SI.Cache = {}
-    end
-end
-W.SInd_GetSoundId = SI_SoundId
-
--- === INVISIBILITY ===
 do
-    local MV = getgenv().W2Invis
-    if not MV then
-        MV = { Enabled = false, Loading = false, Ready = false, API = nil, _lastToggle = 0, _retries = 0, _retryMax = 3, _retryDelay = 2, _queueState = nil }
-        getgenv().W2Invis = MV
-    end
-    local URL = "https://leekguy.vercel.app/roblox/menghub/crack_obf_invisible_93978595733734.lua"
-    local function validate(api)
-        if type(api) ~= "table" then return false end
-        if type(api.enable) ~= "function" then return false end
-        if type(api.disable) ~= "function" then return false end
-        return true
-    end
-    local function cleanup()
-        pcall(function()
-            local ch = Workspace:FindFirstChild("invischair")
-            if ch then ch:Destroy() end
-            local c = LP.Character
-            if c then
-                for _, p in ipairs(c:GetDescendants()) do
-                    if p:IsA("BasePart") or p:IsA("Decal") then
-                        if p.Name ~= "Hurtbox" and p.Name ~= "HumanoidRootPart" and p.Name ~= "HRP_Clone" then
-                            p.Transparency = 0
-                            if p:IsA("BasePart") then p.LocalTransparencyModifier = 0 end
-                        end
-                    end
-                end
-            end
-        end)
-    end
-    local function loadAPI()
-        if _G.MengHub and _G.MengHub.Invisible and validate(_G.MengHub.Invisible) then
-            MV.API = _G.MengHub.Invisible; MV.Ready = true
-            return true
-        end
-        MV.Loading = true; MV.Ready = false
-        for i = 1, MV._retryMax do
-            MV._retries = i
-            local ok = pcall(function() loadstring(game:HttpGet(URL))() end)
-            task.wait(0.5)
-            if ok and _G.MengHub and _G.MengHub.Invisible and validate(_G.MengHub.Invisible) then
-                MV.API = _G.MengHub.Invisible; MV.Ready = true; MV.Loading = false
-                if MV._queueState ~= nil then
-                    local q = MV._queueState; MV._queueState = nil
-                    task.defer(function() W.Invisible_SetState(q, false) end)
-                end
-                return true
-            elseif i < MV._retryMax then task.wait(MV._retryDelay) end
-        end
-        MV.Loading = false; MV.Ready = false
-        return false
-    end
-    task.spawn(function() loadAPI() end)
-
-    function W.Invisible_SetState(state, fromBtn)
-        state = state and true or false
-        local now = tick()
-        if now - MV._lastToggle < 0.25 then return end
-        if not MV.API then
-            if MV.Loading then
-                W.W2_Notify("Invisible", "Loading API...", 2)
-                MV._queueState = state
-            else
-                W.W2_Notify("Invisible", "Retry...", 2)
-                MV._queueState = state
-                task.spawn(function()
-                    if loadAPI() then
-                        local q = MV._queueState; MV._queueState = nil
-                        if q ~= nil then task.defer(function() W.Invisible_SetState(q, fromBtn) end) end
-                    end
-                end)
-            end
-            return
-        end
-        if MV.Enabled == state then
-            if not state then cleanup() end
-            return
-        end
-        MV._lastToggle = now
-        MV.Enabled = state
-        W2.Invis_Enabled = state
-        if state then pcall(function() MV.API.enable() end)
-        else pcall(function() MV.API.disable() end); cleanup() end
-    end
-
-    UserInputService.InputBegan:Connect(function(inp, gp)
-        if gp then return end
-        if inp.UserInputType ~= Enum.UserInputType.Keyboard then return end
-        local hk = Enum.KeyCode[W2.Invis_Hotkey or "G"]
-        if hk and inp.KeyCode == hk then W.Invisible_SetState(not MV.Enabled, false) end
-    end)
-    LP.CharacterAdded:Connect(function()
-        task.wait(1.2)
-        if MV.Enabled and MV.API then pcall(function() MV.API.enable() end) end
-    end)
-    W.Invisible_IsOn = function() return MV.Enabled end
-end
-
--- === PLAYER UTILITY ===
-do
-    local PU = { _Conns = {}, _OrigCanCollide = {}, _ShiftWasActive = false }
-    W.PU = PU
-
-    table.insert(PU._Conns, RunService.Heartbeat:Connect(function()
-        if not W2.PU_SpeedEnabled then return end
-        local c = LP.Character
-        local h = c and c:FindFirstChildOfClass("Humanoid")
-        if h and h.WalkSpeed ~= W2.PU_SpeedValue then h.WalkSpeed = W2.PU_SpeedValue end
-    end))
-
-    table.insert(PU._Conns, RunService.RenderStepped:Connect(function()
-        local c = LP.Character
-        if not c then return end
-        local h = c:FindFirstChildOfClass("Humanoid")
-        local root = c:FindFirstChild("HumanoidRootPart")
-        local cam = workspace.CurrentCamera
-        if not (h and root and cam) then return end
-        if W2.PU_ShiftLock then
-            h.AutoRotate = false
-            PU._ShiftWasActive = true
-            local lv = cam.CFrame.LookVector
-            local flat = Vector3.new(lv.X, 0, lv.Z)
-            if flat.Magnitude > 0.001 then root.CFrame = CFrame.new(root.Position, root.Position + flat.Unit) end
-        elseif PU._ShiftWasActive then
-            h.AutoRotate = true
-            PU._ShiftWasActive = false
-        end
-    end))
-
-    table.insert(PU._Conns, RunService.RenderStepped:Connect(function()
-        if not W2.PU_UnlimitedZoom then return end
-        if LP.CameraMaxZoomDistance ~= math.huge then LP.CameraMaxZoomDistance = math.huge end
-        if LP.CameraMinZoomDistance ~= 0 then LP.CameraMinZoomDistance = 0 end
-    end))
-
-    table.insert(PU._Conns, RunService.Stepped:Connect(function()
-        if not W2.PU_Noclip then return end
-        local c = LP.Character
-        if not c then return end
-        for _, d in ipairs(c:GetDescendants()) do
-            if d:IsA("BasePart") then
-                if PU._OrigCanCollide[d] == nil then PU._OrigCanCollide[d] = d.CanCollide end
-                d.CanCollide = false
-            end
-        end
-    end))
-
-    LP.CharacterRemoving:Connect(function(c)
-        if c == LP.Character then PU._OrigCanCollide = {} end
-    end)
-end
-
--- === SPEED BOOST ===
-do
-    local conn = nil
-    local function shouldDisable()
-        local c = LP.Character
-        if not c then return true end
-        local h = c:FindFirstChildOfClass("Humanoid")
-        if h then
-            if h.Health <= 0 or h.Health < 2
-                or c:GetAttribute("Downed") == true
-                or c:GetAttribute("IsDown") == true
-                or c:GetAttribute("Knocked") == true then
-                return true
-            end
-        end
-        return false
-    end
-    function W.SpeedBoost_Set(v)
-        W2.SpeedBoost_Enabled = v and true or false
-        if conn then conn:Disconnect(); conn = nil end
-        if not W2.SpeedBoost_Enabled then
-            local c = LP.Character
-            local h = c and c:FindFirstChildOfClass("Humanoid")
-            if h then pcall(function() h.WalkSpeed = 16 end) end
-            return
-        end
-        conn = RunService.Heartbeat:Connect(function()
-            if not W2.SpeedBoost_Enabled then return end
-            if shouldDisable() then return end
-            local c = LP.Character
-            local h = c and c:FindFirstChildOfClass("Humanoid")
-            if h and h.WalkSpeed ~= W2.SpeedBoost_Value then pcall(function() h.WalkSpeed = W2.SpeedBoost_Value end) end
-        end)
-    end
-    LP.CharacterAdded:Connect(function()
-        task.wait(0.8)
-        if W2.SpeedBoost_Enabled then W.SpeedBoost_Set(true) end
-    end)
-end
-
--- === CURSOR FEATURE ===
-do
-    local thread = nil
-    local saved = { MouseIconEnabled = nil, MouseBehavior = nil, AutoRotate = nil }
-    function W.Cursor_Set(v)
-        W2.Cursor_Enabled = v and true or false
-        if v then
-            saved.MouseIconEnabled = UserInputService.MouseIconEnabled
-            saved.MouseBehavior = UserInputService.MouseBehavior
-            local c = LP.Character
-            local h = c and c:FindFirstChildOfClass("Humanoid")
-            saved.AutoRotate = h and h.AutoRotate or true
-            pcall(function()
-                UserInputService.MouseIconEnabled = true
-                UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-            end)
-            if h then pcall(function() h.AutoRotate = false end) end
-            if thread then pcall(function() task.cancel(thread) end) end
-            thread = task.spawn(function()
-                while W2.Cursor_Enabled do
-                    pcall(function()
-                        UserInputService.MouseIconEnabled = true
-                        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-                    end)
-                    local c2 = LP.Character
-                    local h2 = c2 and c2:FindFirstChildOfClass("Humanoid")
-                    if h2 and h2.AutoRotate then h2.AutoRotate = false end
-                    task.wait(0.1)
-                end
-            end)
-        else
-            if thread then pcall(function() task.cancel(thread) end); thread = nil end
-            pcall(function()
-                UserInputService.MouseIconEnabled = saved.MouseIconEnabled or false
-                UserInputService.MouseBehavior = saved.MouseBehavior or Enum.MouseBehavior.LockCenter
-            end)
-            local c = LP.Character
-            local h = c and c:FindFirstChildOfClass("Humanoid")
-            if h then pcall(function() h.AutoRotate = saved.AutoRotate or true end) end
-        end
-    end
-    UserInputService.InputBegan:Connect(function(inp, gp)
-        if gp then return end
-        if inp.KeyCode == Enum.KeyCode.LeftAlt or inp.KeyCode == Enum.KeyCode.RightAlt then
-            W.Cursor_Set(not W2.Cursor_Enabled)
-        end
-    end)
-    LP.CharacterAdded:Connect(function()
-        task.wait(1)
-        if W2.Cursor_Enabled then W.Cursor_Set(true) end
-    end)
-end
-
--- === SPECTATOR COUNTER ===
-do
-    local Gui, Label, Thread = nil, nil, nil
-    local function build()
-        if Gui then Gui:Destroy(); Gui = nil end
-        Gui = Instance.new("ScreenGui")
-        Gui.Name = "W2SpectatorCounter"
-        Gui.ResetOnSpawn = false
-        Gui.IgnoreGuiInset = true
-        Gui.Parent = CoreGui
-        local f = Instance.new("Frame", Gui)
-        f.Name = "MainBox"
-        f.AnchorPoint = Vector2.new(0.5, 0)
-        f.Position = UDim2.new(0.5, 0, 0.42, 0)
-        f.Size = UDim2.new(0, 145, 0, 52)
-        f.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-        f.BackgroundTransparency = 0.1
-        f.BorderSizePixel = 0
-        f.Active = true
-        Instance.new("UICorner", f).CornerRadius = UDim.new(0, 6)
-        local h = Instance.new("Frame", f)
-        h.Size = UDim2.new(1, 0, 0, 18)
-        h.Position = UDim2.new(0, 0, 0, 4)
-        h.BackgroundTransparency = 1
-        h.Active = true
-        local t = Instance.new("TextLabel", h)
-        t.Size = UDim2.new(1, -20, 1, 0)
-        t.BackgroundTransparency = 1
-        t.Font = Enum.Font.GothamBold
-        t.Text = "Spectators"
-        t.TextColor3 = Color3.fromRGB(255, 255, 255)
-        t.TextSize = 10
-        local body = Instance.new("Frame", f)
-        body.Size = UDim2.new(1, 0, 1, -25)
-        body.Position = UDim2.new(0, 0, 0, 25)
-        body.BackgroundTransparency = 1
-        Label = Instance.new("TextLabel", body)
-        Label.Size = UDim2.new(1, 0, 1, 0)
-        Label.BackgroundTransparency = 1
-        Label.Font = Enum.Font.GothamMedium
-        Label.Text = "No spectators"
-        Label.TextColor3 = Color3.fromRGB(220, 220, 220)
-        Label.TextSize = 10
-        local drag, dStart, sPos = false, nil, nil
-        f.InputBegan:Connect(function(inp)
-            if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-                drag = true; dStart = inp.Position; sPos = f.Position
-            end
-        end)
-        UserInputService.InputChanged:Connect(function(inp)
-            if not drag then return end
-            if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
-                local d = inp.Position - dStart
-                f.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + d.X, sPos.Y.Scale, sPos.Y.Offset + d.Y)
-            end
-        end)
-        UserInputService.InputEnded:Connect(function(inp)
-            if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then drag = false end
-        end)
-    end
-    local function update()
-        if not Label then return end
-        local cnt = 0
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p.Team and p.Team.Name == "Spectator" then cnt = cnt + 1 end
-        end
-        if cnt == 0 then
-            Label.Text = "No spectators"; Label.TextColor3 = Color3.fromRGB(200, 200, 200)
-        else
-            Label.Text = cnt .. " spectators"; Label.TextColor3 = Color3.fromRGB(255, 255, 255)
-        end
-    end
-    function W.Spectator_Set(state)
-        W2.Spectator_Enabled = state
-        if Thread then task.cancel(Thread); Thread = nil end
-        if state then
-            build(); update()
-            Thread = task.spawn(function()
-                while W2.Spectator_Enabled do update(); task.wait(1.2) end
-            end)
-        else
-            if Gui then Gui:Destroy(); Gui = nil; Label = nil end
-        end
-    end
-end
-
--- === JERK OFF TOOL ===
-W.JerkTool = W.JerkTool or { Enabled = false, ToolName = "Jerk Off" }
-local JerkTool = W.JerkTool
-local currentJerkTool = nil
-local jerkRunning = false
-
-function W.JerkOff_Destroy()
-    if currentJerkTool then pcall(function() currentJerkTool:Destroy() end); currentJerkTool = nil end
-end
-
-function W.JerkOff_Create()
-    W.JerkOff_Destroy()
-    local character = LP.Character
-    if not character then return end
-    local humanoid = character:FindFirstChildWhichIsA("Humanoid")
-    local backpack = LP:FindFirstChildWhichIsA("Backpack")
-    if not humanoid or not backpack then return end
-
-    local tool = Instance.new("Tool")
-    tool.Name = JerkTool.ToolName
-    tool.ToolTip = 'jorking it'
-    tool.RequiresHandle = false
-    tool.Parent = backpack
-    currentJerkTool = tool
-
-    local jorkin = false
-    local track = nil
-
-    local function stopTomfoolery()
-        jorkin = false
-        if track then pcall(function() track:Stop() end); track = nil end
-    end
-
-    tool.Equipped:Connect(function() jorkin = true end)
-    tool.Unequipped:Connect(stopTomfoolery)
-    if humanoid.Died then humanoid.Died:Connect(stopTomfoolery) end
-
-    task.spawn(function()
-        while jerkRunning do
-            task.wait()
-            if not JerkTool.Enabled or not jorkin then
-                if track then pcall(function() track:Stop() end) end
-                continue
-            end
-            local isR15 = humanoid.RigType == Enum.HumanoidRigType.R15
-            if not track then
-                local anim = Instance.new("Animation")
-                anim.AnimationId = not isR15 and "rbxassetid://72042024" or "rbxassetid://698251653"
-                track = humanoid:LoadAnimation(anim)
-            end
-            track:Play()
-            track:AdjustSpeed(isR15 and 0.7 or 0.65)
-            track.TimePosition = 0.6
-            task.wait(0.1)
-            while track and track.TimePosition < (not isR15 and 0.65 or 0.7) do
-                task.wait(0.1)
-            end
-            if track then pcall(function() track:Stop() end) end
-        end
-    end)
-end
-
-function W.JerkOff_SetEnabled(v)
-    JerkTool.Enabled = v and true or false
-    jerkRunning = JerkTool.Enabled
-    if v then W.JerkOff_Create() else W.JerkOff_Destroy() end
-end
-
-LP.CharacterAdded:Connect(function()
-    task.wait(1)
-    if JerkTool.Enabled then jerkRunning = true; W.JerkOff_Create() end
-end)
-
--- === SKIP END SCREEN ===
-W.SkipEnd = W.SkipEnd or { Enabled = false }
-local function ShowInstantResults()
-    if not W.SkipEnd.Enabled then return end
-    pcall(function()
-        local cam = workspace.CurrentCamera
-        if cam then cam.CameraType = Enum.CameraType.Custom; cam.FieldOfView = 70 end
-        UserInputService.MouseIconEnabled = true
-        LP:SetAttribute("isspectating", true)
-        local pg = LP:FindFirstChild("PlayerGui")
-        if pg then
-            for _, n in ipairs({"Results", "EndScreen", "Darkness"}) do
-                local g = pg:FindFirstChild(n)
-                if g then
-                    g.Enabled = true
-                    local f = g:FindFirstChild("blackout") or g:FindFirstChild("Frame2")
-                    if f then f.BackgroundTransparency = 1 end
-                end
-            end
-        end
-    end)
-end
-task.spawn(function()
-    local gf = ReplicatedStorage:WaitForChild("Remotes", 10)
-    gf = gf and gf:WaitForChild("Game", 10)
-    if not gf then return end
-    for _, n in ipairs({"endscreencutscene", "cutsceneEnd", "cutsceneEnd2", "cutsceneEndwithownchar"}) do
-        local ev = gf:FindFirstChild(n)
-        if ev and ev:IsA("RemoteEvent") then
-            ev.OnClientEvent:Connect(ShowInstantResults)
-        end
-    end
-end)
-function W.SkipEnd_Set(v) W.SkipEnd.Enabled = v and true or false end
-
--- === HIDE NAME ===
-W.HideName = W.HideName or { Enabled = false, Conn = nil }
-local function ProcessHideName(obj)
-    if not obj then return end
-    local ok, isText = pcall(function()
-        return obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox")
-    end)
-    if not ok or not isText then return end
-    local txt = ""
-    pcall(function() txt = tostring(obj.Text or "") end)
-    if txt == "" then return end
-    if txt == LP.Name or txt == LP.DisplayName
-        or txt:find(LP.Name, 1, true) ~= nil then
-        pcall(function() obj.Visible = not W.HideName.Enabled end)
-    end
-end
-function W.HideName_Set(enabled)
-    W.HideName.Enabled = enabled and true or false
-    if W.HideName.Conn then
-        pcall(function() W.HideName.Conn:Disconnect() end)
-        W.HideName.Conn = nil
-    end
-    local pg = LP:FindFirstChildOfClass("PlayerGui")
-    if not pg then return end
-    for _, d in ipairs(pg:GetDescendants()) do ProcessHideName(d) end
-    if W.HideName.Enabled then
-        W.HideName.Conn = pg.DescendantAdded:Connect(function(obj)
-            task.defer(ProcessHideName, obj)
-        end)
-    end
-end
-
--- === HIDE SURVIVOR ICON ===
-W.HideIcon = W.HideIcon or { Enabled = false, OrigIcons = {} }
-function W.HideIcon_Apply()
-    local pg = LP:FindFirstChild("PlayerGui")
-    if not pg then return end
-    for _, gui in ipairs(pg:GetChildren()) do
-        if gui:IsA("ScreenGui") and gui.Name:match("%-mob$") then
-            local frame = gui:FindFirstChild("Frame")
-            if frame then
-                for i = 1, 5 do
-                    local sf = frame:FindFirstChild("Survivor" .. i)
-                    if sf then
-                        local il = sf:FindFirstChild("ImageLabel")
-                        local tl = sf:FindFirstChild("TextLabel")
-                        if il and il:IsA("ImageLabel") then
-                            if not W.HideIcon.OrigIcons[il] then
-                                W.HideIcon.OrigIcons[il] = { Image = il.Image, ImageTransparency = il.ImageTransparency }
-                            end
-                            il.Image = "rbxassetid://92826170205694"
-                            il.ImageTransparency = 0
-                        end
-                        if tl and tl:IsA("TextLabel") then
-                            if not W.HideIcon.OrigIcons[tl] then
-                                W.HideIcon.OrigIcons[tl] = { Text = tl.Text, TextTransparency = tl.TextTransparency }
-                            end
-                            tl.Text = "W2"
-                            tl.TextTransparency = 0
-                        end
-                    end
-                end
-            end
-        end
-    end
-end
-function W.HideIcon_Restore()
-    for obj, data in pairs(W.HideIcon.OrigIcons) do
-        if obj and obj.Parent then
-            pcall(function()
-                if data.Image ~= nil and obj:IsA("ImageLabel") then
-                    obj.Image = data.Image
-                    obj.ImageTransparency = data.ImageTransparency
-                end
-                if data.Text ~= nil and obj:IsA("TextLabel") then
-                    obj.Text = data.Text
-                    obj.TextTransparency = data.TextTransparency
-                end
-            end)
-        end
-    end
-    W.HideIcon.OrigIcons = {}
-end
-RunService.Heartbeat:Connect(function()
-    if W.HideIcon.Enabled then W.HideIcon_Apply() end
-end)
-function W.HideIcon_Set(v)
-    W.HideIcon.Enabled = v and true or false
-    if v then W.HideIcon_Apply() else W.HideIcon_Restore() end
-                                                        end--====================================================--
--- PART 16B: HOOK + FLOATING BUTTONS + BOMBAX V4 (RAYFIELD) + FPS + TROLL
---====================================================--
-
--- === PART 16B-1: HOOK GLOBAL ===
-do
-    local installed = false
-    if installed then return end
-    installed = true
+    if getgenv().W2_HookInstalled then return end
+    getgenv().W2_HookInstalled = true
     task.spawn(function()
         pcall(function()
             if typeof(hookmetamethod) ~= "function" then return end
@@ -7576,11 +7685,11 @@ do
             end)
         end)
     end)
-end
-
---====================================================--
+        end--====================================================--
 -- PART 16B-2: FLOATING BUTTONS (10)
 --====================================================--
+W2.Escape_Enabled = W2.Escape_Enabled or false
+
 local function CreateFloat(cfg)
     local st = cfg.state
     st.Conns = st.Conns or {}
@@ -7859,36 +7968,8 @@ local PT_Btn = CreateFloat({ id = "PistolTOF", title = "Pistol", state = PT_St,
     isOn = function() return W2.TOF_Enabled end,
     onToggle = function(v) W.SetToFEnabled(v) end, iconRotation = 0 })
 getgenv().W2_PistolBtn_SetEnabled = function(en) PT_Btn.SetEnabled(en) end
-getgenv().W2_PistolBtn_UpdateVisual = function() PT_Btn.Refresh() end
-
--- 2 FLOATING BUTTON BARU: EMOTE + SILENT AIM PISTOL (3 MODE)
-local EM_St = { Enabled = false, DragLocked = false, Gui = nil, SavedPos = UDim2.new(0.03, 0, 0.85, 0), Conns = {} }
-local EM_Btn = CreateFloat({ id = "Emote", title = "Emote", state = EM_St,
-    isOn = function() return W.Emote and W.Emote.Enabled end,
-    onToggle = function(v) W.Emote_Set(v) end, iconRotation = 0 })
-getgenv().W2_EmoteBtn_SetEnabled = function(en) EM_Btn.SetEnabled(en) end
-getgenv().W2_EmoteBtn_UpdateVisual = function() EM_Btn.Refresh() end
-
-local SA_St = { Enabled = false, DragLocked = false, Gui = nil, SavedPos = UDim2.new(0.03, 0, 0.91, 0), Conns = {} }
-local SA_Btn = CreateFloat({ id = "SilentPistol", title = "Pistol", state = SA_St,
-    isOn = function() return W2.TOF_Enabled end,
-    onToggle = function(v)
-        W.SetToFEnabled(v)
-        if v then
-            -- Cycle mode: Killer → Survivors → Zombie
-            local modes = {"Killer", "Survivors", "Zombie"}
-            local cur = W2.TOF_TargetMode or "Killer"
-            local idx = 1
-            for i, m in ipairs(modes) do if m == cur then idx = i; break end end
-            local nxt = modes[(idx % #modes) + 1]
-            W.ToF_SetMode(nxt, true)
-        end
-    end, iconRotation = 90 })
-getgenv().W2_SilentPistolBtn_SetEnabled = function(en) SA_Btn.SetEnabled(en) end
-getgenv().W2_SilentPistolBtn_UpdateVisual = function() SA_Btn.Refresh() end
-
---====================================================--
--- PART 16B-3: BOMBAX UI V4 RAYFIELD-STYLE
+getgenv().W2_PistolBtn_UpdateVisual = function() PT_Btn.Refresh() end--====================================================--
+-- PART 16B-3: BOMBAX UI V4 (RAYFIELD STYLE)
 --====================================================--
 do
     local IMG = "rbxassetid://138040631725974"
@@ -7986,10 +8067,8 @@ do
         end
     end
 
-    -- BUILD BUTTON (RAYFIELD STYLE)
     local function buildButton()
         if BS.ButtonBox then pcall(function() BS.ButtonBox:Destroy() end); BS.ButtonBox = nil end
-
         local box = Instance.new("Frame")
         box.Name = "W2MenuToggleBtn"
         box.Size = UDim2.fromOffset(54, 54)
@@ -7998,7 +8077,6 @@ do
         box.Parent = BS.Gui
         BS.ButtonBox = box
         BS._ButtonBox = box
-
         local glow = Instance.new("Frame")
         glow.Name = "Glow"
         glow.Size = UDim2.fromScale(1.35, 1.35)
@@ -8015,7 +8093,6 @@ do
         glowStroke.Thickness = 1
         glowStroke.Transparency = 1
         glowStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-
         local btn = Instance.new("TextButton")
         btn.Name = "Btn"
         btn.Size = UDim2.fromScale(1, 1)
@@ -8027,14 +8104,12 @@ do
         btn.ZIndex = 2
         btn.Parent = box
         Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
-
         local btnStroke = Instance.new("UIStroke", btn)
         btnStroke.Name = "S"
         btnStroke.Color = Color3.fromRGB(255, 255, 255)
         btnStroke.Thickness = 1.5
         btnStroke.Transparency = 0.35
         btnStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-
         local icon = Instance.new("ImageLabel", btn)
         icon.Name = "I"
         icon.Size = UDim2.fromScale(0.62, 0.62)
@@ -8043,7 +8118,6 @@ do
         icon.Image = IMG
         icon.ImageColor3 = Color3.fromRGB(255, 255, 255)
         icon.ZIndex = 3
-
         local hint = Instance.new("TextLabel", box)
         hint.Name = "Hint"
         hint.AnchorPoint = Vector2.new(0.5, 0)
@@ -8057,7 +8131,6 @@ do
         hint.TextStrokeTransparency = 0.5
         hint.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
         hint.ZIndex = 2
-
         task.spawn(function()
             while box.Parent do
                 if not BS.Open then
@@ -8082,16 +8155,13 @@ do
                 end
             end
         end)
-
         local function refresh()
             local isOpen = BS.Open
             local isPlaying = W.Bombax and W.Bombax.Playing
-
             local strokeColor = Color3.fromRGB(255, 255, 255)
             local strokeTrans = 0.35
             local iconColor = Color3.fromRGB(255, 255, 255)
             local bgColor = Color3.fromRGB(12, 12, 16)
-
             if isOpen then
                 strokeColor = Color3.fromRGB(120, 200, 255)
                 strokeTrans = 0
@@ -8103,7 +8173,6 @@ do
                 iconColor = Color3.fromRGB(120, 255, 160)
                 bgColor = Color3.fromRGB(15, 30, 20)
             end
-
             TweenService:Create(btnStroke, TweenInfo.new(0.3), {
                 Color = strokeColor,
                 Transparency = strokeTrans,
@@ -8121,11 +8190,9 @@ do
         end
         getgenv().W2_BombaxRefresh = refresh
         refresh()
-
         local dragging, dragStart, startPos = false, nil, nil
         local dDist = 0
         local holdStart = 0
-
         btn.InputBegan:Connect(function(inp)
             if inp.UserInputType == Enum.UserInputType.MouseButton1
             or inp.UserInputType == Enum.UserInputType.Touch then
@@ -8136,7 +8203,6 @@ do
                 holdStart = tick()
             end
         end)
-
         btn.InputEnded:Connect(function(inp)
             if inp.UserInputType == Enum.UserInputType.MouseButton1
             or inp.UserInputType == Enum.UserInputType.Touch then
@@ -8147,7 +8213,6 @@ do
                 end
             end
         end)
-
         table.insert(BS.Conns, UserInputService.InputChanged:Connect(function(inp)
             if not dragging then return end
             if inp.UserInputType == Enum.UserInputType.MouseMovement
@@ -8160,7 +8225,6 @@ do
                 )
             end
         end))
-
         btn.MouseEnter:Connect(function()
             if not BS.Open then
                 TweenService:Create(btn, TweenInfo.new(0.15), {
@@ -8177,10 +8241,8 @@ do
         end)
     end
 
-    -- BUILD WINDOW
     local function buildWindow()
         if BS.Window then pcall(function() BS.Window:Destroy() end); BS.Window = nil end
-
         local win = Instance.new("Frame")
         win.Name = "BombaxWindow"
         win.Size = UDim2.fromOffset(260, 260)
@@ -8199,13 +8261,11 @@ do
         winStroke.Thickness = 1.2
         winStroke.Transparency = 0.25
         winStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-
         local header = Instance.new("Frame", win)
         header.Name = "Header"
         header.Size = UDim2.new(1, 0, 0, 40)
         header.BackgroundTransparency = 1
         header.Active = true
-
         local iconBox = Instance.new("ImageLabel", header)
         iconBox.Name = "Icon"
         iconBox.Size = UDim2.fromOffset(28, 28)
@@ -8213,7 +8273,6 @@ do
         iconBox.BackgroundTransparency = 1
         iconBox.Image = IMG
         iconBox.ImageColor3 = Color3.fromRGB(255, 255, 255)
-
         local title = Instance.new("TextLabel", header)
         title.Size = UDim2.new(1, -80, 0, 16)
         title.Position = UDim2.new(0, 46, 0, 6)
@@ -8223,7 +8282,6 @@ do
         title.TextColor3 = Color3.fromRGB(255, 255, 255)
         title.TextSize = 12
         title.TextXAlignment = Enum.TextXAlignment.Left
-
         local subtitle = Instance.new("TextLabel", header)
         subtitle.Size = UDim2.new(1, -80, 0, 12)
         subtitle.Position = UDim2.new(0, 46, 0, 22)
@@ -8233,7 +8291,6 @@ do
         subtitle.TextColor3 = Color3.fromRGB(140, 140, 160)
         subtitle.TextSize = 9
         subtitle.TextXAlignment = Enum.TextXAlignment.Left
-
         local closeBtn = Instance.new("TextButton", header)
         closeBtn.Name = "CloseBtn"
         closeBtn.AnchorPoint = Vector2.new(1, 0.5)
@@ -8250,7 +8307,6 @@ do
         closeBtn.MouseButton1Click:Connect(function()
             if BS.Open then toggleWindow() end
         end)
-
         local nowCard = Instance.new("Frame", win)
         nowCard.Name = "NowCard"
         nowCard.Size = UDim2.new(1, -20, 0, 46)
@@ -8262,7 +8318,6 @@ do
         nowStroke.Color = Color3.fromRGB(60, 60, 80)
         nowStroke.Thickness = 1
         nowStroke.Transparency = 0.4
-
         local nowLabel = Instance.new("TextLabel", nowCard)
         nowLabel.Name = "NowLabel"
         nowLabel.Size = UDim2.new(1, -16, 0, 18)
@@ -8275,7 +8330,6 @@ do
         nowLabel.TextXAlignment = Enum.TextXAlignment.Left
         nowLabel.TextTruncate = Enum.TextTruncate.AtEnd
         BS.NowLabel = nowLabel
-
         local progBg = Instance.new("Frame", nowCard)
         progBg.Name = "ProgBg"
         progBg.Size = UDim2.new(1, -110, 0, 6)
@@ -8283,7 +8337,6 @@ do
         progBg.BackgroundColor3 = Color3.fromRGB(40, 40, 52)
         progBg.BorderSizePixel = 0
         Instance.new("UICorner", progBg).CornerRadius = UDim.new(1, 0)
-
         local progFill = Instance.new("Frame", progBg)
         progFill.Name = "Fill"
         progFill.Size = UDim2.new(0, 0, 1, 0)
@@ -8291,7 +8344,6 @@ do
         progFill.BorderSizePixel = 0
         Instance.new("UICorner", progFill).CornerRadius = UDim.new(1, 0)
         BS.ProgressFill = progFill
-
         local timeLabel = Instance.new("TextLabel", nowCard)
         timeLabel.Name = "TimeLabel"
         timeLabel.AnchorPoint = Vector2.new(1, 0)
@@ -8304,7 +8356,6 @@ do
         timeLabel.TextSize = 9
         timeLabel.TextXAlignment = Enum.TextXAlignment.Right
         BS.TimeLabel = timeLabel
-
         local pick = Instance.new("TextButton", win)
         pick.Name = "Picker"
         pick.Size = UDim2.new(1, -20, 0, 32)
@@ -8328,13 +8379,11 @@ do
             local BX = W.Bombax
             if BX and BX.Enabled then W.Bombax_Play(BX.Selected) end
         end)
-
         local ctrl = Instance.new("Frame", win)
         ctrl.Name = "Controls"
         ctrl.Size = UDim2.new(1, -20, 0, 44)
         ctrl.Position = UDim2.fromOffset(10, 142)
         ctrl.BackgroundTransparency = 1
-
         local function mkCtrl(name, txt, x, bg)
             local b = Instance.new("TextButton", ctrl)
             b.Name = name
@@ -8353,12 +8402,10 @@ do
             s.Transparency = 0.6
             return b
         end
-
         local prevB = mkCtrl("Prev", "⏮", 0, Color3.fromRGB(45, 45, 58))
         local playB = mkCtrl("Play", "▶", 78, Color3.fromRGB(30, 70, 40))
         local nextB = mkCtrl("Next", "⏭", 156, Color3.fromRGB(45, 45, 58))
         BS.PlayBtn = playB
-
         prevB.MouseButton1Click:Connect(function()
             W.Bombax_Prev(); updateNowLabel(); updatePlayBtn()
         end)
@@ -8372,13 +8419,11 @@ do
         nextB.MouseButton1Click:Connect(function()
             W.Bombax_Next(); updateNowLabel(); updatePlayBtn()
         end)
-
         local vrow = Instance.new("Frame", win)
         vrow.Name = "VolumeRow"
         vrow.Size = UDim2.new(1, -20, 0, 22)
         vrow.Position = UDim2.fromOffset(10, 194)
         vrow.BackgroundTransparency = 1
-
         local vIcon = Instance.new("TextLabel", vrow)
         vIcon.Size = UDim2.fromOffset(24, 22)
         vIcon.BackgroundTransparency = 1
@@ -8387,7 +8432,6 @@ do
         vIcon.TextColor3 = Color3.fromRGB(200, 200, 220)
         vIcon.TextSize = 13
         vIcon.TextXAlignment = Enum.TextXAlignment.Left
-
         local vbar = Instance.new("Frame", vrow)
         vbar.Name = "Bar"
         vbar.Size = UDim2.new(1, -80, 0, 8)
@@ -8401,7 +8445,6 @@ do
         vfill.BackgroundColor3 = Color3.fromRGB(120, 255, 160)
         vfill.BorderSizePixel = 0
         Instance.new("UICorner", vfill).CornerRadius = UDim.new(1, 0)
-
         local vval = Instance.new("TextLabel", vrow)
         vval.Name = "Val"
         vval.AnchorPoint = Vector2.new(1, 0.5)
@@ -8413,12 +8456,10 @@ do
         vval.TextColor3 = Color3.fromRGB(255, 255, 255)
         vval.TextSize = 11
         vval.TextXAlignment = Enum.TextXAlignment.Right
-
         local vhit = Instance.new("TextButton", vbar)
         vhit.Size = UDim2.fromScale(1, 1)
         vhit.BackgroundTransparency = 1
         vhit.Text = ""
-
         local vDrag = false
         local function applyV(x)
             local ax = vbar.AbsolutePosition.X
@@ -8446,7 +8487,6 @@ do
                 vDrag = false
             end
         end))
-
         local loop = Instance.new("TextButton", win)
         loop.Name = "Loop"
         loop.Size = UDim2.new(1, -20, 0, 26)
@@ -8465,7 +8505,6 @@ do
             W.Bombax_SetLoop(not BX.Looped)
             updateLoopBtn()
         end)
-
         local dragging, dragStart, startPos = false, nil, nil
         header.InputBegan:Connect(function(inp)
             if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
@@ -8495,11 +8534,9 @@ do
         BS.Window = nil
         BS._ButtonBox = nil
         BS.Open = false
-
         local parent = LP:FindFirstChild("PlayerGui")
         if gethui then local ok, hui = pcall(gethui); if ok and hui then parent = hui end end
         if not parent then return end
-
         local gui = Instance.new("ScreenGui")
         gui.Name = "W2BombaxUI"
         gui.ResetOnSpawn = false
@@ -8508,7 +8545,6 @@ do
         gui.DisplayOrder = 999
         gui.Parent = parent
         BS.Gui = gui
-
         buildButton()
         buildWindow()
     end
@@ -8554,10 +8590,8 @@ do
         task.wait(1.5)
         if W2.Bombax_ButtonEnabled then W.BombaxUI_Start() end
     end)
-end
-
---====================================================--
--- PART 16B-4: FPS/PING COUNTER (AUTO-ON)
+                end--====================================================--
+-- PART 16B-4: FPS/PING COUNTER
 --====================================================--
 do
     local FpsPingGui = nil
@@ -8664,11 +8698,10 @@ do
         task.wait(1)
         if not FpsPingGui or not FpsPingGui.Parent then BuildUI() end
     end)
-end
+                    end--====================================================--
+-- PART 16B-5: TROLL (Emote + Bombax + Avatar + Korless + Header + Escape)
+--====================================================--
 
---====================================================--
--- PART 16B-5: TROLL (EMOTE + BOMBAX + AVATAR + KORLESS + HEADER + ESCAPE)
---====================================================--
 W2.Emote_Enabled = W2.Emote_Enabled or false
 W2.Emote_Selected = W2.Emote_Selected or "Friday Night"
 W2.FakeAvatar_Enabled = W2.FakeAvatar_Enabled or false
@@ -8684,7 +8717,7 @@ W2.Bombax_Looped = W2.Bombax_Looped ~= false
 W2.Bombax_ButtonEnabled = W2.Bombax_ButtonEnabled or false
 W2.Escape_Enabled = W2.Escape_Enabled or false
 
--- EMOTE
+-- === EMOTE ===
 W.Emote = W.Emote or {
     Enabled = false, Track = nil, Sound = nil, Selected = "Friday Night",
     Options = { "Friday Night","WarCry","24 Hour Cinderella","Applause","Arm Swing","Backflip","California Girls","Christmas Spirit","Floating Rest","Ghoul","Griddy","Kyoufuu","OnePlays","Vulnerable" },
@@ -8756,7 +8789,7 @@ LP.CharacterAdded:Connect(function()
     if Emote.Enabled then W.Emote_Play() end
 end)
 
--- BOMBAX
+-- === BOMBAX ===
 W.Bombax = W.Bombax or {
     Enabled = false, Current = nil, Selected = "One", Volume = 2, Looped = true, Playing = false,
     Songs = {
@@ -8869,10 +8902,7 @@ function W.Bombax_Prev()
     W.Bombax_Play(l[p].judul)
 end
 
--- FAKE AVATAR
-W2.FakeAvatar_Enabled = W2.FakeAvatar_Enabled or false
-W2.FakeAvatar_ID = W2.FakeAvatar_ID or 0
-
+-- === FAKE AVATAR ===
 do
     local FakeAvatarEnabled = W2.FakeAvatar_Enabled
     local SelectedFakeAva = LP.UserId
@@ -9003,7 +9033,7 @@ do
     end)
 end
 
--- KORLESS
+-- === KORLESS ===
 do
     local Conn = nil
     local function morph()
@@ -9056,7 +9086,7 @@ do
     end
 end
 
--- HEADER
+-- === HEADER ===
 do
     local HS = { Billboard = nil, Txt = nil }
     local BW = isMobile and 90 or 140
@@ -9109,7 +9139,7 @@ do
     end)
 end
 
--- INSTANT ESCAPE
+-- === INSTANT ESCAPE ===
 W.Escape = W.Escape or { Enabled = false, Name = "fininshline", Count = 0 }
 function W.Escape_TP()
     local r = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
@@ -9125,385 +9155,381 @@ function W.Escape_TP()
     W.Escape.Count = W.Escape.Count + 1
     W.W2_Notify("Instant Escape", "Teleported! (#" .. W.Escape.Count .. ")", 2)
     return true
-end
-
+end--====================================================--
+-- PART 16C FINAL: UI SECTIONS + CONFIG + CLOSING
 --====================================================--
--- END OF PART 16B
---====================================================--    --====================================================--
-    -- PART 16C FINAL: UI SECTIONS + CONFIG + CLOSING
-    --====================================================--
 
-    -- === UI SECTION: MISC ===
-    do
-        local s = W.T_Misc:AddSection("Stun Indicator")
-        s:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
-            W.SInd_Set(v)
-            W.W2_Notify("Stun Indicator", v and "Enabled" or "Disabled", 2)
+-- === UI SECTION: MISC ===
+W.OnUIReady(function()
+    local s = W.T_Misc:AddSection("Stun Indicator")
+    s:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
+        W.SInd_Set(v)
+        W.W2_Notify("Stun Indicator", v and "Enabled" or "Disabled", 2)
+    end })
+    s:AddDropdown({ Title = "Stun Sound",
+        Options = { "Default","Clash Royale","Blash","Coin","Kururin Kuru","Spongebob","Fahhhh","Cave","Aughhh","Samsung","iPhone","Siren" },
+        Default = "Default", Callback = function(v)
+            local val = type(v) == "table" and v[1] or v
+            if W.StunInd then W.StunInd.SelectedSound = val end
         end })
-        s:AddDropdown({ Title = "Stun Sound",
-            Options = { "Default","Clash Royale","Blash","Coin","Kururin Kuru","Spongebob","Fahhhh","Cave","Aughhh","Samsung","iPhone","Siren" },
-            Default = "Default", Callback = function(v)
-                local val = type(v) == "table" and v[1] or v
-                if W.StunInd then W.StunInd.SelectedSound = val end
-            end })
-        s:AddToggle({ Title = "Sound Alert", Default = true, Callback = function(v)
-            if W.StunInd then W.StunInd.SoundEnabled = v end
-        end })
-        s:AddButton({ Title = "Preview Sound", Callback = function()
-            pcall(function()
-                local sid = "18843924331"
-                if W.SInd_GetSoundId then sid = W.SInd_GetSoundId() end
-                local snd = Instance.new("Sound")
-                snd.SoundId = "rbxassetid://" .. tostring(sid)
-                snd.Volume = (W.StunInd and W.StunInd.Volume) or 1.5
-                snd.Parent = LP:FindFirstChildOfClass("PlayerGui") or Workspace
-                snd:Play()
-                snd.Ended:Connect(function() pcall(function() snd:Destroy() end) end)
-            end)
-        end })
-        s:AddSlider({ Title = "Detect Range", Min = 50, Max = 2000, Default = 500, Increment = 25, Suffix = " studs",
-            Callback = function(v) if W.StunInd then W.StunInd.Range = v end end })
-        s:AddSlider({ Title = "Volume", Min = 0, Max = 5, Default = 1.5, Increment = 0.1,
-            Callback = function(v) if W.StunInd then W.StunInd.Volume = v end end })
+    s:AddToggle({ Title = "Sound Alert", Default = true, Callback = function(v)
+        if W.StunInd then W.StunInd.SoundEnabled = v end
+    end })
+    s:AddButton({ Title = "Preview Sound", Callback = function()
+        pcall(function()
+            local sid = "18843924331"
+            if W.SInd_GetSoundId then sid = W.SInd_GetSoundId() end
+            local snd = Instance.new("Sound")
+            snd.SoundId = "rbxassetid://" .. tostring(sid)
+            snd.Volume = (W.StunInd and W.StunInd.Volume) or 1.5
+            snd.Parent = LP:FindFirstChildOfClass("PlayerGui") or Workspace
+            snd:Play()
+            snd.Ended:Connect(function() pcall(function() snd:Destroy() end) end)
+        end)
+    end })
+    s:AddSlider({ Title = "Detect Range", Min = 50, Max = 2000, Default = 500, Increment = 25, Suffix = " studs",
+        Callback = function(v) if W.StunInd then W.StunInd.Range = v end end })
+    s:AddSlider({ Title = "Volume", Min = 0, Max = 5, Default = 1.5, Increment = 0.1,
+        Callback = function(v) if W.StunInd then W.StunInd.Volume = v end end })
 
-        local s2 = W.T_Misc:AddSection("Invisibility")
-        s2:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
-            W.Invisible_SetState(v, false)
+    local s2 = W.T_Misc:AddSection("Invisibility")
+    s2:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
+        W.Invisible_SetState(v, false)
+    end })
+    s2:AddKeybind({ Title = "Hotkey", Default = Enum.KeyCode.G, Callback = function(kc)
+        if kc then W2.Invis_Hotkey = kc.Name end
+    end })
+
+    local s3 = W.T_Misc:AddSection("Player Utility")
+    s3:AddToggle({ Title = "Speed Hack", Default = false, Callback = function(v)
+        W2.PU_SpeedEnabled = v
+        if not v then
+            local h = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+            if h then h.WalkSpeed = 16 end
+        end
+    end })
+    s3:AddSlider({ Title = "Speed Value", Min = 16, Max = 200, Default = 16, Increment = 1,
+        Callback = function(v) W2.PU_SpeedValue = v end })
+    s3:AddToggle({ Title = "Shift Lock", Default = false, Callback = function(v) W2.PU_ShiftLock = v end })
+    s3:AddToggle({ Title = "Unlimited Zoom", Default = false, Callback = function(v) W2.PU_UnlimitedZoom = v end })
+    s3:AddToggle({ Title = "Noclip", Default = false, Callback = function(v) W2.PU_Noclip = v end })
+
+    local s4 = W.T_Misc:AddSection("Speed Boost")
+    s4:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
+        W.SpeedBoost_Set(v)
+        W.W2_Notify("Speed Boost", v and "Enabled" or "Disabled", 2)
+    end })
+    s4:AddSlider({ Title = "Speed Value", Min = 16, Max = 100, Default = 30, Increment = 1,
+        Callback = function(v) W2.SpeedBoost_Value = v end })
+
+    local s5 = W.T_Misc:AddSection("Cursor Feature")
+    s5:AddToggle({ Title = "Enable Cursor Unlock", Default = false, Callback = function(v)
+        W.Cursor_Set(v)
+    end })
+    s5:AddButton({ Title = "Toggle Now", Callback = function()
+        W.Cursor_Set(not W2.Cursor_Enabled)
+    end })
+
+    local s6 = W.T_Misc:AddSection("Spectator Counter")
+    s6:AddToggle({ Title = "Enable", Default = false, Callback = function(v) W.Spectator_Set(v) end })
+
+    local s7 = W.T_Misc:AddSection("Jerk Off")
+    s7:AddToggle({ Title = "Enable Jerk Off Tool", Default = false, Callback = function(v)
+        W.JerkOff_SetEnabled(v)
+    end })
+
+    local s8 = W.T_Misc:AddSection("Player Utility — Extra")
+    s8:AddToggle({ Title = "Skip End Screen", Default = false, Callback = function(v)
+        W.SkipEnd_Set(v)
+    end })
+    s8:AddToggle({ Title = "Hide Name", Default = false, Callback = function(v)
+        W.HideName_Set(v)
+    end })
+    s8:AddToggle({ Title = "Hide Survivor Icon", Default = false, Callback = function(v)
+        W.HideIcon_Set(v)
+    end })
+
+    local s9 = W.T_Misc:AddSection("Floating Buttons")
+    s9:AddToggle({ Title = "Self Heal Button", Default = false, Callback = function(v)
+        if getgenv().W2_SHB_SetEnabled then getgenv().W2_SHB_SetEnabled(v) end
+    end })
+    s9:AddToggle({ Title = "Self Unhook Button", Default = false, Callback = function(v)
+        if getgenv().W2_SUB_SetEnabled then getgenv().W2_SUB_SetEnabled(v) end
+    end })
+    s9:AddToggle({ Title = "Escape Button", Default = false, Callback = function(v)
+        if getgenv().W2_Escape_SetEnabled then getgenv().W2_Escape_SetEnabled(v) end
+    end })
+    s9:AddToggle({ Title = "Invisible Button", Default = false, Callback = function(v)
+        if getgenv().W2_InvisBtn_SetEnabled then getgenv().W2_InvisBtn_SetEnabled(v) end
+    end })
+    s9:AddToggle({ Title = "Moonwalk Button", Default = false, Callback = function(v)
+        if getgenv().W2_MoonwalkBtn_SetEnabled then getgenv().W2_MoonwalkBtn_SetEnabled(v) end
+    end })
+    s9:AddToggle({ Title = "Spear Aimbot Button", Default = false, Callback = function(v)
+        if getgenv().W2_SpearBtn_SetEnabled then getgenv().W2_SpearBtn_SetEnabled(v) end
+    end })
+    s9:AddToggle({ Title = "Troll TP Button", Default = false, Callback = function(v)
+        if getgenv().W2_TTB_SetEnabled then getgenv().W2_TTB_SetEnabled(v) end
+    end })
+    s9:AddToggle({ Title = "Parry Button", Default = false, Callback = function(v)
+        if getgenv().W2_ParryBtn_SetEnabled then getgenv().W2_ParryBtn_SetEnabled(v) end
+    end })
+    s9:AddToggle({ Title = "Myers Grab Button", Default = false, Callback = function(v)
+        if getgenv().W2_MGrabBtn_SetEnabled then getgenv().W2_MGrabBtn_SetEnabled(v) end
+    end })
+    s9:AddToggle({ Title = "Pistol TOF Button", Default = false, Callback = function(v)
+        if getgenv().W2_PistolBtn_SetEnabled then getgenv().W2_PistolBtn_SetEnabled(v) end
+    end })
+    s9:AddButton({ Title = "Show All Buttons", Callback = function()
+        for _, fn in ipairs({
+            "W2_SHB_SetEnabled", "W2_SUB_SetEnabled", "W2_Escape_SetEnabled",
+            "W2_InvisBtn_SetEnabled", "W2_MoonwalkBtn_SetEnabled", "W2_SpearBtn_SetEnabled",
+            "W2_TTB_SetEnabled", "W2_ParryBtn_SetEnabled", "W2_MGrabBtn_SetEnabled",
+            "W2_PistolBtn_SetEnabled"
+        }) do
+            if getgenv()[fn] then pcall(getgenv()[fn], true) end
+        end
+        W.W2_Notify("Buttons", "All 10 buttons ON", 3)
+    end })
+    s9:AddButton({ Title = "Hide All Buttons", Callback = function()
+        for _, fn in ipairs({
+            "W2_SHB_SetEnabled", "W2_SUB_SetEnabled", "W2_Escape_SetEnabled",
+            "W2_InvisBtn_SetEnabled", "W2_MoonwalkBtn_SetEnabled", "W2_SpearBtn_SetEnabled",
+            "W2_TTB_SetEnabled", "W2_ParryBtn_SetEnabled", "W2_MGrabBtn_SetEnabled",
+            "W2_PistolBtn_SetEnabled"
+        }) do
+            if getgenv()[fn] then pcall(getgenv()[fn], false) end
+        end
+        W.W2_Notify("Buttons", "All buttons OFF", 3)
+    end })
+end)
+
+-- === UI SECTION: TROLL ===
+W.OnUIReady(function()
+    local t1 = W.T_Troll:AddSection("Emote")
+    t1:AddToggle({ Title = "Enable", Default = false, Callback = function(v) W.Emote_Set(v) end })
+    t1:AddDropdown({ Title = "Select Emote",
+        Options = (W.Emote and W.Emote.Options) or {},
+        Default = "Friday Night", Multi = false,
+        Callback = function(v)
+            local val = type(v) == "table" and v[1] or v
+            W.Emote_Select(val or "Friday Night")
         end })
-        s2:AddKeybind({ Title = "Hotkey", Default = Enum.KeyCode.G, Callback = function(kc)
-            if kc then W2.Invis_Hotkey = kc.Name end
+    t1:AddButton({ Title = "Stop Emote", Callback = function()
+        W.Emote_Stop()
+        if W.Emote then W.Emote.Enabled = false end
+    end })
+
+    local t2 = W.T_Troll:AddSection("Bombax")
+    t2:AddToggle({ Title = "Enable Bombax", Default = false, Callback = function(v) W.Bombax_Set(v) end })
+    t2:AddDropdown({ Title = "Select Song",
+        Options = W.Bombax_GetList and W.Bombax_GetList() or {},
+        Default = "One", Multi = false,
+        Callback = function(v)
+            local val = type(v) == "table" and v[1] or v
+            if W.Bombax then W.Bombax.Selected = val end
+            W2.Bombax_Selected = val
+            if W.Bombax and W.Bombax.Enabled then W.Bombax_Play(val) end
+        end })
+    t2:AddSlider({ Title = "Volume", Min = 0, Max = 10, Default = 2, Increment = 0.5,
+        Callback = function(v) W.Bombax_SetVol(v) end })
+    t2:AddToggle({ Title = "Looped", Default = true, Callback = function(v) W.Bombax_SetLoop(v) end })
+    t2:AddButton({ Title = "▶ Play", Callback = function()
+        W.Bombax_Play(W.Bombax and W.Bombax.Selected or "One")
+    end })
+    t2:AddButton({ Title = "⏸ Stop", Callback = function() W.Bombax_Stop() end })
+    t2:AddButton({ Title = "⏭ Next", Callback = function() W.Bombax_Next() end })
+    t2:AddButton({ Title = "⏮ Prev", Callback = function() W.Bombax_Prev() end })
+    t2:AddToggle({ Title = "Show Bombax Button", Content = "Tombol kecil + window toggle",
+        Default = false, Callback = function(v)
+            if W.BombaxUI_Set then W.BombaxUI_Set(v) end
+        end })
+    t2:AddButton({ Title = "Toggle Bombax Window", Content = "Buka/tutup window",
+        Callback = function()
+            if W.BombaxUI_Toggle then W.BombaxUI_Toggle() end
         end })
 
-        local s3 = W.T_Misc:AddSection("Player Utility")
-        s3:AddToggle({ Title = "Speed Hack", Default = false, Callback = function(v)
-            W2.PU_SpeedEnabled = v
-            if not v then
-                local h = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
-                if h then h.WalkSpeed = 16 end
-            end
+    local t3 = W.T_Troll:AddSection("Fake Avatar")
+    t3:AddDropdown({ Title = "Preset",
+        Options = { "Self Avatar","Random 1","Random 2","Random 3","Random 4","Random 5","Random 6","Random 7",
+            "WoozyNate","Nicholas","yvlyf","traevp","J0LLY","LucashDev","CEOofIsaac","Stealthy","Wildes","Talon",
+            "Relukt","Sammy","Diesel","S4ans03","Aura","iJava","White Guy","Purple King","Kachaaaa Gay","Mpruyyy" },
+        Default = "Self Avatar", Callback = function(opt)
+            local ids = {
+                ["Self Avatar"] = LP.UserId, ["Random 1"] = 2888298851, ["Random 2"] = 10074747755,
+                ["Random 3"] = 5209567453, ["Random 4"] = 8991982843, ["Random 5"] = 5796319029,
+                ["Random 6"] = 9744452117, ["Random 7"] = 8476755006, ["WoozyNate"] = 146089324,
+                ["Nicholas"] = 909635, ["yvlyf"] = 181751703, ["traevp"] = 471607078, ["J0LLY"] = 1073847038,
+                ["LucashDev"] = 2525651744, ["CEOofIsaac"] = 63238912, ["Stealthy"] = 56602747,
+                ["Wildes"] = 40397833, ["Talon"] = 75974130, ["Relukt"] = 65042011, ["Sammy"] = 2678001507,
+                ["Diesel"] = 9123921576, ["S4ans03"] = 35439794, ["Aura"] = 2275806428, ["iJava"] = 276557820,
+                ["White Guy"] = 8843268357, ["Purple King"] = 9070758608,
+                ["Kachaaaa Gay"] = 8956318334, ["Mpruyyy"] = 8340163775
+            }
+            W.FakeAvatar_SetId(ids[opt] or LP.UserId)
         end })
-        s3:AddSlider({ Title = "Speed Value", Min = 16, Max = 200, Default = 16, Increment = 1,
-            Callback = function(v) W2.PU_SpeedValue = v end })
-        s3:AddToggle({ Title = "Shift Lock", Default = false, Callback = function(v) W2.PU_ShiftLock = v end })
-        s3:AddToggle({ Title = "Unlimited Zoom", Default = false, Callback = function(v) W2.PU_UnlimitedZoom = v end })
-        s3:AddToggle({ Title = "Noclip", Default = false, Callback = function(v) W2.PU_Noclip = v end })
+    t3:AddToggle({ Title = "Enable Fake Avatar", Default = false, Callback = function(v) W.FakeAvatar_Set(v) end })
+    local UN = ""
+    t3:AddInput({ Title = "Fake Avatar Username", Placeholder = "username",
+        Callback = function(inp) UN = (inp or ""):gsub("^@", "") end })
+    t3:AddButton({ Title = "Apply From Username", Callback = function()
+        if UN == "" then W.ForceNotify("Fake Avatar", "Masukkan username dulu!", 2); return end
+        W.FakeAvatar_FromUsername(UN)
+    end })
 
-        local s4 = W.T_Misc:AddSection("Speed Boost")
-        s4:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
-            W.SpeedBoost_Set(v)
-            W.W2_Notify("Speed Boost", v and "Enabled" or "Disabled", 2)
-        end })
-        s4:AddSlider({ Title = "Speed Value", Min = 16, Max = 100, Default = 30, Increment = 1,
-            Callback = function(v) W2.SpeedBoost_Value = v end })
+    local t4 = W.T_Troll:AddSection("Fake Korless")
+    t4:AddToggle({ Title = "Korless Morph", Default = false, Callback = function(v) W.Korless_Set(v) end })
 
-        local s5 = W.T_Misc:AddSection("Cursor Feature")
-        s5:AddToggle({ Title = "Enable Cursor Unlock", Default = false, Callback = function(v)
-            W.Cursor_Set(v)
-        end })
-        s5:AddButton({ Title = "Toggle Now", Callback = function()
-            W.Cursor_Set(not W2.Cursor_Enabled)
-        end })
+    local t5 = W.T_Troll:AddSection("Header Title")
+    t5:AddInput({ Title = "Header Text", Default = "W2", Placeholder = "Nama header...",
+        Callback = function(inp) W.Header_SetText(inp) end })
+    t5:AddToggle({ Title = "Enable Header", Default = false, Callback = function(v) W.Header_Set(v) end })
+    t5:AddColorPicker({ Title = "Header Color", Default = Color3.fromRGB(255, 255, 255), Save = false,
+        Callback = function(c) W.Header_SetColor(c) end })
 
-        local s6 = W.T_Misc:AddSection("Spectator Counter")
-        s6:AddToggle({ Title = "Enable", Default = false, Callback = function(v) W.Spectator_Set(v) end })
+    local t6 = W.T_Troll:AddSection("Escape")
+    t6:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
+        W2.Escape_Enabled = v
+    end })
+    t6:AddButton({ Title = "Teleport Now", Callback = function() W.Escape_TP() end })
+end)
 
-        local s7 = W.T_Misc:AddSection("Jerk Off")
-        s7:AddToggle({ Title = "Enable Jerk Off Tool", Default = false, Callback = function(v)
-            W.JerkOff_SetEnabled(v)
-        end })
-
-        local s8 = W.T_Misc:AddSection("Player Utility — Extra")
-        s8:AddToggle({ Title = "Skip End Screen", Default = false, Callback = function(v)
-            W.SkipEnd_Set(v)
-        end })
-        s8:AddToggle({ Title = "Hide Name", Default = false, Callback = function(v)
-            W.HideName_Set(v)
-        end })
-        s8:AddToggle({ Title = "Hide Survivor Icon", Default = false, Callback = function(v)
-            W.HideIcon_Set(v)
-        end })
-
-        local s9 = W.T_Misc:AddSection("Floating Buttons")
-        s9:AddToggle({ Title = "Self Heal Button", Default = false, Callback = function(v)
-            if getgenv().W2_SHB_SetEnabled then getgenv().W2_SHB_SetEnabled(v) end
-        end })
-        s9:AddToggle({ Title = "Self Unhook Button", Default = false, Callback = function(v)
-            if getgenv().W2_SUB_SetEnabled then getgenv().W2_SUB_SetEnabled(v) end
-        end })
-        s9:AddToggle({ Title = "Escape Button", Default = false, Callback = function(v)
-            if getgenv().W2_Escape_SetEnabled then getgenv().W2_Escape_SetEnabled(v) end
-        end })
-        s9:AddToggle({ Title = "Invisible Button", Default = false, Callback = function(v)
-            if getgenv().W2_InvisBtn_SetEnabled then getgenv().W2_InvisBtn_SetEnabled(v) end
-        end })
-        s9:AddToggle({ Title = "Moonwalk Button", Default = false, Callback = function(v)
-            if getgenv().W2_MoonwalkBtn_SetEnabled then getgenv().W2_MoonwalkBtn_SetEnabled(v) end
-        end })
-        s9:AddToggle({ Title = "Spear Aimbot Button", Default = false, Callback = function(v)
-            if getgenv().W2_SpearBtn_SetEnabled then getgenv().W2_SpearBtn_SetEnabled(v) end
-        end })
-        s9:AddToggle({ Title = "Troll TP Button", Default = false, Callback = function(v)
-            if getgenv().W2_TTB_SetEnabled then getgenv().W2_TTB_SetEnabled(v) end
-        end })
-        s9:AddToggle({ Title = "Parry Button", Default = false, Callback = function(v)
-            if getgenv().W2_ParryBtn_SetEnabled then getgenv().W2_ParryBtn_SetEnabled(v) end
-        end })
-        s9:AddToggle({ Title = "Myers Grab Button", Default = false, Callback = function(v)
-            if getgenv().W2_MGrabBtn_SetEnabled then getgenv().W2_MGrabBtn_SetEnabled(v) end
-        end })
-        s9:AddToggle({ Title = "Pistol TOF Button", Default = false, Callback = function(v)
-            if getgenv().W2_PistolBtn_SetEnabled then getgenv().W2_PistolBtn_SetEnabled(v) end
-        end })
-        s9:AddButton({ Title = "Show All Buttons", Callback = function()
-            for _, fn in ipairs({
-                "W2_SHB_SetEnabled", "W2_SUB_SetEnabled", "W2_Escape_SetEnabled",
-                "W2_InvisBtn_SetEnabled", "W2_MoonwalkBtn_SetEnabled", "W2_SpearBtn_SetEnabled",
-                "W2_TTB_SetEnabled", "W2_ParryBtn_SetEnabled", "W2_MGrabBtn_SetEnabled",
-                "W2_PistolBtn_SetEnabled"
-            }) do
-                if getgenv()[fn] then pcall(getgenv()[fn], true) end
-            end
-            W.W2_Notify("Buttons", "All 10 buttons ON", 3)
-        end })
-        s9:AddButton({ Title = "Hide All Buttons", Callback = function()
-            for _, fn in ipairs({
-                "W2_SHB_SetEnabled", "W2_SUB_SetEnabled", "W2_Escape_SetEnabled",
-                "W2_InvisBtn_SetEnabled", "W2_MoonwalkBtn_SetEnabled", "W2_SpearBtn_SetEnabled",
-                "W2_TTB_SetEnabled", "W2_ParryBtn_SetEnabled", "W2_MGrabBtn_SetEnabled",
-                "W2_PistolBtn_SetEnabled"
-            }) do
-                if getgenv()[fn] then pcall(getgenv()[fn], false) end
-            end
-            W.W2_Notify("Buttons", "All buttons OFF", 3)
-        end })
+-- === UI SECTION: CONFIG ===
+W.OnUIReady(function()
+    local cfgName = ""
+    local selCfg = nil
+    local cfgList = nil
+    local function folderPath() return "W2/Config" end
+    local function ensureFolder()
+        if isfolder and makefolder then
+            if not isfolder("W2") then makefolder("W2") end
+            if not isfolder(folderPath()) then makefolder(folderPath()) end
+        end
     end
+    ensureFolder()
 
-    -- === UI SECTION: TROLL ===
-    do
-        local t1 = W.T_Troll:AddSection("Emote")
-        t1:AddToggle({ Title = "Enable", Default = false, Callback = function(v) W.Emote_Set(v) end })
-        t1:AddDropdown({ Title = "Select Emote",
-            Options = (W.Emote and W.Emote.Options) or {},
-            Default = "Friday Night", Multi = false,
-            Callback = function(v)
-                local val = type(v) == "table" and v[1] or v
-                W.Emote_Select(val or "Friday Night")
-            end })
-        t1:AddButton({ Title = "Stop Emote", Callback = function()
-            W.Emote_Stop()
-            if W.Emote then W.Emote.Enabled = false end
-        end })
-
-        local t2 = W.T_Troll:AddSection("Bombax")
-        t2:AddToggle({ Title = "Enable Bombax", Default = false, Callback = function(v) W.Bombax_Set(v) end })
-        t2:AddDropdown({ Title = "Select Song",
-            Options = W.Bombax_GetList and W.Bombax_GetList() or {},
-            Default = "One", Multi = false,
-            Callback = function(v)
-                local val = type(v) == "table" and v[1] or v
-                if W.Bombax then W.Bombax.Selected = val end
-                W2.Bombax_Selected = val
-                if W.Bombax and W.Bombax.Enabled then W.Bombax_Play(val) end
-            end })
-        t2:AddSlider({ Title = "Volume", Min = 0, Max = 10, Default = 2, Increment = 0.5,
-            Callback = function(v) W.Bombax_SetVol(v) end })
-        t2:AddToggle({ Title = "Looped", Default = true, Callback = function(v) W.Bombax_SetLoop(v) end })
-        t2:AddButton({ Title = "▶ Play", Callback = function()
-            W.Bombax_Play(W.Bombax and W.Bombax.Selected or "One")
-        end })
-        t2:AddButton({ Title = "⏸ Stop", Callback = function() W.Bombax_Stop() end })
-        t2:AddButton({ Title = "⏭ Next", Callback = function() W.Bombax_Next() end })
-        t2:AddButton({ Title = "⏮ Prev", Callback = function() W.Bombax_Prev() end })
-        t2:AddToggle({ Title = "Show Bombax Button", Content = "Tombol kecil + window toggle",
-            Default = false, Callback = function(v)
-                if W.BombaxUI_Set then W.BombaxUI_Set(v) end
-            end })
-        t2:AddButton({ Title = "Toggle Bombax Window", Content = "Buka/tutup window",
-            Callback = function()
-                if W.BombaxUI_Toggle then W.BombaxUI_Toggle() end
-            end })
-
-        local t3 = W.T_Troll:AddSection("Fake Avatar")
-        t3:AddDropdown({ Title = "Preset",
-            Options = { "Self Avatar","Random 1","Random 2","Random 3","Random 4","Random 5","Random 6","Random 7",
-                "WoozyNate","Nicholas","yvlyf","traevp","J0LLY","LucashDev","CEOofIsaac","Stealthy","Wildes","Talon",
-                "Relukt","Sammy","Diesel","S4ans03","Aura","iJava","White Guy","Purple King","Kachaaaa Gay","Mpruyyy" },
-            Default = "Self Avatar", Callback = function(opt)
-                local ids = {
-                    ["Self Avatar"] = LP.UserId, ["Random 1"] = 2888298851, ["Random 2"] = 10074747755,
-                    ["Random 3"] = 5209567453, ["Random 4"] = 8991982843, ["Random 5"] = 5796319029,
-                    ["Random 6"] = 9744452117, ["Random 7"] = 8476755006, ["WoozyNate"] = 146089324,
-                    ["Nicholas"] = 909635, ["yvlyf"] = 181751703, ["traevp"] = 471607078, ["J0LLY"] = 1073847038,
-                    ["LucashDev"] = 2525651744, ["CEOofIsaac"] = 63238912, ["Stealthy"] = 56602747,
-                    ["Wildes"] = 40397833, ["Talon"] = 75974130, ["Relukt"] = 65042011, ["Sammy"] = 2678001507,
-                    ["Diesel"] = 9123921576, ["S4ans03"] = 35439794, ["Aura"] = 2275806428, ["iJava"] = 276557820,
-                    ["White Guy"] = 8843268357, ["Purple King"] = 9070758608,
-                    ["Kachaaaa Gay"] = 8956318334, ["Mpruyyy"] = 8340163775
-                }
-                W.FakeAvatar_SetId(ids[opt] or LP.UserId)
-            end })
-        t3:AddToggle({ Title = "Enable Fake Avatar", Default = false, Callback = function(v) W.FakeAvatar_Set(v) end })
-        local UN = ""
-        t3:AddInput({ Title = "Fake Avatar Username", Placeholder = "username",
-            Callback = function(inp) UN = (inp or ""):gsub("^@", "") end })
-        t3:AddButton({ Title = "Apply From Username", Callback = function()
-            if UN == "" then W.ForceNotify("Fake Avatar", "Masukkan username dulu!", 2); return end
-            W.FakeAvatar_FromUsername(UN)
-        end })
-
-        local t4 = W.T_Troll:AddSection("Fake Korless")
-        t4:AddToggle({ Title = "Korless Morph", Default = false, Callback = function(v) W.Korless_Set(v) end })
-
-        local t5 = W.T_Troll:AddSection("Header Title")
-        t5:AddInput({ Title = "Header Text", Default = "W2", Placeholder = "Nama header...",
-            Callback = function(inp) W.Header_SetText(inp) end })
-        t5:AddToggle({ Title = "Enable Header", Default = false, Callback = function(v) W.Header_Set(v) end })
-        t5:AddColorPicker({ Title = "Header Color", Default = Color3.fromRGB(255, 255, 255), Save = false,
-            Callback = function(c) W.Header_SetColor(c) end })
-
-        local t6 = W.T_Troll:AddSection("Escape")
-        t6:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
-            W2.Escape_Enabled = v
-        end })
-        t6:AddButton({ Title = "Teleport Now", Callback = function() W.Escape_TP() end })
-    end
-
-    -- === UI SECTION: CONFIG ===
-    do
-        local cfgName = ""
-        local selCfg = nil
-        local cfgList = nil
-        local function folderPath() return "W2/Config" end
-        local function ensureFolder()
-            if isfolder and makefolder then
-                if not isfolder("W2") then makefolder("W2") end
-                if not isfolder(folderPath()) then makefolder(folderPath()) end
+    local function refreshList()
+        local l = {}
+        if listfiles then
+            ensureFolder()
+            local ok, files = pcall(listfiles, folderPath())
+            if ok and files then
+                for _, f in ipairs(files) do
+                    local n = string.match(f, "([^/\\]+)%.json$")
+                    if n then table.insert(l, n) end
+                end
             end
         end
-        ensureFolder()
-
-        local function refreshList()
-            local l = {}
-            if listfiles then
-                ensureFolder()
-                local ok, files = pcall(listfiles, folderPath())
-                if ok and files then
-                    for _, f in ipairs(files) do
-                        local n = string.match(f, "([^/\\]+)%.json$")
-                        if n then table.insert(l, n) end
-                    end
-                end
-            end
-            if cfgList and cfgList.SetValues then cfgList:SetValues(l, selCfg, true) end
-        end
-
-        local function GetSnapshot()
-            local snap = {}
-            for k, v in pairs(W2) do
-                local t = type(v)
-                if t ~= "function" and t ~= "userdata" and t ~= "thread" then
-                    if t == "table" then
-                        local ok = pcall(function() return HttpService:JSONEncode(v) end)
-                        if ok then snap[k] = v end
-                    else
-                        snap[k] = v
-                    end
-                end
-            end
-            return snap
-        end
-
-        local s = W.T_Cfg:AddSection("Config Manager")
-        s:AddInput({ Title = "Config Name", Placeholder = "MyConfig", Save = false,
-            Callback = function(t) cfgName = t end })
-        cfgList = s:AddDropdown({ Title = "Saved Configs", Multi = false, Options = {}, Save = false,
-            Callback = function(v) selCfg = v end })
-        refreshList()
-
-        s:AddButton({ Title = "Save", SubTitle = "Load",
-            Callback = function()
-                if cfgName == nil or cfgName == "" then
-                    W.ForceNotify("Config", "Isi nama config dulu!", 2); return
-                end
-                if not writefile or not HttpService then
-                    W.ForceNotify("Config", "Executor gak support", 2); return
-                end
-                ensureFolder()
-                local snapshot = GetSnapshot()
-                local okEnc, encoded = pcall(function() return HttpService:JSONEncode(snapshot) end)
-                if not okEnc or not encoded then
-                    W.ForceNotify("Config", "Gagal encode", 2); return
-                end
-                local okW = pcall(writefile, folderPath() .. "/" .. cfgName .. ".json", encoded)
-                if not okW then
-                    W.ForceNotify("Config", "Gagal save", 2); return
-                end
-                W.ForceNotify("Config", "Saved: " .. cfgName, 2)
-                refreshList()
-            end,
-            SubCallback = function()
-                if not selCfg or selCfg == "" then
-                    W.ForceNotify("Config", "Pilih config dulu!", 2); return
-                end
-                if not readfile or not isfile then
-                    W.ForceNotify("Config", "Executor gak support", 2); return
-                end
-                local path = folderPath() .. "/" .. selCfg .. ".json"
-                if not isfile(path) then
-                    W.ForceNotify("Config", "File gak ketemu", 2); return
-                end
-                local okR, raw = pcall(readfile, path)
-                if not okR or not raw then
-                    W.ForceNotify("Config", "Gagal baca file", 2); return
-                end
-                local okD, dec = pcall(function() return HttpService:JSONDecode(raw) end)
-                if not okD or type(dec) ~= "table" then
-                    W.ForceNotify("Config", "File corrupt", 2); return
-                end
-                for k, v in pairs(dec) do
-                    if k ~= "_version" then W2[k] = v end
-                end
-                W.ForceNotify("Config", "Loaded: " .. selCfg, 2)
-            end
-        })
-
-        s:AddButton({ Title = "Delete", SubTitle = "Refresh List",
-            Callback = function()
-                if not selCfg or selCfg == "" then
-                    W.ForceNotify("Config", "Pilih config dulu!", 2); return
-                end
-                local path = folderPath() .. "/" .. selCfg .. ".json"
-                if isfile and delfile and isfile(path) then
-                    pcall(delfile, path)
-                    W.ForceNotify("Config", "Deleted: " .. selCfg, 2)
-                    selCfg = nil; refreshList()
-                end
-            end,
-            SubCallback = function()
-                refreshList()
-                W.ForceNotify("Config", "List refreshed", 2)
-            end
-        })
-
-        s:AddToggle({ Title = "Auto Save", Default = false, Save = false,
-            Callback = function(v) W2.Config_AutoSave = v end })
-        s:AddToggle({ Title = "Auto Load", Default = false, Save = false,
-            Callback = function(v) W2.Config_AutoLoad = v end })
-
-        local s2 = W.T_Cfg:AddSection("Config Info")
-        s2:AddParagraph({ Title = "Cara Pakai Config",
-            Content = "• Save: tulis nama config, klik Save\n• Load: pilih dropdown, klik Load\n• Auto Save: simpan otomatis\n• Auto Load: load config saat start" })
+        if cfgList and cfgList.SetValues then cfgList:SetValues(l, selCfg, true) end
     end
 
-    -- === CLOSING ===
-    print("[W2] Loaded OK")
-    print("  Tab: Survivor / Visuals / Killer / Misc / Troll / Config")
-    print("  Buttons: 10 floating buttons + Bombax Toggle + FPS Counter")
-    print("  Free Script - Jangan Dijual!")
+    local function GetSnapshot()
+        local snap = {}
+        for k, v in pairs(W2) do
+            local t = type(v)
+            if t ~= "function" and t ~= "userdata" and t ~= "thread" then
+                if t == "table" then
+                    local ok = pcall(function() return HttpService:JSONEncode(v) end)
+                    if ok then snap[k] = v end
+                else
+                    snap[k] = v
+                end
+            end
+        end
+        return snap
+    end
 
-    W.W2_Notify("W2", "Script Loaded!", 6)
+    local s = W.T_Cfg:AddSection("Config Manager")
+    s:AddInput({ Title = "Config Name", Placeholder = "MyConfig", Save = false,
+        Callback = function(t) cfgName = t end })
+    cfgList = s:AddDropdown({ Title = "Saved Configs", Multi = false, Options = {}, Save = false,
+        Callback = function(v) selCfg = v end })
+    refreshList()
+
+    s:AddButton({ Title = "Save", SubTitle = "Load",
+        Callback = function()
+            if cfgName == nil or cfgName == "" then
+                W.ForceNotify("Config", "Isi nama config dulu!", 2); return
+            end
+            if not writefile or not HttpService then
+                W.ForceNotify("Config", "Executor gak support", 2); return
+            end
+            ensureFolder()
+            local snapshot = GetSnapshot()
+            local okEnc, encoded = pcall(function() return HttpService:JSONEncode(snapshot) end)
+            if not okEnc or not encoded then
+                W.ForceNotify("Config", "Gagal encode", 2); return
+            end
+            local okW = pcall(writefile, folderPath() .. "/" .. cfgName .. ".json", encoded)
+            if not okW then
+                W.ForceNotify("Config", "Gagal save", 2); return
+            end
+            W.ForceNotify("Config", "Saved: " .. cfgName, 2)
+            refreshList()
+        end,
+        SubCallback = function()
+            if not selCfg or selCfg == "" then
+                W.ForceNotify("Config", "Pilih config dulu!", 2); return
+            end
+            if not readfile or not isfile then
+                W.ForceNotify("Config", "Executor gak support", 2); return
+            end
+            local path = folderPath() .. "/" .. selCfg .. ".json"
+            if not isfile(path) then
+                W.ForceNotify("Config", "File gak ketemu", 2); return
+            end
+            local okR, raw = pcall(readfile, path)
+            if not okR or not raw then
+                W.ForceNotify("Config", "Gagal baca file", 2); return
+            end
+            local okD, dec = pcall(function() return HttpService:JSONDecode(raw) end)
+            if not okD or type(dec) ~= "table" then
+                W.ForceNotify("Config", "File corrupt", 2); return
+            end
+            for k, v in pairs(dec) do
+                if k ~= "_version" then W2[k] = v end
+            end
+            W.ForceNotify("Config", "Loaded: " .. selCfg, 2)
+        end
+    })
+
+    s:AddButton({ Title = "Delete", SubTitle = "Refresh List",
+        Callback = function()
+            if not selCfg or selCfg == "" then
+                W.ForceNotify("Config", "Pilih config dulu!", 2); return
+            end
+            local path = folderPath() .. "/" .. selCfg .. ".json"
+            if isfile and delfile and isfile(path) then
+                pcall(delfile, path)
+                W.ForceNotify("Config", "Deleted: " .. selCfg, 2)
+                selCfg = nil; refreshList()
+            end
+        end,
+        SubCallback = function()
+            refreshList()
+            W.ForceNotify("Config", "List refreshed", 2)
+        end
+    })
+
+    s:AddToggle({ Title = "Auto Save", Default = false, Save = false,
+        Callback = function(v) W2.Config_AutoSave = v end })
+    s:AddToggle({ Title = "Auto Load", Default = false, Save = false,
+        Callback = function(v) W2.Config_AutoLoad = v end })
+
+    local s2 = W.T_Cfg:AddSection("Config Info")
+    s2:AddParagraph({ Title = "Cara Pakai Config",
+        Content = "• Save: tulis nama config, klik Save\n• Load: pilih dropdown, klik Load\n• Auto Save: simpan otomatis\n• Auto Load: load config saat start" })
+end)
+
+-- === CLOSING ===
+print("[W2] Loaded OK")
+print("  Tab: Survivor / Visuals / Killer / Misc / Troll / Config")
+print("  Buttons: 12 floating buttons + Bombax Toggle + FPS Counter")
+print("  Free Script - Jangan Dijual!")
+
+W.W2_Notify("W2", "Script Loaded!", 6)
 
 end  -- PENUTUP __W2_Init__()
 
--- === EXECUTE (1 X SAJA) ===
+-- === EXECUTE ===
 __W2_Init__()
