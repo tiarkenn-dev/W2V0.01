@@ -3417,7 +3417,7 @@ do
         Callback = function(v) W.Moonwalk_SetBack(v) end })
     s6:AddSlider({ Title = "Switch Interval", Min = 0.02, Max = 0.5, Default = 0.07, Increment = 0.01,
         Callback = function(v) W.Moonwalk_SetInterval(v) end })
-                        end--====================================================--
+end--====================================================--
 -- PART 8: VISUALS — FULL ESP + ESP STATUS
 --====================================================--
 
@@ -6402,7 +6402,7 @@ do
         end
         W.ForceNotify("Block Vault", "Unblock " .. count .. " vaults!", 3)
     end })
-                                                end--====================================================--
+end--====================================================--
 -- PART 15: KILLER — FLASK + DASH LOCK + INSTANT BUTTONS
 --====================================================--
 
@@ -7412,7 +7412,7 @@ function W.HideIcon_Set(v)
     W.HideIcon.Enabled = v and true or false
     if v then W.HideIcon_Apply() else W.HideIcon_Restore() end
                                                         end--====================================================--
--- PART 16B: HOOK + FLOATING BUTTONS + BOMBAX V4 (RAYFIELD) + FPS + TROLL
+-- PART 16B: HOOK + FLOATING BUTTONS + BOMBAX RAYFIELD + FPS + TROLL
 --====================================================--
 
 -- === PART 16B-1: HOOK GLOBAL ===
@@ -7428,7 +7428,6 @@ do
                 local method = getnamecallmethod()
                 if checkcaller() then return oldNC(self, ...) end
 
-                -- 1. No Fall Damage
                 if method == "FireServer" and W2.NoFallDamage then
                     local ok, n = pcall(function() return self.Name end)
                     if ok and n == "Fall" then
@@ -7437,7 +7436,6 @@ do
                     end
                 end
 
-                -- 2. Anti Blind
                 if method == "FireServer" and W2.AntiBlind_Enabled then
                     local ok, n = pcall(function() return self.Name end)
                     if ok and n == "GotBlinded" then
@@ -7448,7 +7446,6 @@ do
                     end
                 end
 
-                -- 3. Silent Flashlight
                 if method == "FireServer" then
                     local ok, n = pcall(function() return self.Name end)
                     if ok and n == "Activate" then
@@ -7464,14 +7461,12 @@ do
                     end
                 end
 
-                -- 4. Veil (Spearthrow)
                 if method == "FireServer" then
                     local ok, n = pcall(function() return self.Name end)
                     if ok and n == "Spearthrow" then
                         local args = {...}
                         local api = W.W424Veil_API
                         local VeilState = W._VeilV1_State
-
                         local modeV1ALF = W2.VeilV1_Enabled and VeilState and typeof(VeilState.lookVector) == "Vector3"
                         local modeV2Block = false
                         local modeV2Predict = false
@@ -7482,9 +7477,7 @@ do
                                 if ac.Aim_SilentVeilV2 then modeV2Predict = true end
                             end
                         end
-
                         if modeV2Block then return nil end
-
                         if modeV2Predict and api then
                             local ac = api.AimConfig
                             local cfg = api.Config
@@ -7527,7 +7520,6 @@ do
                             args[3] = originPos
                             return oldNC(self, unpack(args))
                         end
-
                         if modeV1ALF then
                             if typeof(args[1]) == "Vector3" then
                                 args[1] = VeilState.lookVector
@@ -7537,7 +7529,6 @@ do
                     end
                 end
 
-                -- 5. Silent Flask
                 if method == "FireServer" and W2.Flask_Enabled then
                     local ok, n = pcall(function() return self.Name end)
                     if ok and n == "ThrowFlask" then
@@ -7566,7 +7557,6 @@ do
                     end
                 end
 
-                -- 6. Unlock Skill While Carrying
                 if method == "GetAttribute" and W.CarryCfg and W.CarryCfg.Enabled then
                     local args = {...}
                     if args[1] == "IsCarrying" then return false end
@@ -7579,7 +7569,7 @@ do
 end
 
 --====================================================--
--- PART 16B-2: FLOATING BUTTONS (10)
+-- PART 16B-2: FLOATING BUTTONS (12 TOTAL)
 --====================================================--
 local function CreateFloat(cfg)
     local st = cfg.state
@@ -7787,108 +7777,118 @@ local function CreateFloat(cfg)
 end
 W.CreateFloat = CreateFloat
 
--- 10 Floating Buttons
+-- 10 Floating Buttons Lama
 local SH_St = { Enabled = false, DragLocked = false, Gui = nil, SavedPos = UDim2.new(0.03, 0, 0.25, 0), Conns = {} }
 local SH_Btn = CreateFloat({ id = "SelfHeal", title = "Heal", state = SH_St,
     isOn = function() return W2.SelfHeal_Enabled end,
     onToggle = function(v) W.setSelfHeal(v) end, iconRotation = 0 })
 getgenv().W2_SHB_SetEnabled = function(en) SH_Btn.SetEnabled(en) end
-getgenv().W2_SHB_UpdateVisual = function() SH_Btn.Refresh() end
 
 local SU_St = { Enabled = false, DragLocked = false, Gui = nil, SavedPos = UDim2.new(0.03, 0, 0.31, 0), Conns = {} }
 local SU_Btn = CreateFloat({ id = "SelfUnhook", title = "Hook", state = SU_St,
     isOn = function() return W2.SelfUnhook_Enabled end,
     onToggle = function(v) W.SU_Set(v) end, iconRotation = 135 })
 getgenv().W2_SUB_SetEnabled = function(en) SU_Btn.SetEnabled(en) end
-getgenv().W2_SUB_UpdateVisual = function() SU_Btn.Refresh() end
 
 local ESC_St = { Enabled = false, DragLocked = false, Gui = nil, SavedPos = UDim2.new(0.03, 0, 0.37, 0), Conns = {} }
 local ESC_Btn = CreateFloat({ id = "Escape", title = "Escape", state = ESC_St,
     isOn = function() return W2.Escape_Enabled end,
     onToggle = function(v) W2.Escape_Enabled = v; if v then W.Escape_TP() end end, iconRotation = 45 })
 getgenv().W2_Escape_SetEnabled = function(en) ESC_Btn.SetEnabled(en) end
-getgenv().W2_Escape_UpdateVisual = function() ESC_Btn.Refresh() end
 
 local INV_St = { Enabled = false, DragLocked = false, Gui = nil, SavedPos = UDim2.new(0.03, 0, 0.43, 0), Conns = {} }
 local INV_Btn = CreateFloat({ id = "Invisible", title = "Invis", state = INV_St,
-    isOn = function()
-        local MV = getgenv().W2Invis
-        return MV and MV.Enabled or false
-    end,
+    isOn = function() local MV = getgenv().W2Invis; return MV and MV.Enabled or false end,
     onToggle = function(v) W.Invisible_SetState(v, true) end, iconRotation = 180 })
 getgenv().W2_InvisBtn_SetEnabled = function(en) INV_Btn.SetEnabled(en) end
-getgenv().W2_InvisBtn_UpdateVisual = function() INV_Btn.Refresh() end
 
 local MW_St = { Enabled = false, DragLocked = false, Gui = nil, SavedPos = UDim2.new(0.03, 0, 0.49, 0), Conns = {} }
 local MW_Btn = CreateFloat({ id = "Moonwalk", title = "Moon", state = MW_St,
     isOn = function() return W2.Moonwalk_Enabled end,
     onToggle = function(v) W.Moonwalk_Set(v) end, iconRotation = 0 })
 getgenv().W2_MoonwalkBtn_SetEnabled = function(en) MW_Btn.SetEnabled(en) end
-getgenv().W2_MoonwalkBtn_UpdateVisual = function() MW_Btn.Refresh() end
 
 local SP_St = { Enabled = false, DragLocked = false, Gui = nil, SavedPos = UDim2.new(0.03, 0, 0.55, 0), Conns = {} }
 local SP_Btn = CreateFloat({ id = "SpearAimbot", title = "Spear", state = SP_St,
     isOn = function() return W2.SpearAimbot_Enabled end,
     onToggle = function(v) W.SpearAimbot_Set(v) end, iconRotation = 90 })
 getgenv().W2_SpearBtn_SetEnabled = function(en) SP_Btn.SetEnabled(en) end
-getgenv().W2_SpearBtn_UpdateVisual = function() SP_Btn.Refresh() end
 
 local TT_St = { Enabled = false, DragLocked = false, Gui = nil, SavedPos = UDim2.new(0.03, 0, 0.61, 0), Conns = {} }
 local TT_Btn = CreateFloat({ id = "TrollTP", title = "T_TP", state = TT_St,
     isOn = function() return W.TT.Enabled end,
     onToggle = function(v) W.TT_Set(v) end, iconRotation = 225 })
 getgenv().W2_TTB_SetEnabled = function(en) TT_Btn.SetEnabled(en) end
-getgenv().W2_TTB_UpdateVisual = function() TT_Btn.Refresh() end
 
 local P1_St = { Enabled = false, DragLocked = false, Gui = nil, SavedPos = UDim2.new(0.03, 0, 0.67, 0), Conns = {} }
 local P1_Btn = CreateFloat({ id = "Parry", title = "Parry", state = P1_St,
     isOn = function() return W2.ParryV1_Enabled end,
     onToggle = function(v) W2.ParryV1_Enabled = v end, iconRotation = 45 })
 getgenv().W2_ParryBtn_SetEnabled = function(en) P1_Btn.SetEnabled(en) end
-getgenv().W2_ParryBtn_UpdateVisual = function() P1_Btn.Refresh() end
 
 local MG_St = { Enabled = false, DragLocked = false, Gui = nil, SavedPos = UDim2.new(0.03, 0, 0.73, 0), Conns = {} }
 local MG_Btn = CreateFloat({ id = "MyersGrab", title = "Grab", state = MG_St,
     isOn = function() return W.MyersData.Enabled end,
     onToggle = function(v) W.Myers_Set(v) end, iconRotation = 90 })
 getgenv().W2_MGrabBtn_SetEnabled = function(en) MG_Btn.SetEnabled(en) end
-getgenv().W2_MGrabBtn_UpdateVisual = function() MG_Btn.Refresh() end
 
-local PT_St = { Enabled = false, DragLocked = false, Gui = nil, SavedPos = UDim2.new(0.03, 0, 0.79, 0), Conns = {} }
-local PT_Btn = CreateFloat({ id = "PistolTOF", title = "Pistol", state = PT_St,
-    isOn = function() return W2.TOF_Enabled end,
-    onToggle = function(v) W.SetToFEnabled(v) end, iconRotation = 0 })
-getgenv().W2_PistolBtn_SetEnabled = function(en) PT_Btn.SetEnabled(en) end
-getgenv().W2_PistolBtn_UpdateVisual = function() PT_Btn.Refresh() end
-
--- 2 FLOATING BUTTON BARU: EMOTE + SILENT AIM PISTOL (3 MODE)
-local EM_St = { Enabled = false, DragLocked = false, Gui = nil, SavedPos = UDim2.new(0.03, 0, 0.85, 0), Conns = {} }
+-- ⭐ TOMBOL BARU #11: FLOATING EMOTE
+local EM_St = { Enabled = false, DragLocked = false, Gui = nil, SavedPos = UDim2.new(0.03, 0, 0.79, 0), Conns = {} }
 local EM_Btn = CreateFloat({ id = "Emote", title = "Emote", state = EM_St,
     isOn = function() return W.Emote and W.Emote.Enabled end,
-    onToggle = function(v) W.Emote_Set(v) end, iconRotation = 0 })
+    onToggle = function(v)
+        if not W.Emote_Set then
+            W.ForceNotify("Emote", "Sistem belum siap, tunggu sebentar...", 2)
+            return
+        end
+        W.Emote_Set(v)
+    end, iconRotation = 0 })
 getgenv().W2_EmoteBtn_SetEnabled = function(en) EM_Btn.SetEnabled(en) end
-getgenv().W2_EmoteBtn_UpdateVisual = function() EM_Btn.Refresh() end
 
-local SA_St = { Enabled = false, DragLocked = false, Gui = nil, SavedPos = UDim2.new(0.03, 0, 0.91, 0), Conns = {} }
-local SA_Btn = CreateFloat({ id = "SilentPistol", title = "Pistol", state = SA_St,
+-- ⭐ TOMBOL BARU #12: FLOATING SILENT AIM TOF (3 MODE)
+local SA_St = { Enabled = false, DragLocked = false, Gui = nil, SavedPos = UDim2.new(0.03, 0, 0.85, 0), Conns = {} }
+local SA_Btn = CreateFloat({ id = "SilentTOF", title = "TOF", state = SA_St,
     isOn = function() return W2.TOF_Enabled end,
     onToggle = function(v)
+        if not W.SetToFEnabled then
+            W.ForceNotify("Silent TOF", "Sistem belum siap, tunggu sebentar...", 2)
+            return
+        end
         W.SetToFEnabled(v)
         if v then
             -- Cycle mode: Killer → Survivors → Zombie
             local modes = {"Killer", "Survivors", "Zombie"}
             local cur = W2.TOF_TargetMode or "Killer"
             local idx = 1
-            for i, m in ipairs(modes) do if m == cur then idx = i; break end end
+            for i, m in ipairs(modes) do
+                if m == cur then idx = i; break end
+            end
             local nxt = modes[(idx % #modes) + 1]
-            W.ToF_SetMode(nxt, true)
+            if W.ToF_SetMode then
+                W.ToF_SetMode(nxt, false)
+                W.W2_Notify("Silent Aim TOF", "Mode: " .. nxt, 2)
+            end
+        else
+            W.W2_Notify("Silent Aim TOF", "OFF", 2)
         end
     end, iconRotation = 90 })
-getgenv().W2_SilentPistolBtn_SetEnabled = function(en) SA_Btn.SetEnabled(en) end
-getgenv().W2_SilentPistolBtn_UpdateVisual = function() SA_Btn.Refresh() end
+getgenv().W2_SilentTOFBtn_SetEnabled = function(en) SA_Btn.SetEnabled(en) end
+
+-- ⭐ AUTO-SHOW kedua tombol baru setelah 3 detik
+task.spawn(function()
+    task.wait(3)
+    if getgenv().W2_EmoteBtn_SetEnabled then
+        pcall(getgenv().W2_EmoteBtn_SetEnabled, true)
+        print("[W2] Floating Emote: ON")
+    end
+    if getgenv().W2_SilentTOFBtn_SetEnabled then
+        pcall(getgenv().W2_SilentTOFBtn_SetEnabled, true)
+        print("[W2] Floating Silent TOF: ON")
+    end
+end)
 
 --====================================================--
--- PART 16B-3: BOMBAX UI V4 RAYFIELD-STYLE
+-- PART 16B-3: BOMBAX UI RAYFIELD-STYLE
 --====================================================--
 do
     local IMG = "rbxassetid://138040631725974"
@@ -7968,7 +7968,7 @@ do
             BS.Window.Size = UDim2.fromOffset(0, 0)
             BS.Window.BackgroundTransparency = 1
             TweenService:Create(BS.Window, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                Size = UDim2.fromOffset(260, 260),
+                Size = UDim2.fromOffset(240, 240),
                 BackgroundTransparency = 0.05,
             }):Play()
         else
@@ -7981,15 +7981,11 @@ do
                 if BS.Window then BS.Window.Visible = false end
             end)
         end
-        if getgenv().W2_BombaxRefresh then
-            pcall(getgenv().W2_BombaxRefresh)
-        end
+        if getgenv().W2_BombaxRefresh then pcall(getgenv().W2_BombaxRefresh) end
     end
 
-    -- BUILD BUTTON (RAYFIELD STYLE)
     local function buildButton()
         if BS.ButtonBox then pcall(function() BS.ButtonBox:Destroy() end); BS.ButtonBox = nil end
-
         local box = Instance.new("Frame")
         box.Name = "W2MenuToggleBtn"
         box.Size = UDim2.fromOffset(54, 54)
@@ -8062,16 +8058,14 @@ do
             while box.Parent do
                 if not BS.Open then
                     TweenService:Create(glowStroke, TweenInfo.new(1.2, Enum.EasingStyle.Sine), {
-                        Transparency = 0.2,
-                        Thickness = 2.5,
+                        Transparency = 0.2, Thickness = 2.5,
                     }):Play()
                     TweenService:Create(glow, TweenInfo.new(1.2, Enum.EasingStyle.Sine), {
                         Size = UDim2.fromScale(1.45, 1.45),
                     }):Play()
                     task.wait(1.2)
                     TweenService:Create(glowStroke, TweenInfo.new(1.2, Enum.EasingStyle.Sine), {
-                        Transparency = 1,
-                        Thickness = 1,
+                        Transparency = 1, Thickness = 1,
                     }):Play()
                     TweenService:Create(glow, TweenInfo.new(1.2, Enum.EasingStyle.Sine), {
                         Size = UDim2.fromScale(1.15, 1.15),
@@ -8086,12 +8080,10 @@ do
         local function refresh()
             local isOpen = BS.Open
             local isPlaying = W.Bombax and W.Bombax.Playing
-
             local strokeColor = Color3.fromRGB(255, 255, 255)
             local strokeTrans = 0.35
             local iconColor = Color3.fromRGB(255, 255, 255)
             local bgColor = Color3.fromRGB(12, 12, 16)
-
             if isOpen then
                 strokeColor = Color3.fromRGB(120, 200, 255)
                 strokeTrans = 0
@@ -8103,21 +8095,10 @@ do
                 iconColor = Color3.fromRGB(120, 255, 160)
                 bgColor = Color3.fromRGB(15, 30, 20)
             end
-
-            TweenService:Create(btnStroke, TweenInfo.new(0.3), {
-                Color = strokeColor,
-                Transparency = strokeTrans,
-                Thickness = isOpen and 2 or 1.5,
-            }):Play()
-            TweenService:Create(icon, TweenInfo.new(0.3), {
-                ImageColor3 = iconColor,
-            }):Play()
-            TweenService:Create(btn, TweenInfo.new(0.3), {
-                BackgroundColor3 = bgColor,
-            }):Play()
-            TweenService:Create(hint, TweenInfo.new(0.3), {
-                TextColor3 = isOpen and Color3.fromRGB(120, 200, 255) or Color3.fromRGB(180, 180, 200),
-            }):Play()
+            TweenService:Create(btnStroke, TweenInfo.new(0.3), { Color = strokeColor, Transparency = strokeTrans, Thickness = isOpen and 2 or 1.5 }):Play()
+            TweenService:Create(icon, TweenInfo.new(0.3), { ImageColor3 = iconColor }):Play()
+            TweenService:Create(btn, TweenInfo.new(0.3), { BackgroundColor3 = bgColor }):Play()
+            TweenService:Create(hint, TweenInfo.new(0.3), { TextColor3 = isOpen and Color3.fromRGB(120, 200, 255) or Color3.fromRGB(180, 180, 200) }):Play()
         end
         getgenv().W2_BombaxRefresh = refresh
         refresh()
@@ -8127,19 +8108,13 @@ do
         local holdStart = 0
 
         btn.InputBegan:Connect(function(inp)
-            if inp.UserInputType == Enum.UserInputType.MouseButton1
-            or inp.UserInputType == Enum.UserInputType.Touch then
-                dragging = true
-                dragStart = inp.Position
-                startPos = box.Position
-                dDist = 0
-                holdStart = tick()
+            if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                dragging = true; dragStart = inp.Position; startPos = box.Position
+                dDist = 0; holdStart = tick()
             end
         end)
-
         btn.InputEnded:Connect(function(inp)
-            if inp.UserInputType == Enum.UserInputType.MouseButton1
-            or inp.UserInputType == Enum.UserInputType.Touch then
+            if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
                 dragging = false
                 if dDist < 8 and (tick() - holdStart) < 0.6 then
                     toggleWindow()
@@ -8147,43 +8122,27 @@ do
                 end
             end
         end)
-
         table.insert(BS.Conns, UserInputService.InputChanged:Connect(function(inp)
             if not dragging then return end
-            if inp.UserInputType == Enum.UserInputType.MouseMovement
-            or inp.UserInputType == Enum.UserInputType.Touch then
+            if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
                 local d = inp.Position - dragStart
                 dDist = math.abs(d.X) + math.abs(d.Y)
-                box.Position = UDim2.new(
-                    startPos.X.Scale, startPos.X.Offset + d.X,
-                    startPos.Y.Scale, startPos.Y.Offset + d.Y
-                )
+                box.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
             end
         end))
-
         btn.MouseEnter:Connect(function()
-            if not BS.Open then
-                TweenService:Create(btn, TweenInfo.new(0.15), {
-                    BackgroundTransparency = 0,
-                }):Play()
-            end
+            if not BS.Open then TweenService:Create(btn, TweenInfo.new(0.15), { BackgroundTransparency = 0 }):Play() end
         end)
         btn.MouseLeave:Connect(function()
-            if not BS.Open then
-                TweenService:Create(btn, TweenInfo.new(0.15), {
-                    BackgroundTransparency = 0.08,
-                }):Play()
-            end
+            if not BS.Open then TweenService:Create(btn, TweenInfo.new(0.15), { BackgroundTransparency = 0.08 }):Play() end
         end)
     end
 
-    -- BUILD WINDOW
     local function buildWindow()
         if BS.Window then pcall(function() BS.Window:Destroy() end); BS.Window = nil end
-
         local win = Instance.new("Frame")
         win.Name = "BombaxWindow"
-        win.Size = UDim2.fromOffset(260, 260)
+        win.Size = UDim2.fromOffset(240, 240)
         win.Position = UDim2.new(0, 20, 0, 84)
         win.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
         win.BackgroundTransparency = 0.05
@@ -8202,49 +8161,46 @@ do
 
         local header = Instance.new("Frame", win)
         header.Name = "Header"
-        header.Size = UDim2.new(1, 0, 0, 40)
+        header.Size = UDim2.new(1, 0, 0, 36)
         header.BackgroundTransparency = 1
         header.Active = true
 
         local iconBox = Instance.new("ImageLabel", header)
-        iconBox.Name = "Icon"
-        iconBox.Size = UDim2.fromOffset(28, 28)
-        iconBox.Position = UDim2.new(0, 10, 0.5, -14)
+        iconBox.Size = UDim2.fromOffset(24, 24)
+        iconBox.Position = UDim2.new(0, 10, 0.5, -12)
         iconBox.BackgroundTransparency = 1
         iconBox.Image = IMG
-        iconBox.ImageColor3 = Color3.fromRGB(255, 255, 255)
 
         local title = Instance.new("TextLabel", header)
-        title.Size = UDim2.new(1, -80, 0, 16)
-        title.Position = UDim2.new(0, 46, 0, 6)
+        title.Size = UDim2.new(1, -80, 0, 14)
+        title.Position = UDim2.new(0, 42, 0, 5)
         title.BackgroundTransparency = 1
         title.Font = Enum.Font.GothamBold
-        title.Text = "BOMBAX PLAYER"
+        title.Text = "BOMBAX"
         title.TextColor3 = Color3.fromRGB(255, 255, 255)
-        title.TextSize = 12
+        title.TextSize = 11
         title.TextXAlignment = Enum.TextXAlignment.Left
 
         local subtitle = Instance.new("TextLabel", header)
-        subtitle.Size = UDim2.new(1, -80, 0, 12)
-        subtitle.Position = UDim2.new(0, 46, 0, 22)
+        subtitle.Size = UDim2.new(1, -80, 0, 10)
+        subtitle.Position = UDim2.new(0, 42, 0, 19)
         subtitle.BackgroundTransparency = 1
         subtitle.Font = Enum.Font.Gotham
         subtitle.Text = "Music Player"
         subtitle.TextColor3 = Color3.fromRGB(140, 140, 160)
-        subtitle.TextSize = 9
+        subtitle.TextSize = 8
         subtitle.TextXAlignment = Enum.TextXAlignment.Left
 
         local closeBtn = Instance.new("TextButton", header)
-        closeBtn.Name = "CloseBtn"
         closeBtn.AnchorPoint = Vector2.new(1, 0.5)
-        closeBtn.Size = UDim2.fromOffset(24, 24)
+        closeBtn.Size = UDim2.fromOffset(22, 22)
         closeBtn.Position = UDim2.new(1, -8, 0.5, 0)
         closeBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
         closeBtn.BorderSizePixel = 0
         closeBtn.Text = "✕"
         closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
         closeBtn.Font = Enum.Font.GothamBold
-        closeBtn.TextSize = 12
+        closeBtn.TextSize = 11
         closeBtn.AutoButtonColor = false
         Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
         closeBtn.MouseButton1Click:Connect(function()
@@ -8252,9 +8208,8 @@ do
         end)
 
         local nowCard = Instance.new("Frame", win)
-        nowCard.Name = "NowCard"
-        nowCard.Size = UDim2.new(1, -20, 0, 46)
-        nowCard.Position = UDim2.fromOffset(10, 48)
+        nowCard.Size = UDim2.new(1, -20, 0, 42)
+        nowCard.Position = UDim2.fromOffset(10, 44)
         nowCard.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
         nowCard.BorderSizePixel = 0
         Instance.new("UICorner", nowCard).CornerRadius = UDim.new(0, 8)
@@ -8264,28 +8219,25 @@ do
         nowStroke.Transparency = 0.4
 
         local nowLabel = Instance.new("TextLabel", nowCard)
-        nowLabel.Name = "NowLabel"
-        nowLabel.Size = UDim2.new(1, -16, 0, 18)
+        nowLabel.Size = UDim2.new(1, -16, 0, 16)
         nowLabel.Position = UDim2.fromOffset(8, 4)
         nowLabel.BackgroundTransparency = 1
         nowLabel.Font = Enum.Font.GothamBold
         nowLabel.Text = "▶ " .. tostring((W.Bombax and W.Bombax.Selected) or "One")
         nowLabel.TextColor3 = Color3.fromRGB(150, 200, 255)
-        nowLabel.TextSize = 11
+        nowLabel.TextSize = 10
         nowLabel.TextXAlignment = Enum.TextXAlignment.Left
         nowLabel.TextTruncate = Enum.TextTruncate.AtEnd
         BS.NowLabel = nowLabel
 
         local progBg = Instance.new("Frame", nowCard)
-        progBg.Name = "ProgBg"
-        progBg.Size = UDim2.new(1, -110, 0, 6)
-        progBg.Position = UDim2.new(0, 8, 0, 30)
+        progBg.Size = UDim2.new(1, -110, 0, 5)
+        progBg.Position = UDim2.new(0, 8, 0, 28)
         progBg.BackgroundColor3 = Color3.fromRGB(40, 40, 52)
         progBg.BorderSizePixel = 0
         Instance.new("UICorner", progBg).CornerRadius = UDim.new(1, 0)
 
         local progFill = Instance.new("Frame", progBg)
-        progFill.Name = "Fill"
         progFill.Size = UDim2.new(0, 0, 1, 0)
         progFill.BackgroundColor3 = Color3.fromRGB(120, 255, 160)
         progFill.BorderSizePixel = 0
@@ -8293,10 +8245,9 @@ do
         BS.ProgressFill = progFill
 
         local timeLabel = Instance.new("TextLabel", nowCard)
-        timeLabel.Name = "TimeLabel"
         timeLabel.AnchorPoint = Vector2.new(1, 0)
-        timeLabel.Size = UDim2.fromOffset(96, 12)
-        timeLabel.Position = UDim2.new(1, -8, 0, 26)
+        timeLabel.Size = UDim2.fromOffset(96, 11)
+        timeLabel.Position = UDim2.new(1, -8, 0, 25)
         timeLabel.BackgroundTransparency = 1
         timeLabel.Font = Enum.Font.GothamBold
         timeLabel.Text = "0:00 / 0:00"
@@ -8306,15 +8257,14 @@ do
         BS.TimeLabel = timeLabel
 
         local pick = Instance.new("TextButton", win)
-        pick.Name = "Picker"
-        pick.Size = UDim2.new(1, -20, 0, 32)
-        pick.Position = UDim2.fromOffset(10, 102)
+        pick.Size = UDim2.new(1, -20, 0, 28)
+        pick.Position = UDim2.fromOffset(10, 92)
         pick.BackgroundColor3 = Color3.fromRGB(28, 28, 40)
         pick.BorderSizePixel = 0
         pick.Text = "🎵 SONG: " .. tostring((W.Bombax and W.Bombax.Selected) or "One")
         pick.TextColor3 = Color3.fromRGB(230, 230, 245)
         pick.Font = Enum.Font.GothamBold
-        pick.TextSize = 11
+        pick.TextSize = 10
         pick.TextTruncate = Enum.TextTruncate.AtEnd
         Instance.new("UICorner", pick).CornerRadius = UDim.new(0, 8)
         local pickStroke = Instance.new("UIStroke", pick)
@@ -8330,22 +8280,21 @@ do
         end)
 
         local ctrl = Instance.new("Frame", win)
-        ctrl.Name = "Controls"
-        ctrl.Size = UDim2.new(1, -20, 0, 44)
-        ctrl.Position = UDim2.fromOffset(10, 142)
+        ctrl.Size = UDim2.new(1, -20, 0, 40)
+        ctrl.Position = UDim2.fromOffset(10, 128)
         ctrl.BackgroundTransparency = 1
 
-        local function mkCtrl(name, txt, x, bg)
+        local function mkCtrl(name, txt, x, bg, w)
             local b = Instance.new("TextButton", ctrl)
             b.Name = name
-            b.Size = UDim2.fromOffset(74, 44)
+            b.Size = UDim2.fromOffset(w, 40)
             b.Position = UDim2.fromOffset(x, 0)
             b.BackgroundColor3 = bg
             b.BorderSizePixel = 0
             b.Text = txt
             b.TextColor3 = Color3.fromRGB(255, 255, 255)
             b.Font = Enum.Font.GothamBold
-            b.TextSize = 18
+            b.TextSize = 16
             Instance.new("UICorner", b).CornerRadius = UDim.new(0, 10)
             local s = Instance.new("UIStroke", b)
             s.Color = Color3.fromRGB(255, 255, 255)
@@ -8354,14 +8303,12 @@ do
             return b
         end
 
-        local prevB = mkCtrl("Prev", "⏮", 0, Color3.fromRGB(45, 45, 58))
-        local playB = mkCtrl("Play", "▶", 78, Color3.fromRGB(30, 70, 40))
-        local nextB = mkCtrl("Next", "⏭", 156, Color3.fromRGB(45, 45, 58))
+        local prevB = mkCtrl("Prev", "⏮", 0, Color3.fromRGB(45, 45, 58), 68)
+        local playB = mkCtrl("Play", "▶", 76, Color3.fromRGB(30, 70, 40), 68)
+        local nextB = mkCtrl("Next", "⏭", 152, Color3.fromRGB(45, 45, 58), 68)
         BS.PlayBtn = playB
 
-        prevB.MouseButton1Click:Connect(function()
-            W.Bombax_Prev(); updateNowLabel(); updatePlayBtn()
-        end)
+        prevB.MouseButton1Click:Connect(function() W.Bombax_Prev(); updateNowLabel(); updatePlayBtn() end)
         playB.MouseButton1Click:Connect(function()
             local BX = W.Bombax
             if not BX then return end
@@ -8369,49 +8316,43 @@ do
             else W.Bombax_Play(BX.Selected) end
             updatePlayBtn()
         end)
-        nextB.MouseButton1Click:Connect(function()
-            W.Bombax_Next(); updateNowLabel(); updatePlayBtn()
-        end)
+        nextB.MouseButton1Click:Connect(function() W.Bombax_Next(); updateNowLabel(); updatePlayBtn() end)
 
         local vrow = Instance.new("Frame", win)
-        vrow.Name = "VolumeRow"
-        vrow.Size = UDim2.new(1, -20, 0, 22)
-        vrow.Position = UDim2.fromOffset(10, 194)
+        vrow.Size = UDim2.new(1, -20, 0, 20)
+        vrow.Position = UDim2.fromOffset(10, 176)
         vrow.BackgroundTransparency = 1
 
         local vIcon = Instance.new("TextLabel", vrow)
-        vIcon.Size = UDim2.fromOffset(24, 22)
+        vIcon.Size = UDim2.fromOffset(22, 20)
         vIcon.BackgroundTransparency = 1
         vIcon.Font = Enum.Font.GothamBold
         vIcon.Text = "🔊"
         vIcon.TextColor3 = Color3.fromRGB(200, 200, 220)
-        vIcon.TextSize = 13
+        vIcon.TextSize = 12
         vIcon.TextXAlignment = Enum.TextXAlignment.Left
 
         local vbar = Instance.new("Frame", vrow)
-        vbar.Name = "Bar"
-        vbar.Size = UDim2.new(1, -80, 0, 8)
-        vbar.Position = UDim2.new(0, 28, 0.5, -4)
+        vbar.Size = UDim2.new(1, -76, 0, 6)
+        vbar.Position = UDim2.new(0, 26, 0.5, -3)
         vbar.BackgroundColor3 = Color3.fromRGB(45, 45, 58)
         vbar.BorderSizePixel = 0
         Instance.new("UICorner", vbar).CornerRadius = UDim.new(1, 0)
         local vfill = Instance.new("Frame", vbar)
-        vfill.Name = "Fill"
         vfill.Size = UDim2.new(((W.Bombax and W.Bombax.Volume) or 2) / 10, 0, 1, 0)
         vfill.BackgroundColor3 = Color3.fromRGB(120, 255, 160)
         vfill.BorderSizePixel = 0
         Instance.new("UICorner", vfill).CornerRadius = UDim.new(1, 0)
 
         local vval = Instance.new("TextLabel", vrow)
-        vval.Name = "Val"
         vval.AnchorPoint = Vector2.new(1, 0.5)
-        vval.Size = UDim2.fromOffset(42, 22)
+        vval.Size = UDim2.fromOffset(40, 20)
         vval.Position = UDim2.new(1, 0, 0.5, 0)
         vval.BackgroundTransparency = 1
         vval.Font = Enum.Font.GothamBold
         vval.Text = string.format("%.1f", (W.Bombax and W.Bombax.Volume) or 2)
         vval.TextColor3 = Color3.fromRGB(255, 255, 255)
-        vval.TextSize = 11
+        vval.TextSize = 10
         vval.TextXAlignment = Enum.TextXAlignment.Right
 
         local vhit = Instance.new("TextButton", vbar)
@@ -8431,8 +8372,7 @@ do
         end
         vhit.InputBegan:Connect(function(inp)
             if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-                vDrag = true
-                applyV(inp.Position.X)
+                vDrag = true; applyV(inp.Position.X)
             end
         end)
         table.insert(BS.Conns, UserInputService.InputChanged:Connect(function(inp)
@@ -8448,15 +8388,14 @@ do
         end))
 
         local loop = Instance.new("TextButton", win)
-        loop.Name = "Loop"
-        loop.Size = UDim2.new(1, -20, 0, 26)
-        loop.Position = UDim2.fromOffset(10, 222)
+        loop.Size = UDim2.new(1, -20, 0, 24)
+        loop.Position = UDim2.fromOffset(10, 202)
         loop.BackgroundColor3 = ((W.Bombax and W.Bombax.Looped) and Color3.fromRGB(30, 70, 40)) or Color3.fromRGB(45, 45, 58)
         loop.BorderSizePixel = 0
         loop.Text = "LOOP: " .. (((W.Bombax and W.Bombax.Looped) and "ON") or "OFF")
         loop.TextColor3 = Color3.fromRGB(255, 255, 255)
         loop.Font = Enum.Font.GothamBold
-        loop.TextSize = 11
+        loop.TextSize = 10
         Instance.new("UICorner", loop).CornerRadius = UDim.new(0, 8)
         BS.LoopBtn = loop
         loop.MouseButton1Click:Connect(function()
@@ -8469,9 +8408,7 @@ do
         local dragging, dragStart, startPos = false, nil, nil
         header.InputBegan:Connect(function(inp)
             if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-                dragging = true
-                dragStart = inp.Position
-                startPos = win.Position
+                dragging = true; dragStart = inp.Position; startPos = win.Position
             end
         end)
         header.InputEnded:Connect(function(inp)
@@ -8491,10 +8428,7 @@ do
     function W.BombaxUI_BuildAll()
         clean()
         if BS.Gui then pcall(function() BS.Gui:Destroy() end); BS.Gui = nil end
-        BS.ButtonBox = nil
-        BS.Window = nil
-        BS._ButtonBox = nil
-        BS.Open = false
+        BS.ButtonBox = nil; BS.Window = nil; BS._ButtonBox = nil; BS.Open = false
 
         local parent = LP:FindFirstChild("PlayerGui")
         if gethui then local ok, hui = pcall(gethui); if ok and hui then parent = hui end end
@@ -8508,14 +8442,11 @@ do
         gui.DisplayOrder = 999
         gui.Parent = parent
         BS.Gui = gui
-
         buildButton()
         buildWindow()
     end
 
-    function W.BombaxUI_Start()
-        if not BS.Gui then W.BombaxUI_BuildAll() end
-    end
+    function W.BombaxUI_Start() if not BS.Gui then W.BombaxUI_BuildAll() end end
     function W.BombaxUI_Stop()
         clean()
         if BS.ButtonBox then pcall(function() BS.ButtonBox:Destroy() end); BS.ButtonBox = nil end
@@ -8527,9 +8458,7 @@ do
         W2.Bombax_ButtonEnabled = v and true or false
         if v then W.BombaxUI_Start() else W.BombaxUI_Stop() end
     end
-    function W.BombaxUI_Toggle()
-        toggleWindow()
-    end
+    function W.BombaxUI_Toggle() toggleWindow() end
 
     task.spawn(function()
         while true do
@@ -8557,15 +8486,11 @@ do
 end
 
 --====================================================--
--- PART 16B-4: FPS/PING COUNTER (AUTO-ON)
+-- PART 16B-4: FPS/PING COUNTER
 --====================================================--
 do
-    local FpsPingGui = nil
-    local FpsLabel = nil
-    local PingLabel = nil
-    local FrameCount = 0
-    local LastTime = tick()
-    local FpsValue = 0
+    local FpsPingGui, FpsLabel, PingLabel = nil, nil, nil
+    local FrameCount, LastTime, FpsValue = 0, tick(), 0
 
     local function GetPing()
         local ok, v = pcall(function()
@@ -8577,10 +8502,7 @@ do
     local function BuildUI()
         if FpsPingGui then pcall(function() FpsPingGui:Destroy() end) end
         local parent = LP:FindFirstChild("PlayerGui")
-        if gethui then
-            local ok, hui = pcall(gethui)
-            if ok and hui then parent = hui end
-        end
+        if gethui then local ok, hui = pcall(gethui); if ok and hui then parent = hui end end
         if not parent then return end
         local gui = Instance.new("ScreenGui")
         gui.Name = "W2FpsPing"
@@ -8590,7 +8512,6 @@ do
         gui.Parent = parent
         FpsPingGui = gui
         local frame = Instance.new("Frame")
-        frame.Name = "Box"
         frame.AnchorPoint = Vector2.new(0.5, 1)
         frame.Position = UDim2.new(0.5, 0, 1, -10)
         frame.Size = UDim2.fromOffset(200, 30)
@@ -8609,32 +8530,26 @@ do
         layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
         layout.VerticalAlignment = Enum.VerticalAlignment.Center
         layout.Padding = UDim.new(0, 12)
-        layout.SortOrder = Enum.SortOrder.LayoutOrder
         FpsLabel = Instance.new("TextLabel")
-        FpsLabel.Name = "FPS"
         FpsLabel.Size = UDim2.fromOffset(70, 20)
         FpsLabel.BackgroundTransparency = 1
         FpsLabel.Font = Enum.Font.GothamBold
         FpsLabel.Text = "FPS: --"
         FpsLabel.TextColor3 = Color3.fromRGB(120, 255, 160)
         FpsLabel.TextSize = 12
-        FpsLabel.LayoutOrder = 1
         FpsLabel.Parent = frame
         local sep = Instance.new("Frame")
         sep.Size = UDim2.fromOffset(1, 14)
         sep.BackgroundColor3 = Color3.fromRGB(80, 80, 90)
         sep.BorderSizePixel = 0
-        sep.LayoutOrder = 2
         sep.Parent = frame
         PingLabel = Instance.new("TextLabel")
-        PingLabel.Name = "PING"
         PingLabel.Size = UDim2.fromOffset(70, 20)
         PingLabel.BackgroundTransparency = 1
         PingLabel.Font = Enum.Font.GothamBold
         PingLabel.Text = "PING: --"
         PingLabel.TextColor3 = Color3.fromRGB(120, 200, 255)
         PingLabel.TextSize = 12
-        PingLabel.LayoutOrder = 3
         PingLabel.Parent = frame
     end
     BuildUI()
@@ -8684,7 +8599,6 @@ W2.Bombax_Looped = W2.Bombax_Looped ~= false
 W2.Bombax_ButtonEnabled = W2.Bombax_ButtonEnabled or false
 W2.Escape_Enabled = W2.Escape_Enabled or false
 
--- EMOTE
 W.Emote = W.Emote or {
     Enabled = false, Track = nil, Sound = nil, Selected = "Friday Night",
     Options = { "Friday Night","WarCry","24 Hour Cinderella","Applause","Arm Swing","Backflip","California Girls","Christmas Spirit","Floating Rest","Ghoul","Griddy","Kyoufuu","OnePlays","Vulnerable" },
@@ -8756,7 +8670,6 @@ LP.CharacterAdded:Connect(function()
     if Emote.Enabled then W.Emote_Play() end
 end)
 
--- BOMBAX
 W.Bombax = W.Bombax or {
     Enabled = false, Current = nil, Selected = "One", Volume = 2, Looped = true, Playing = false,
     Songs = {
@@ -8801,9 +8714,7 @@ function W.Bombax_GetList()
     return l
 end
 function W.Bombax_Find(t)
-    for _, s in ipairs(BX.Songs) do
-        if s.judul == t then return s end
-    end
+    for _, s in ipairs(BX.Songs) do if s.judul == t then return s end end
     return nil
 end
 function W.Bombax_Stop()
@@ -8869,247 +8780,6 @@ function W.Bombax_Prev()
     W.Bombax_Play(l[p].judul)
 end
 
--- FAKE AVATAR
-W2.FakeAvatar_Enabled = W2.FakeAvatar_Enabled or false
-W2.FakeAvatar_ID = W2.FakeAvatar_ID or 0
-
-do
-    local FakeAvatarEnabled = W2.FakeAvatar_Enabled
-    local SelectedFakeAva = LP.UserId
-
-    local function LoadAppearanceIntoChar(appearance, character, head)
-        local items = appearance:GetChildren()
-        local function applyMesh(obj)
-            if obj:IsA("CharacterMesh") or obj:IsA("BodyColors") or obj:IsA("Shirt") or obj:IsA("Pants") then
-                local existing = character:FindFirstChild(obj.Name)
-                if existing and existing.ClassName == obj.ClassName then existing:Destroy() end
-                obj:Clone().Parent = character
-            end
-        end
-        for _, item in pairs(items) do
-            if item:IsA("Folder") or item:IsA("Model") then
-                for _, subItem in pairs(item:GetChildren()) do applyMesh(subItem) end
-            else applyMesh(item) end
-        end
-        for _, item in pairs(items) do
-            if item:IsA("SpecialMesh") and head then
-                local targetMesh = head:FindFirstChildOfClass("SpecialMesh") or Instance.new("SpecialMesh", head)
-                targetMesh.MeshType = Enum.MeshType.FileMesh
-                targetMesh.MeshId = item.MeshId
-                targetMesh.TextureId = item.TextureId
-            elseif item:IsA("Decal") and item.Name == "face" and head then
-                if head:FindFirstChild("face") then head.face:Destroy() end
-                item:Clone().Parent = head
-            end
-        end
-        for _, item in pairs(items) do
-            if item:IsA("Accessory") then
-                local clone = item:Clone()
-                local handle = clone:FindFirstChild("Handle")
-                if handle then
-                    local att = handle:FindFirstChildOfClass("Attachment")
-                    if att then
-                        local targetAtt = character:FindFirstChild(att.Name, true)
-                        if targetAtt then
-                            local weld = Instance.new("Weld")
-                            weld.Part0 = handle; weld.Part1 = targetAtt.Parent
-                            weld.C0 = att.CFrame; weld.C1 = targetAtt.CFrame
-                            weld.Parent = handle
-                        end
-                    end
-                    handle.CanCollide = false; handle.Massless = true; clone.Parent = character
-                end
-            end
-        end
-    end
-
-    local function ApplyFakeAvatar()
-        local character = LP.Character
-        if not character or not SelectedFakeAva then return end
-        local humanoid = character:FindFirstChildOfClass("Humanoid")
-        if not humanoid then return end
-        task.spawn(function()
-            local success, appearance = pcall(function()
-                return game:GetService("Players"):GetCharacterAppearanceAsync(SelectedFakeAva)
-            end)
-            if not success or not appearance then warn("[FakeAvatar] Gagal load data avatar!"); return end
-            for _, obj in pairs(character:GetChildren()) do
-                if obj:IsA("Accessory") or obj:IsA("Shirt") or obj:IsA("Pants")
-                or obj:IsA("BodyColors") or obj:IsA("CharacterMesh") or obj:IsA("ShirtGraphic") then
-                    obj:Destroy()
-                end
-            end
-            local head = character:FindFirstChild("Head")
-            if head then
-                for _, hObj in pairs(head:GetChildren()) do
-                    if hObj:IsA("SpecialMesh") or hObj:IsA("Decal") then hObj:Destroy() end
-                end
-                local m = Instance.new("SpecialMesh", head)
-                m.MeshType = Enum.MeshType.Head; m.Scale = Vector3.new(1, 1, 1)
-            end
-            local scaleDefaults = { BodyDepthScale = 1, BodyHeightScale = 1, BodyWidthScale = 1, HeadScale = 1, BodyTypeScale = 0, BodyProportionScale = 0 }
-            for scaleName, val in pairs(scaleDefaults) do
-                local s = humanoid:FindFirstChild(scaleName); if s then s.Value = val end
-            end
-            task.wait(0.1)
-            LoadAppearanceIntoChar(appearance, character, head)
-            pcall(function()
-                local info = game:GetService("Players"):GetCharacterAppearanceInfoAsync(SelectedFakeAva)
-                if head and info.assets then
-                    for _, asset in pairs(info.assets) do
-                        if asset.assetType.name == "Face" then
-                            if head:FindFirstChild("face") then head.face:Destroy() end
-                            local f = Instance.new("Decal", head)
-                            f.Name = "face"; f.Texture = "rbxassetid://" .. asset.id
-                            break
-                        end
-                    end
-                end
-            end)
-        end)
-    end
-
-    function W.FakeAvatar_Set(state)
-        FakeAvatarEnabled = state
-        W2.FakeAvatar_Enabled = state
-        if state then ApplyFakeAvatar() end
-    end
-
-    function W.FakeAvatar_SetId(id)
-        SelectedFakeAva = id
-        W2.FakeAvatar_ID = id
-        if FakeAvatarEnabled then ApplyFakeAvatar() end
-    end
-
-    function W.FakeAvatar_FromUsername(input)
-        input = (input or ""):gsub("^@", "")
-        if input == "" then W.ForceNotify("Fake Avatar", "Masukkan username dulu!", 2); return false end
-        local ok, userId = pcall(function()
-            return game:GetService("Players"):GetUserIdFromNameAsync(input)
-        end)
-        if not ok or not userId then
-            W.ForceNotify("Fake Avatar", "Username tidak ditemukan: " .. input, 2)
-            return false
-        end
-        SelectedFakeAva = userId
-        W2.FakeAvatar_ID = userId
-        ApplyFakeAvatar()
-        W.ForceNotify("Fake Avatar", "Applied: @" .. input, 2)
-        return true
-    end
-
-    LP.CharacterAdded:Connect(function()
-        if FakeAvatarEnabled then task.wait(1); ApplyFakeAvatar() end
-    end)
-end
-
--- KORLESS
-do
-    local Conn = nil
-    local function morph()
-        local plr = LP
-        task.spawn(function()
-            repeat task.wait() until plr.Character
-                and plr.Character:FindFirstChild("HumanoidRootPart")
-                and plr.Character:FindFirstChild("Right Leg")
-            task.wait(0.1)
-            local c = plr.Character
-            pcall(function()
-                c.Head.Transparency = 1
-                local f = c.Head:FindFirstChild("face")
-                if f then f:Destroy() end
-                c["Right Leg"].Transparency = 1
-                local old = c:FindFirstChild("KorlessHead")
-                if old then old:Destroy() end
-                local mesh = Instance.new("MeshPart")
-                mesh.Name = "KorlessHead"
-                mesh.Size = Vector3.new(1.5, 1.5, 1.5)
-                mesh.CanCollide = false
-                mesh.MeshId = "rbxassetid://902942096"
-                mesh.TextureID = "rbxassetid://902843398"
-                mesh.CFrame = c["Right Leg"].CFrame * CFrame.new(0, 0.5, 0)
-                mesh.Parent = c
-                local w = Instance.new("WeldConstraint")
-                w.Part0 = c["Right Leg"]
-                w.Part1 = mesh
-                w.Parent = mesh
-            end)
-        end)
-    end
-    local function remove()
-        local c = LP.Character
-        if c then
-            local m = c:FindFirstChild("KorlessHead")
-            if m then m:Destroy() end
-            if c:FindFirstChild("Head") then c.Head.Transparency = 0 end
-            if c:FindFirstChild("Right Leg") then c["Right Leg"].Transparency = 0 end
-        end
-        if Conn then Conn:Disconnect(); Conn = nil end
-    end
-    function W.Korless_Set(v)
-        W2.Korless_Enabled = v and true or false
-        if v then
-            morph()
-            if Conn then Conn:Disconnect() end
-            Conn = LP.CharacterAdded:Connect(function() task.wait(1); morph() end)
-        else remove() end
-    end
-end
-
--- HEADER
-do
-    local HS = { Billboard = nil, Txt = nil }
-    local BW = isMobile and 90 or 140
-    local BH = isMobile and 20 or 32
-    local function create()
-        if HS.Billboard then HS.Billboard:Destroy() end
-        local c = LP.Character or LP.CharacterAdded:Wait()
-        if not c:FindFirstChild("Head") then return end
-        local bb = Instance.new("BillboardGui")
-        bb.Name = "W2HeaderBillboard"
-        bb.Adornee = c.Head
-        bb.Size = UDim2.new(0, BW, 0, BH)
-        bb.StudsOffset = Vector3.new(0, 1.5, 0)
-        bb.AlwaysOnTop = true
-        bb.LightInfluence = 0
-        bb.Parent = c
-        HS.Billboard = bb
-        local t = Instance.new("TextLabel", bb)
-        t.Name = "BaseText"
-        t.Size = UDim2.new(1, 0, 1, 0)
-        t.BackgroundTransparency = 1
-        t.TextScaled = true
-        t.Font = Enum.Font.GothamBold
-        t.TextStrokeTransparency = 0.5
-        t.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-        t.TextColor3 = W2.Header_Color
-        t.Text = W2.Header_Text
-        HS.Txt = t
-    end
-    local function updateText(txt)
-        W2.Header_Text = txt or "W2"
-        if HS.Txt then HS.Txt.Text = W2.Header_Text end
-    end
-    local function toggle(v)
-        if v then create()
-        else
-            if HS.Billboard then HS.Billboard:Destroy() end
-            HS.Billboard = nil; HS.Txt = nil
-        end
-    end
-    function W.Header_Set(v) W2.Header_Enabled = v; toggle(v) end
-    function W.Header_SetText(t) updateText(t) end
-    function W.Header_SetColor(c)
-        W2.Header_Color = c
-        if HS.Txt then HS.Txt.TextColor3 = c end
-    end
-    LP.CharacterAdded:Connect(function()
-        task.wait(1)
-        if W2.Header_Enabled then toggle(true) end
-    end)
-end
-
--- INSTANT ESCAPE
 W.Escape = W.Escape or { Enabled = false, Name = "fininshline", Count = 0 }
 function W.Escape_TP()
     local r = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
@@ -9129,381 +8799,382 @@ end
 
 --====================================================--
 -- END OF PART 16B
---====================================================--    --====================================================--
-    -- PART 16C FINAL: UI SECTIONS + CONFIG + CLOSING
-    --====================================================--
+--====================================================----====================================================--
+-- PART 16C FINAL: UI SECTIONS + CONFIG + CLOSING
+--====================================================--
 
-    -- === UI SECTION: MISC ===
-    do
-        local s = W.T_Misc:AddSection("Stun Indicator")
-        s:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
-            W.SInd_Set(v)
-            W.W2_Notify("Stun Indicator", v and "Enabled" or "Disabled", 2)
+-- === PART 16C-1: UI SECTION: MISC ===
+do
+    local s = W.T_Misc:AddSection("Stun Indicator")
+    s:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
+        W.SInd_Set(v)
+        W.W2_Notify("Stun Indicator", v and "Enabled" or "Disabled", 2)
+    end })
+    s:AddDropdown({ Title = "Stun Sound",
+        Options = { "Default","Clash Royale","Blash","Coin","Kururin Kuru","Spongebob","Fahhhh","Cave","Aughhh","Samsung","iPhone","Siren" },
+        Default = "Default", Callback = function(v)
+            local val = type(v) == "table" and v[1] or v
+            if W.StunInd then W.StunInd.SelectedSound = val end
         end })
-        s:AddDropdown({ Title = "Stun Sound",
-            Options = { "Default","Clash Royale","Blash","Coin","Kururin Kuru","Spongebob","Fahhhh","Cave","Aughhh","Samsung","iPhone","Siren" },
-            Default = "Default", Callback = function(v)
-                local val = type(v) == "table" and v[1] or v
-                if W.StunInd then W.StunInd.SelectedSound = val end
-            end })
-        s:AddToggle({ Title = "Sound Alert", Default = true, Callback = function(v)
-            if W.StunInd then W.StunInd.SoundEnabled = v end
-        end })
-        s:AddButton({ Title = "Preview Sound", Callback = function()
-            pcall(function()
-                local sid = "18843924331"
-                if W.SInd_GetSoundId then sid = W.SInd_GetSoundId() end
-                local snd = Instance.new("Sound")
-                snd.SoundId = "rbxassetid://" .. tostring(sid)
-                snd.Volume = (W.StunInd and W.StunInd.Volume) or 1.5
-                snd.Parent = LP:FindFirstChildOfClass("PlayerGui") or Workspace
-                snd:Play()
-                snd.Ended:Connect(function() pcall(function() snd:Destroy() end) end)
-            end)
-        end })
-        s:AddSlider({ Title = "Detect Range", Min = 50, Max = 2000, Default = 500, Increment = 25, Suffix = " studs",
-            Callback = function(v) if W.StunInd then W.StunInd.Range = v end end })
-        s:AddSlider({ Title = "Volume", Min = 0, Max = 5, Default = 1.5, Increment = 0.1,
-            Callback = function(v) if W.StunInd then W.StunInd.Volume = v end end })
+    s:AddToggle({ Title = "Sound Alert", Default = true, Callback = function(v)
+        if W.StunInd then W.StunInd.SoundEnabled = v end
+    end })
+    s:AddButton({ Title = "Preview Sound", Callback = function()
+        pcall(function()
+            local sid = "18843924331"
+            if W.SInd_GetSoundId then sid = W.SInd_GetSoundId() end
+            local snd = Instance.new("Sound")
+            snd.SoundId = "rbxassetid://" .. tostring(sid)
+            snd.Volume = (W.StunInd and W.StunInd.Volume) or 1.5
+            snd.Parent = LP:FindFirstChildOfClass("PlayerGui") or Workspace
+            snd:Play()
+            snd.Ended:Connect(function() pcall(function() snd:Destroy() end) end)
+        end)
+    end })
+    s:AddSlider({ Title = "Detect Range", Min = 50, Max = 2000, Default = 500, Increment = 25, Suffix = " studs",
+        Callback = function(v) if W.StunInd then W.StunInd.Range = v end end })
+    s:AddSlider({ Title = "Volume", Min = 0, Max = 5, Default = 1.5, Increment = 0.1,
+        Callback = function(v) if W.StunInd then W.StunInd.Volume = v end end })
 
-        local s2 = W.T_Misc:AddSection("Invisibility")
-        s2:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
-            W.Invisible_SetState(v, false)
+    local s2 = W.T_Misc:AddSection("Invisibility")
+    s2:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
+        W.Invisible_SetState(v, false)
+    end })
+    s2:AddKeybind({ Title = "Hotkey", Default = Enum.KeyCode.G, Callback = function(kc)
+        if kc then W2.Invis_Hotkey = kc.Name end
+    end })
+
+    local s3 = W.T_Misc:AddSection("Player Utility")
+    s3:AddToggle({ Title = "Speed Hack", Default = false, Callback = function(v)
+        W2.PU_SpeedEnabled = v
+        if not v then
+            local h = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
+            if h then h.WalkSpeed = 16 end
+        end
+    end })
+    s3:AddSlider({ Title = "Speed Value", Min = 16, Max = 200, Default = 16, Increment = 1,
+        Callback = function(v) W2.PU_SpeedValue = v end })
+    s3:AddToggle({ Title = "Shift Lock", Default = false, Callback = function(v) W2.PU_ShiftLock = v end })
+    s3:AddToggle({ Title = "Unlimited Zoom", Default = false, Callback = function(v) W2.PU_UnlimitedZoom = v end })
+    s3:AddToggle({ Title = "Noclip", Default = false, Callback = function(v) W2.PU_Noclip = v end })
+
+    local s4 = W.T_Misc:AddSection("Speed Boost")
+    s4:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
+        W.SpeedBoost_Set(v)
+        W.W2_Notify("Speed Boost", v and "Enabled" or "Disabled", 2)
+    end })
+    s4:AddSlider({ Title = "Speed Value", Min = 16, Max = 100, Default = 30, Increment = 1,
+        Callback = function(v) W2.SpeedBoost_Value = v end })
+
+    local s5 = W.T_Misc:AddSection("Cursor Feature")
+    s5:AddToggle({ Title = "Enable Cursor Unlock", Default = false, Callback = function(v)
+        W.Cursor_Set(v)
+    end })
+    s5:AddButton({ Title = "Toggle Now", Callback = function()
+        W.Cursor_Set(not W2.Cursor_Enabled)
+    end })
+
+    local s6 = W.T_Misc:AddSection("Spectator Counter")
+    s6:AddToggle({ Title = "Enable", Default = false, Callback = function(v) W.Spectator_Set(v) end })
+
+    local s7 = W.T_Misc:AddSection("Jerk Off")
+    s7:AddToggle({ Title = "Enable Jerk Off Tool", Default = false, Callback = function(v)
+        W.JerkOff_SetEnabled(v)
+    end })
+
+    local s8 = W.T_Misc:AddSection("Player Utility — Extra")
+    s8:AddToggle({ Title = "Skip End Screen", Default = false, Callback = function(v)
+        W.SkipEnd_Set(v)
+    end })
+    s8:AddToggle({ Title = "Hide Name", Default = false, Callback = function(v)
+        W.HideName_Set(v)
+    end })
+    s8:AddToggle({ Title = "Hide Survivor Icon", Default = false, Callback = function(v)
+        W.HideIcon_Set(v)
+    end })
+
+    -- ⭐ SECTION FLOATING BUTTONS (UPDATED — 11 BUTTON + AUTO-SHOW)
+    local s9 = W.T_Misc:AddSection("Floating Buttons")
+    s9:AddToggle({ Title = "Self Heal Button", Default = false, Callback = function(v)
+        if getgenv().W2_SHB_SetEnabled then getgenv().W2_SHB_SetEnabled(v) end
+    end })
+    s9:AddToggle({ Title = "Self Unhook Button", Default = false, Callback = function(v)
+        if getgenv().W2_SUB_SetEnabled then getgenv().W2_SUB_SetEnabled(v) end
+    end })
+    s9:AddToggle({ Title = "Escape Button", Default = false, Callback = function(v)
+        if getgenv().W2_Escape_SetEnabled then getgenv().W2_Escape_SetEnabled(v) end
+    end })
+    s9:AddToggle({ Title = "Invisible Button", Default = false, Callback = function(v)
+        if getgenv().W2_InvisBtn_SetEnabled then getgenv().W2_InvisBtn_SetEnabled(v) end
+    end })
+    s9:AddToggle({ Title = "Moonwalk Button", Default = false, Callback = function(v)
+        if getgenv().W2_MoonwalkBtn_SetEnabled then getgenv().W2_MoonwalkBtn_SetEnabled(v) end
+    end })
+    s9:AddToggle({ Title = "Spear Aimbot Button", Default = false, Callback = function(v)
+        if getgenv().W2_SpearBtn_SetEnabled then getgenv().W2_SpearBtn_SetEnabled(v) end
+    end })
+    s9:AddToggle({ Title = "Troll TP Button", Default = false, Callback = function(v)
+        if getgenv().W2_TTB_SetEnabled then getgenv().W2_TTB_SetEnabled(v) end
+    end })
+    s9:AddToggle({ Title = "Parry Button", Default = false, Callback = function(v)
+        if getgenv().W2_ParryBtn_SetEnabled then getgenv().W2_ParryBtn_SetEnabled(v) end
+    end })
+    s9:AddToggle({ Title = "Myers Grab Button", Default = false, Callback = function(v)
+        if getgenv().W2_MGrabBtn_SetEnabled then getgenv().W2_MGrabBtn_SetEnabled(v) end
+    end })
+    s9:AddToggle({ Title = "⭐ Emote Button", Default = true, Callback = function(v)
+        if getgenv().W2_EmoteBtn_SetEnabled then getgenv().W2_EmoteBtn_SetEnabled(v) end
+    end })
+    s9:AddToggle({ Title = "⭐ Silent Aim TOF Button", Default = true, Callback = function(v)
+        if getgenv().W2_SilentTOFBtn_SetEnabled then getgenv().W2_SilentTOFBtn_SetEnabled(v) end
+    end })
+    s9:AddButton({ Title = "Show All Buttons", Callback = function()
+        for _, fn in ipairs({
+            "W2_SHB_SetEnabled", "W2_SUB_SetEnabled", "W2_Escape_SetEnabled",
+            "W2_InvisBtn_SetEnabled", "W2_MoonwalkBtn_SetEnabled", "W2_SpearBtn_SetEnabled",
+            "W2_TTB_SetEnabled", "W2_ParryBtn_SetEnabled", "W2_MGrabBtn_SetEnabled",
+            "W2_EmoteBtn_SetEnabled", "W2_SilentTOFBtn_SetEnabled"
+        }) do
+            if getgenv()[fn] then pcall(getgenv()[fn], true) end
+        end
+        W.W2_Notify("Buttons", "All 11 buttons ON", 3)
+    end })
+    s9:AddButton({ Title = "Hide All Buttons", Callback = function()
+        for _, fn in ipairs({
+            "W2_SHB_SetEnabled", "W2_SUB_SetEnabled", "W2_Escape_SetEnabled",
+            "W2_InvisBtn_SetEnabled", "W2_MoonwalkBtn_SetEnabled", "W2_SpearBtn_SetEnabled",
+            "W2_TTB_SetEnabled", "W2_ParryBtn_SetEnabled", "W2_MGrabBtn_SetEnabled",
+            "W2_EmoteBtn_SetEnabled", "W2_SilentTOFBtn_SetEnabled"
+        }) do
+            if getgenv()[fn] then pcall(getgenv()[fn], false) end
+        end
+        W.W2_Notify("Buttons", "All buttons OFF", 3)
+    end })
+end
+
+-- === PART 16C-2: UI SECTION: TROLL ===
+do
+    local t1 = W.T_Troll:AddSection("Emote")
+    t1:AddToggle({ Title = "Enable", Default = false, Callback = function(v) W.Emote_Set(v) end })
+    t1:AddDropdown({ Title = "Select Emote",
+        Options = (W.Emote and W.Emote.Options) or {},
+        Default = "Friday Night", Multi = false,
+        Callback = function(v)
+            local val = type(v) == "table" and v[1] or v
+            W.Emote_Select(val or "Friday Night")
         end })
-        s2:AddKeybind({ Title = "Hotkey", Default = Enum.KeyCode.G, Callback = function(kc)
-            if kc then W2.Invis_Hotkey = kc.Name end
+    t1:AddButton({ Title = "Stop Emote", Callback = function()
+        W.Emote_Stop()
+        if W.Emote then W.Emote.Enabled = false end
+    end })
+
+    local t2 = W.T_Troll:AddSection("Bombax")
+    t2:AddToggle({ Title = "Enable Bombax", Default = false, Callback = function(v) W.Bombax_Set(v) end })
+    t2:AddDropdown({ Title = "Select Song",
+        Options = W.Bombax_GetList and W.Bombax_GetList() or {},
+        Default = "One", Multi = false,
+        Callback = function(v)
+            local val = type(v) == "table" and v[1] or v
+            if W.Bombax then W.Bombax.Selected = val end
+            W2.Bombax_Selected = val
+            if W.Bombax and W.Bombax.Enabled then W.Bombax_Play(val) end
+        end })
+    t2:AddSlider({ Title = "Volume", Min = 0, Max = 10, Default = 2, Increment = 0.5,
+        Callback = function(v) W.Bombax_SetVol(v) end })
+    t2:AddToggle({ Title = "Looped", Default = true, Callback = function(v) W.Bombax_SetLoop(v) end })
+    t2:AddButton({ Title = "▶ Play", Callback = function()
+        W.Bombax_Play(W.Bombax and W.Bombax.Selected or "One")
+    end })
+    t2:AddButton({ Title = "⏸ Stop", Callback = function() W.Bombax_Stop() end })
+    t2:AddButton({ Title = "⏭ Next", Callback = function() W.Bombax_Next() end })
+    t2:AddButton({ Title = "⏮ Prev", Callback = function() W.Bombax_Prev() end })
+    t2:AddToggle({ Title = "Show Bombax Button", Content = "Tombol bulat Rayfield + window",
+        Default = false, Callback = function(v)
+            if W.BombaxUI_Set then W.BombaxUI_Set(v) end
+        end })
+    t2:AddButton({ Title = "Toggle Bombax Window", Content = "Buka/tutup window",
+        Callback = function()
+            if W.BombaxUI_Toggle then W.BombaxUI_Toggle() end
         end })
 
-        local s3 = W.T_Misc:AddSection("Player Utility")
-        s3:AddToggle({ Title = "Speed Hack", Default = false, Callback = function(v)
-            W2.PU_SpeedEnabled = v
-            if not v then
-                local h = LP.Character and LP.Character:FindFirstChildOfClass("Humanoid")
-                if h then h.WalkSpeed = 16 end
-            end
+    local t3 = W.T_Troll:AddSection("Fake Avatar")
+    t3:AddDropdown({ Title = "Preset",
+        Options = { "Self Avatar","Random 1","Random 2","Random 3","Random 4","Random 5","Random 6","Random 7",
+            "WoozyNate","Nicholas","yvlyf","traevp","J0LLY","LucashDev","CEOofIsaac","Stealthy","Wildes","Talon",
+            "Relukt","Sammy","Diesel","S4ans03","Aura","iJava","White Guy","Purple King","Kachaaaa Gay","Mpruyyy" },
+        Default = "Self Avatar", Callback = function(opt)
+            local ids = {
+                ["Self Avatar"] = LP.UserId, ["Random 1"] = 2888298851, ["Random 2"] = 10074747755,
+                ["Random 3"] = 5209567453, ["Random 4"] = 8991982843, ["Random 5"] = 5796319029,
+                ["Random 6"] = 9744452117, ["Random 7"] = 8476755006, ["WoozyNate"] = 146089324,
+                ["Nicholas"] = 909635, ["yvlyf"] = 181751703, ["traevp"] = 471607078, ["J0LLY"] = 1073847038,
+                ["LucashDev"] = 2525651744, ["CEOofIsaac"] = 63238912, ["Stealthy"] = 56602747,
+                ["Wildes"] = 40397833, ["Talon"] = 75974130, ["Relukt"] = 65042011, ["Sammy"] = 2678001507,
+                ["Diesel"] = 9123921576, ["S4ans03"] = 35439794, ["Aura"] = 2275806428, ["iJava"] = 276557820,
+                ["White Guy"] = 8843268357, ["Purple King"] = 9070758608,
+                ["Kachaaaa Gay"] = 8956318334, ["Mpruyyy"] = 8340163775
+            }
+            W.FakeAvatar_SetId(ids[opt] or LP.UserId)
         end })
-        s3:AddSlider({ Title = "Speed Value", Min = 16, Max = 200, Default = 16, Increment = 1,
-            Callback = function(v) W2.PU_SpeedValue = v end })
-        s3:AddToggle({ Title = "Shift Lock", Default = false, Callback = function(v) W2.PU_ShiftLock = v end })
-        s3:AddToggle({ Title = "Unlimited Zoom", Default = false, Callback = function(v) W2.PU_UnlimitedZoom = v end })
-        s3:AddToggle({ Title = "Noclip", Default = false, Callback = function(v) W2.PU_Noclip = v end })
+    t3:AddToggle({ Title = "Enable Fake Avatar", Default = false, Callback = function(v) W.FakeAvatar_Set(v) end })
+    local UN = ""
+    t3:AddInput({ Title = "Fake Avatar Username", Placeholder = "username",
+        Callback = function(inp) UN = (inp or ""):gsub("^@", "") end })
+    t3:AddButton({ Title = "Apply From Username", Callback = function()
+        if UN == "" then W.ForceNotify("Fake Avatar", "Masukkan username dulu!", 2); return end
+        W.FakeAvatar_FromUsername(UN)
+    end })
 
-        local s4 = W.T_Misc:AddSection("Speed Boost")
-        s4:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
-            W.SpeedBoost_Set(v)
-            W.W2_Notify("Speed Boost", v and "Enabled" or "Disabled", 2)
-        end })
-        s4:AddSlider({ Title = "Speed Value", Min = 16, Max = 100, Default = 30, Increment = 1,
-            Callback = function(v) W2.SpeedBoost_Value = v end })
+    local t4 = W.T_Troll:AddSection("Fake Korless")
+    t4:AddToggle({ Title = "Korless Morph", Default = false, Callback = function(v) W.Korless_Set(v) end })
 
-        local s5 = W.T_Misc:AddSection("Cursor Feature")
-        s5:AddToggle({ Title = "Enable Cursor Unlock", Default = false, Callback = function(v)
-            W.Cursor_Set(v)
-        end })
-        s5:AddButton({ Title = "Toggle Now", Callback = function()
-            W.Cursor_Set(not W2.Cursor_Enabled)
-        end })
+    local t5 = W.T_Troll:AddSection("Header Title")
+    t5:AddInput({ Title = "Header Text", Default = "W2", Placeholder = "Nama header...",
+        Callback = function(inp) W.Header_SetText(inp) end })
+    t5:AddToggle({ Title = "Enable Header", Default = false, Callback = function(v) W.Header_Set(v) end })
+    t5:AddColorPicker({ Title = "Header Color", Default = Color3.fromRGB(255, 255, 255), Save = false,
+        Callback = function(c) W.Header_SetColor(c) end })
 
-        local s6 = W.T_Misc:AddSection("Spectator Counter")
-        s6:AddToggle({ Title = "Enable", Default = false, Callback = function(v) W.Spectator_Set(v) end })
+    local t6 = W.T_Troll:AddSection("Escape")
+    t6:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
+        W2.Escape_Enabled = v
+    end })
+    t6:AddButton({ Title = "Teleport Now", Callback = function() W.Escape_TP() end })
+end
 
-        local s7 = W.T_Misc:AddSection("Jerk Off")
-        s7:AddToggle({ Title = "Enable Jerk Off Tool", Default = false, Callback = function(v)
-            W.JerkOff_SetEnabled(v)
-        end })
-
-        local s8 = W.T_Misc:AddSection("Player Utility — Extra")
-        s8:AddToggle({ Title = "Skip End Screen", Default = false, Callback = function(v)
-            W.SkipEnd_Set(v)
-        end })
-        s8:AddToggle({ Title = "Hide Name", Default = false, Callback = function(v)
-            W.HideName_Set(v)
-        end })
-        s8:AddToggle({ Title = "Hide Survivor Icon", Default = false, Callback = function(v)
-            W.HideIcon_Set(v)
-        end })
-
-        local s9 = W.T_Misc:AddSection("Floating Buttons")
-        s9:AddToggle({ Title = "Self Heal Button", Default = false, Callback = function(v)
-            if getgenv().W2_SHB_SetEnabled then getgenv().W2_SHB_SetEnabled(v) end
-        end })
-        s9:AddToggle({ Title = "Self Unhook Button", Default = false, Callback = function(v)
-            if getgenv().W2_SUB_SetEnabled then getgenv().W2_SUB_SetEnabled(v) end
-        end })
-        s9:AddToggle({ Title = "Escape Button", Default = false, Callback = function(v)
-            if getgenv().W2_Escape_SetEnabled then getgenv().W2_Escape_SetEnabled(v) end
-        end })
-        s9:AddToggle({ Title = "Invisible Button", Default = false, Callback = function(v)
-            if getgenv().W2_InvisBtn_SetEnabled then getgenv().W2_InvisBtn_SetEnabled(v) end
-        end })
-        s9:AddToggle({ Title = "Moonwalk Button", Default = false, Callback = function(v)
-            if getgenv().W2_MoonwalkBtn_SetEnabled then getgenv().W2_MoonwalkBtn_SetEnabled(v) end
-        end })
-        s9:AddToggle({ Title = "Spear Aimbot Button", Default = false, Callback = function(v)
-            if getgenv().W2_SpearBtn_SetEnabled then getgenv().W2_SpearBtn_SetEnabled(v) end
-        end })
-        s9:AddToggle({ Title = "Troll TP Button", Default = false, Callback = function(v)
-            if getgenv().W2_TTB_SetEnabled then getgenv().W2_TTB_SetEnabled(v) end
-        end })
-        s9:AddToggle({ Title = "Parry Button", Default = false, Callback = function(v)
-            if getgenv().W2_ParryBtn_SetEnabled then getgenv().W2_ParryBtn_SetEnabled(v) end
-        end })
-        s9:AddToggle({ Title = "Myers Grab Button", Default = false, Callback = function(v)
-            if getgenv().W2_MGrabBtn_SetEnabled then getgenv().W2_MGrabBtn_SetEnabled(v) end
-        end })
-        s9:AddToggle({ Title = "Pistol TOF Button", Default = false, Callback = function(v)
-            if getgenv().W2_PistolBtn_SetEnabled then getgenv().W2_PistolBtn_SetEnabled(v) end
-        end })
-        s9:AddButton({ Title = "Show All Buttons", Callback = function()
-            for _, fn in ipairs({
-                "W2_SHB_SetEnabled", "W2_SUB_SetEnabled", "W2_Escape_SetEnabled",
-                "W2_InvisBtn_SetEnabled", "W2_MoonwalkBtn_SetEnabled", "W2_SpearBtn_SetEnabled",
-                "W2_TTB_SetEnabled", "W2_ParryBtn_SetEnabled", "W2_MGrabBtn_SetEnabled",
-                "W2_PistolBtn_SetEnabled"
-            }) do
-                if getgenv()[fn] then pcall(getgenv()[fn], true) end
-            end
-            W.W2_Notify("Buttons", "All 10 buttons ON", 3)
-        end })
-        s9:AddButton({ Title = "Hide All Buttons", Callback = function()
-            for _, fn in ipairs({
-                "W2_SHB_SetEnabled", "W2_SUB_SetEnabled", "W2_Escape_SetEnabled",
-                "W2_InvisBtn_SetEnabled", "W2_MoonwalkBtn_SetEnabled", "W2_SpearBtn_SetEnabled",
-                "W2_TTB_SetEnabled", "W2_ParryBtn_SetEnabled", "W2_MGrabBtn_SetEnabled",
-                "W2_PistolBtn_SetEnabled"
-            }) do
-                if getgenv()[fn] then pcall(getgenv()[fn], false) end
-            end
-            W.W2_Notify("Buttons", "All buttons OFF", 3)
-        end })
+-- === PART 16C-3: UI SECTION: CONFIG ===
+do
+    local cfgName = ""
+    local selCfg = nil
+    local cfgList = nil
+    local function folderPath() return "W2/Config" end
+    local function ensureFolder()
+        if isfolder and makefolder then
+            if not isfolder("W2") then makefolder("W2") end
+            if not isfolder(folderPath()) then makefolder(folderPath()) end
+        end
     end
+    ensureFolder()
 
-    -- === UI SECTION: TROLL ===
-    do
-        local t1 = W.T_Troll:AddSection("Emote")
-        t1:AddToggle({ Title = "Enable", Default = false, Callback = function(v) W.Emote_Set(v) end })
-        t1:AddDropdown({ Title = "Select Emote",
-            Options = (W.Emote and W.Emote.Options) or {},
-            Default = "Friday Night", Multi = false,
-            Callback = function(v)
-                local val = type(v) == "table" and v[1] or v
-                W.Emote_Select(val or "Friday Night")
-            end })
-        t1:AddButton({ Title = "Stop Emote", Callback = function()
-            W.Emote_Stop()
-            if W.Emote then W.Emote.Enabled = false end
-        end })
-
-        local t2 = W.T_Troll:AddSection("Bombax")
-        t2:AddToggle({ Title = "Enable Bombax", Default = false, Callback = function(v) W.Bombax_Set(v) end })
-        t2:AddDropdown({ Title = "Select Song",
-            Options = W.Bombax_GetList and W.Bombax_GetList() or {},
-            Default = "One", Multi = false,
-            Callback = function(v)
-                local val = type(v) == "table" and v[1] or v
-                if W.Bombax then W.Bombax.Selected = val end
-                W2.Bombax_Selected = val
-                if W.Bombax and W.Bombax.Enabled then W.Bombax_Play(val) end
-            end })
-        t2:AddSlider({ Title = "Volume", Min = 0, Max = 10, Default = 2, Increment = 0.5,
-            Callback = function(v) W.Bombax_SetVol(v) end })
-        t2:AddToggle({ Title = "Looped", Default = true, Callback = function(v) W.Bombax_SetLoop(v) end })
-        t2:AddButton({ Title = "▶ Play", Callback = function()
-            W.Bombax_Play(W.Bombax and W.Bombax.Selected or "One")
-        end })
-        t2:AddButton({ Title = "⏸ Stop", Callback = function() W.Bombax_Stop() end })
-        t2:AddButton({ Title = "⏭ Next", Callback = function() W.Bombax_Next() end })
-        t2:AddButton({ Title = "⏮ Prev", Callback = function() W.Bombax_Prev() end })
-        t2:AddToggle({ Title = "Show Bombax Button", Content = "Tombol kecil + window toggle",
-            Default = false, Callback = function(v)
-                if W.BombaxUI_Set then W.BombaxUI_Set(v) end
-            end })
-        t2:AddButton({ Title = "Toggle Bombax Window", Content = "Buka/tutup window",
-            Callback = function()
-                if W.BombaxUI_Toggle then W.BombaxUI_Toggle() end
-            end })
-
-        local t3 = W.T_Troll:AddSection("Fake Avatar")
-        t3:AddDropdown({ Title = "Preset",
-            Options = { "Self Avatar","Random 1","Random 2","Random 3","Random 4","Random 5","Random 6","Random 7",
-                "WoozyNate","Nicholas","yvlyf","traevp","J0LLY","LucashDev","CEOofIsaac","Stealthy","Wildes","Talon",
-                "Relukt","Sammy","Diesel","S4ans03","Aura","iJava","White Guy","Purple King","Kachaaaa Gay","Mpruyyy" },
-            Default = "Self Avatar", Callback = function(opt)
-                local ids = {
-                    ["Self Avatar"] = LP.UserId, ["Random 1"] = 2888298851, ["Random 2"] = 10074747755,
-                    ["Random 3"] = 5209567453, ["Random 4"] = 8991982843, ["Random 5"] = 5796319029,
-                    ["Random 6"] = 9744452117, ["Random 7"] = 8476755006, ["WoozyNate"] = 146089324,
-                    ["Nicholas"] = 909635, ["yvlyf"] = 181751703, ["traevp"] = 471607078, ["J0LLY"] = 1073847038,
-                    ["LucashDev"] = 2525651744, ["CEOofIsaac"] = 63238912, ["Stealthy"] = 56602747,
-                    ["Wildes"] = 40397833, ["Talon"] = 75974130, ["Relukt"] = 65042011, ["Sammy"] = 2678001507,
-                    ["Diesel"] = 9123921576, ["S4ans03"] = 35439794, ["Aura"] = 2275806428, ["iJava"] = 276557820,
-                    ["White Guy"] = 8843268357, ["Purple King"] = 9070758608,
-                    ["Kachaaaa Gay"] = 8956318334, ["Mpruyyy"] = 8340163775
-                }
-                W.FakeAvatar_SetId(ids[opt] or LP.UserId)
-            end })
-        t3:AddToggle({ Title = "Enable Fake Avatar", Default = false, Callback = function(v) W.FakeAvatar_Set(v) end })
-        local UN = ""
-        t3:AddInput({ Title = "Fake Avatar Username", Placeholder = "username",
-            Callback = function(inp) UN = (inp or ""):gsub("^@", "") end })
-        t3:AddButton({ Title = "Apply From Username", Callback = function()
-            if UN == "" then W.ForceNotify("Fake Avatar", "Masukkan username dulu!", 2); return end
-            W.FakeAvatar_FromUsername(UN)
-        end })
-
-        local t4 = W.T_Troll:AddSection("Fake Korless")
-        t4:AddToggle({ Title = "Korless Morph", Default = false, Callback = function(v) W.Korless_Set(v) end })
-
-        local t5 = W.T_Troll:AddSection("Header Title")
-        t5:AddInput({ Title = "Header Text", Default = "W2", Placeholder = "Nama header...",
-            Callback = function(inp) W.Header_SetText(inp) end })
-        t5:AddToggle({ Title = "Enable Header", Default = false, Callback = function(v) W.Header_Set(v) end })
-        t5:AddColorPicker({ Title = "Header Color", Default = Color3.fromRGB(255, 255, 255), Save = false,
-            Callback = function(c) W.Header_SetColor(c) end })
-
-        local t6 = W.T_Troll:AddSection("Escape")
-        t6:AddToggle({ Title = "Enable", Default = false, Callback = function(v)
-            W2.Escape_Enabled = v
-        end })
-        t6:AddButton({ Title = "Teleport Now", Callback = function() W.Escape_TP() end })
-    end
-
-    -- === UI SECTION: CONFIG ===
-    do
-        local cfgName = ""
-        local selCfg = nil
-        local cfgList = nil
-        local function folderPath() return "W2/Config" end
-        local function ensureFolder()
-            if isfolder and makefolder then
-                if not isfolder("W2") then makefolder("W2") end
-                if not isfolder(folderPath()) then makefolder(folderPath()) end
+    local function refreshList()
+        local l = {}
+        if listfiles then
+            ensureFolder()
+            local ok, files = pcall(listfiles, folderPath())
+            if ok and files then
+                for _, f in ipairs(files) do
+                    local n = string.match(f, "([^/\\]+)%.json$")
+                    if n then table.insert(l, n) end
+                end
             end
         end
-        ensureFolder()
-
-        local function refreshList()
-            local l = {}
-            if listfiles then
-                ensureFolder()
-                local ok, files = pcall(listfiles, folderPath())
-                if ok and files then
-                    for _, f in ipairs(files) do
-                        local n = string.match(f, "([^/\\]+)%.json$")
-                        if n then table.insert(l, n) end
-                    end
-                end
-            end
-            if cfgList and cfgList.SetValues then cfgList:SetValues(l, selCfg, true) end
-        end
-
-        local function GetSnapshot()
-            local snap = {}
-            for k, v in pairs(W2) do
-                local t = type(v)
-                if t ~= "function" and t ~= "userdata" and t ~= "thread" then
-                    if t == "table" then
-                        local ok = pcall(function() return HttpService:JSONEncode(v) end)
-                        if ok then snap[k] = v end
-                    else
-                        snap[k] = v
-                    end
-                end
-            end
-            return snap
-        end
-
-        local s = W.T_Cfg:AddSection("Config Manager")
-        s:AddInput({ Title = "Config Name", Placeholder = "MyConfig", Save = false,
-            Callback = function(t) cfgName = t end })
-        cfgList = s:AddDropdown({ Title = "Saved Configs", Multi = false, Options = {}, Save = false,
-            Callback = function(v) selCfg = v end })
-        refreshList()
-
-        s:AddButton({ Title = "Save", SubTitle = "Load",
-            Callback = function()
-                if cfgName == nil or cfgName == "" then
-                    W.ForceNotify("Config", "Isi nama config dulu!", 2); return
-                end
-                if not writefile or not HttpService then
-                    W.ForceNotify("Config", "Executor gak support", 2); return
-                end
-                ensureFolder()
-                local snapshot = GetSnapshot()
-                local okEnc, encoded = pcall(function() return HttpService:JSONEncode(snapshot) end)
-                if not okEnc or not encoded then
-                    W.ForceNotify("Config", "Gagal encode", 2); return
-                end
-                local okW = pcall(writefile, folderPath() .. "/" .. cfgName .. ".json", encoded)
-                if not okW then
-                    W.ForceNotify("Config", "Gagal save", 2); return
-                end
-                W.ForceNotify("Config", "Saved: " .. cfgName, 2)
-                refreshList()
-            end,
-            SubCallback = function()
-                if not selCfg or selCfg == "" then
-                    W.ForceNotify("Config", "Pilih config dulu!", 2); return
-                end
-                if not readfile or not isfile then
-                    W.ForceNotify("Config", "Executor gak support", 2); return
-                end
-                local path = folderPath() .. "/" .. selCfg .. ".json"
-                if not isfile(path) then
-                    W.ForceNotify("Config", "File gak ketemu", 2); return
-                end
-                local okR, raw = pcall(readfile, path)
-                if not okR or not raw then
-                    W.ForceNotify("Config", "Gagal baca file", 2); return
-                end
-                local okD, dec = pcall(function() return HttpService:JSONDecode(raw) end)
-                if not okD or type(dec) ~= "table" then
-                    W.ForceNotify("Config", "File corrupt", 2); return
-                end
-                for k, v in pairs(dec) do
-                    if k ~= "_version" then W2[k] = v end
-                end
-                W.ForceNotify("Config", "Loaded: " .. selCfg, 2)
-            end
-        })
-
-        s:AddButton({ Title = "Delete", SubTitle = "Refresh List",
-            Callback = function()
-                if not selCfg or selCfg == "" then
-                    W.ForceNotify("Config", "Pilih config dulu!", 2); return
-                end
-                local path = folderPath() .. "/" .. selCfg .. ".json"
-                if isfile and delfile and isfile(path) then
-                    pcall(delfile, path)
-                    W.ForceNotify("Config", "Deleted: " .. selCfg, 2)
-                    selCfg = nil; refreshList()
-                end
-            end,
-            SubCallback = function()
-                refreshList()
-                W.ForceNotify("Config", "List refreshed", 2)
-            end
-        })
-
-        s:AddToggle({ Title = "Auto Save", Default = false, Save = false,
-            Callback = function(v) W2.Config_AutoSave = v end })
-        s:AddToggle({ Title = "Auto Load", Default = false, Save = false,
-            Callback = function(v) W2.Config_AutoLoad = v end })
-
-        local s2 = W.T_Cfg:AddSection("Config Info")
-        s2:AddParagraph({ Title = "Cara Pakai Config",
-            Content = "• Save: tulis nama config, klik Save\n• Load: pilih dropdown, klik Load\n• Auto Save: simpan otomatis\n• Auto Load: load config saat start" })
+        if cfgList and cfgList.SetValues then cfgList:SetValues(l, selCfg, true) end
     end
 
-    -- === CLOSING ===
-    print("[W2] Loaded OK")
-    print("  Tab: Survivor / Visuals / Killer / Misc / Troll / Config")
-    print("  Buttons: 10 floating buttons + Bombax Toggle + FPS Counter")
-    print("  Free Script - Jangan Dijual!")
+    local function GetSnapshot()
+        local snap = {}
+        for k, v in pairs(W2) do
+            local t = type(v)
+            if t ~= "function" and t ~= "userdata" and t ~= "thread" then
+                if t == "table" then
+                    local ok = pcall(function() return HttpService:JSONEncode(v) end)
+                    if ok then snap[k] = v end
+                else
+                    snap[k] = v
+                end
+            end
+        end
+        return snap
+    end
 
-    W.W2_Notify("W2", "Script Loaded!", 6)
+    local s = W.T_Cfg:AddSection("Config Manager")
+    s:AddInput({ Title = "Config Name", Placeholder = "MyConfig", Save = false,
+        Callback = function(t) cfgName = t end })
+    cfgList = s:AddDropdown({ Title = "Saved Configs", Multi = false, Options = {}, Save = false,
+        Callback = function(v) selCfg = v end })
+    refreshList()
 
-end  -- PENUTUP __W2_Init__()
+    s:AddButton({ Title = "Save", SubTitle = "Load",
+        Callback = function()
+            if cfgName == nil or cfgName == "" then
+                W.ForceNotify("Config", "Isi nama config dulu!", 2); return
+            end
+            if not writefile or not HttpService then
+                W.ForceNotify("Config", "Executor gak support", 2); return
+            end
+            ensureFolder()
+            local snapshot = GetSnapshot()
+            local okEnc, encoded = pcall(function() return HttpService:JSONEncode(snapshot) end)
+            if not okEnc or not encoded then
+                W.ForceNotify("Config", "Gagal encode", 2); return
+            end
+            local okW = pcall(writefile, folderPath() .. "/" .. cfgName .. ".json", encoded)
+            if not okW then
+                W.ForceNotify("Config", "Gagal save", 2); return
+            end
+            W.ForceNotify("Config", "Saved: " .. cfgName, 2)
+            refreshList()
+        end,
+        SubCallback = function()
+            if not selCfg or selCfg == "" then
+                W.ForceNotify("Config", "Pilih config dulu!", 2); return
+            end
+            if not readfile or not isfile then
+                W.ForceNotify("Config", "Executor gak support", 2); return
+            end
+            local path = folderPath() .. "/" .. selCfg .. ".json"
+            if not isfile(path) then
+                W.ForceNotify("Config", "File gak ketemu", 2); return
+            end
+            local okR, raw = pcall(readfile, path)
+            if not okR or not raw then
+                W.ForceNotify("Config", "Gagal baca file", 2); return
+            end
+            local okD, dec = pcall(function() return HttpService:JSONDecode(raw) end)
+            if not okD or type(dec) ~= "table" then
+                W.ForceNotify("Config", "File corrupt", 2); return
+            end
+            for k, v in pairs(dec) do
+                if k ~= "_version" then W2[k] = v end
+            end
+            W.ForceNotify("Config", "Loaded: " .. selCfg, 2)
+        end
+    })
 
--- === EXECUTE (1 X SAJA) ===
-__W2_Init__()
+    s:AddButton({ Title = "Delete", SubTitle = "Refresh List",
+        Callback = function()
+            if not selCfg or selCfg == "" then
+                W.ForceNotify("Config", "Pilih config dulu!", 2); return
+            end
+            local path = folderPath() .. "/" .. selCfg .. ".json"
+            if isfile and delfile and isfile(path) then
+                pcall(delfile, path)
+                W.ForceNotify("Config", "Deleted: " .. selCfg, 2)
+                selCfg = nil; refreshList()
+            end
+        end,
+        SubCallback = function()
+            refreshList()
+            W.ForceNotify("Config", "List refreshed", 2)
+        end
+    })
+
+    s:AddToggle({ Title = "Auto Save", Default = false, Save = false,
+        Callback = function(v) W2.Config_AutoSave = v end })
+    s:AddToggle({ Title = "Auto Load", Default = false, Save = false,
+        Callback = function(v) W2.Config_AutoLoad = v end })
+
+    local s2 = W.T_Cfg:AddSection("Config Info")
+    s2:AddParagraph({ Title = "Cara Pakai Config",
+        Content = "• Save: tulis nama config, klik Save\n• Load: pilih dropdown, klik Load\n• Auto Save: simpan otomatis\n• Auto Load: load config saat start" })
+end
+
+-- === PART 16C-4: CLOSING ===
+print("[W2] Loaded OK")
+print("  Tab: Survivor / Visuals / Killer / Misc / Troll / Config")
+print("  Buttons: 11 floating buttons + Bombax Rayfield Toggle + FPS Counter")
+print("  Emote Button: ON (auto-show)")
+print("  Silent Aim TOF Button: ON (auto-show)")
+print("  Free Script - Jangan Dijual!")
+
+W.W2_Notify("W2", "Script Loaded! 11 buttons ready.", 6)
