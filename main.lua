@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════
--- [W2-01] HEADER + VARIABLE DEFAULTS
+-- [W2-01-REVISI] HEADER + VARIABLE DEFAULTS (LENGKAP)
 -- ═══════════════════════════════════════════════════════
 
 --========================================================--
@@ -98,6 +98,37 @@ VD.KillerPerksDisplay   = VD.KillerPerksDisplay   or false
 VD.SpeedBoostEnabled    = VD.SpeedBoostEnabled    or false
 VD.SpeedBoostValue      = VD.SpeedBoostValue      or 30
 VD.CursorEnabled        = VD.CursorEnabled        or false
+
+--====================================================--
+-- TAMBAHAN: VARIABLE DEFAULT YANG HILANG (FIX W2-24)
+--====================================================--
+VD.SURV_AutoVault       = VD.SURV_AutoVault       or false
+VD.SURV_FastVault       = VD.SURV_FastVault       or false
+VD.SURF_VaultSpeed      = VD.SURF_VaultSpeed      or 13
+VD.SURV_AutoPallet      = VD.SURV_AutoPallet      or false
+VD.SURV_AutoPalletDist  = VD.SURV_AutoPalletDist  or 20
+VD.SPEAR_Aimbot         = VD.SPEAR_Aimbot         or false
+VD.SPEAR_Gravity        = VD.SPEAR_Gravity        or 50
+VD.SPEAR_Speed          = VD.SPEAR_Speed          or 100
+VD.DashLockEnabled      = VD.DashLockEnabled      or false
+VD.DashLockDuration     = VD.DashLockDuration     or 1.5
+VD.DashLockSmoothness   = VD.DashLockSmoothness   or 0.3
+VD.FreezeDuringDashLock = VD.FreezeDuringDashLock or false
+VD.FLASK_SilentAim      = VD.FLASK_SilentAim      or false
+VD.FLASK_ShowBeam       = VD.FLASK_ShowBeam       ~= false
+VD.FLASK_ShowLanding    = VD.FLASK_ShowLanding    ~= false
+VD.FLASK_Predict        = VD.FLASK_Predict        ~= false
+VD.FLASK_Speed          = VD.FLASK_Speed          or 90
+VD.FLASK_Gravity        = VD.FLASK_Gravity        or 196
+VD.FLASK_LeadMult       = VD.FLASK_LeadMult       or 1.0
+VD.FLASK_Range          = VD.FLASK_Range          or 200
+VD.FLASK_BeamColor      = VD.FLASK_BeamColor      or Color3.fromRGB(255, 255, 255)
+VD.FLASK_AccentColor    = VD.FLASK_AccentColor    or Color3.fromRGB(25, 25, 25)
+VD.CamDBD_SmoothEnabled = VD.CamDBD_SmoothEnabled or false
+VD.CamDBD_SmoothSpeed   = VD.CamDBD_SmoothSpeed   or 5
+VD.CamDBD_POVEnabled    = VD.CamDBD_POVEnabled    or false
+VD.CamDBD_TargetPOV     = VD.CamDBD_TargetPOV     or 85
+VD.CamDBD_POVSmooth     = VD.CamDBD_POVSmooth     or 9
 
 W.InstantHealSelf = W.InstantHealSelf or false
 W.AutoHealAll     = W.AutoHealAll or false
@@ -242,6 +273,624 @@ local function __W2_Init_Main__()
             end
         end
         return pts
+    end-- ═══════════════════════════════════════════════════════
+-- [W2-24] FIX PART — LOGIC YANG HILANG + GLOBAL STUB
+-- Taruh SETELAH W2-02, SEBELUM W2-03
+-- ═══════════════════════════════════════════════════════
+
+    --====================================================--
+    -- FIX #1: SWIFT VAULT LOGIC (HILANG)
+    --====================================================--
+    do
+        local _vaultedWindows = {}
+        local _lastVaultScan = 0
+        local function SwiftVault_BuildWindowGroups()
+            local groups = {}
+            local map = Workspace:FindFirstChild("Map")
+            if not map then return groups end
+            local seen = {}
+            local function addPart(part)
+                if not part or seen[part] then return end
+                seen[part] = true
+                local rootWindow = part.Parent
+                if part.Name == "VaultPoint" and part.Parent and part.Parent.Name == "VaultTrigger" then
+                    rootWindow = part.Parent.Parent
+                elseif part.Name == "VaultTrigger" then
+                    rootWindow = part.Parent
+                end
+                if rootWindow then
+                    groups[rootWindow] = groups[rootWindow] or {}
+                    local exists = false
+                    for _, p in ipairs(groups[rootWindow]) do
+                        if p == part then exists = true; break end
+                    end
+                    if not exists then table.insert(groups[rootWindow], part) end
+                end
+            end
+            for _, obj in ipairs(map:GetDescendants()) do
+                if obj:IsA("BasePart") and (obj.Name == "VaultTrigger" or obj.Name == "VaultPoint") then
+                    addPart(obj)
+                end
+            end
+            return groups
+        end
+        local function SwiftVault_GetVTPosition(vt)
+            if not vt then return nil end
+            if vt:IsA("BasePart") then return vt.Position end
+            if vt:IsA("Model") then
+                if vt.PrimaryPart then return vt.PrimaryPart.Position end
+                local bp = vt:FindFirstChildWhichIsA("BasePart", true)
+                if bp then return bp.Position end
+            end
+            return nil
+        end
+        RunService.Heartbeat:Connect(function()
+            if VD.SURV_FastVault then
+                pcall(function()
+                    local char = LocalPlayer.Character
+                    if char then char:SetAttribute("vaultspeed", (VD.SURF_VaultSpeed or 13) / 10) end
+                end)
+            end
+        end)
+        RunService.Heartbeat:Connect(function()
+            if not VD.SURV_AutoVault then return end
+            if GetRole() ~= "Survivor" then return end
+            if tick() - _lastVaultScan < 0.15 then return end
+            _lastVaultScan = tick()
+            pcall(function()
+                local char   = LocalPlayer.Character
+                local myRoot = char and char:FindFirstChild("HumanoidRootPart")
+                local hum    = char and char:FindFirstChildOfClass("Humanoid")
+                if not myRoot or not hum or hum.Health <= 0 then return end
+                local vel = myRoot.AssemblyLinearVelocity
+                if vel.Magnitude < 1 then return end
+                local remotes   = ReplicatedStorage:FindFirstChild("Remotes")
+                local winFolder = remotes and remotes:FindFirstChild("Window")
+                local vaultEv   = winFolder and winFolder:FindFirstChild("VaultCommit")
+                if not vaultEv then return end
+                local windowGroups = SwiftVault_BuildWindowGroups()
+                for rootWindow, parts in pairs(windowGroups) do
+                    local allVTs = {}
+                    for _, child in ipairs(rootWindow:GetChildren()) do
+                        if child.Name == "VaultTrigger" then table.insert(allVTs, child) end
+                    end
+                    if #allVTs == 0 then continue end
+                    local nearestVT, nearestVTDist = nil, math.huge
+                    for _, vt in ipairs(allVTs) do
+                        local pos = SwiftVault_GetVTPosition(vt)
+                        if pos then
+                            local d = (myRoot.Position - pos).Magnitude
+                            if d < nearestVTDist then nearestVTDist = d; nearestVT = vt end
+                        end
+                    end
+                    if not nearestVT or nearestVTDist > 6.0 then continue end
+                    local lastUsed = _vaultedWindows[rootWindow] or 0
+                    if tick() - lastUsed < 3.0 then continue end
+                    local finalTarget = nearestVT
+                    local remotes2 = ReplicatedStorage:FindFirstChild("Remotes")
+                    local winFold  = remotes2 and remotes2:FindFirstChild("Window")
+                    if winFold and finalTarget then
+                        local vaultEvent     = winFold:FindFirstChild("VaultEvent")
+                        local vaultBindable  = winFold:FindFirstChild("Vaultbindable")
+                        local fastvault      = winFold:FindFirstChild("fastvault")
+                        local vaultComplete1 = winFold:FindFirstChild("VaultCompleteEventpart1")
+                        local vaultComplete  = winFold:FindFirstChild("VaultCompleteEvent")
+                        if vaultEvent    then pcall(function() vaultEvent:FireServer(finalTarget, true) end) end
+                        if vaultBindable then pcall(function() vaultBindable:Fire(finalTarget, true) end) end
+                        if fastvault     then pcall(function() fastvault:FireServer(LocalPlayer) end) end
+                        if vaultComplete1 then pcall(function() vaultComplete1:FireServer() end) end
+                        if vaultComplete  then pcall(function() vaultComplete:FireServer(finalTarget, false) end) end
+                    end
+                    _vaultedWindows[rootWindow] = tick()
+                    break
+                end
+            end)
+        end)
+        LocalPlayer.CharacterAdded:Connect(function()
+            task.wait(0.5); _vaultedWindows = {}
+        end)
+        W.SwiftVault_SetEnabled = function(v)
+            VD.SURV_AutoVault = v and true or false; _vaultedWindows = {}
+        end
+        W.SwiftVaultV2_SetEnabled = function(v)
+            VD.SURV_FastVault = v and true or false
+            if not v then
+                local char = LocalPlayer.Character
+                if char then pcall(function() char:SetAttribute("vaultspeed", 1) end) end
+            end
+        end
+        W.SwiftVault_SetSpeed = function(v) VD.SURF_VaultSpeed = tonumber(v) or 13 end
+    end
+
+    --====================================================--
+    -- FIX #2: SILENT FLASK LOGIC (HILANG)
+    --====================================================--
+    do
+        local FlaskState = { Target = nil, PredictedPos = nil, BeamPart = nil, AccentPart = nil, LandingRing = nil }
+        local function Flask_GetTarget()
+            local myChar = LocalPlayer.Character
+            local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+            if not myRoot then return nil end
+            local maxR = tonumber(VD.FLASK_Range) or 200
+            local best, bd = nil, math.huge
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and TeamIs(p, "Survivor") and p.Character then
+                    local hum = p.Character:FindFirstChildOfClass("Humanoid")
+                    local root = p.Character:FindFirstChild("HumanoidRootPart")
+                    if hum and hum.Health > 0 and root then
+                        local d = (root.Position - myRoot.Position).Magnitude
+                        if d <= maxR and d < bd then
+                            bd = d; best = { Player = p, Root = root, Char = p.Character }
+                        end
+                    end
+                end
+            end
+            return best
+        end
+        local function Flask_GetHandOrigin()
+            local c = LocalPlayer.Character
+            if not c then return nil end
+            return c:FindFirstChild("LeftHand") or c:FindFirstChild("Left Arm")
+                or c:FindFirstChild("RightHand") or c:FindFirstChild("Right Arm")
+                or c:FindFirstChild("HumanoidRootPart")
+        end
+        local function Flask_PredictLanding(origin, targetRoot)
+            local targetPos = targetRoot.Position
+            local speed   = tonumber(VD.FLASK_Speed)   or 90
+            local gravity = tonumber(VD.FLASK_Gravity) or 196
+            local lead    = tonumber(VD.FLASK_LeadMult) or 1.0
+            if not VD.FLASK_Predict then return targetPos end
+            local tv = targetRoot.AssemblyLinearVelocity or Vector3.zero
+            local horizVel = Vector3.new(tv.X, 0, tv.Z)
+            local dist = (targetPos - origin).Magnitude
+            local time = dist / speed
+            local predicted = targetPos
+            for _ = 1, 3 do
+                predicted = targetPos + horizVel * time * lead
+                local nd = (predicted - origin).Magnitude
+                time = nd / speed
+            end
+            local drop = 0.5 * gravity * (time * time)
+            return predicted + Vector3.new(0, drop, 0)
+        end
+        local function Flask_ClearVisuals()
+            if FlaskState.BeamPart then pcall(function() FlaskState.BeamPart:Destroy() end); FlaskState.BeamPart = nil end
+            if FlaskState.AccentPart then pcall(function() FlaskState.AccentPart:Destroy() end); FlaskState.AccentPart = nil end
+            if FlaskState.LandingRing then pcall(function() FlaskState.LandingRing:Destroy() end); FlaskState.LandingRing = nil end
+        end
+        local function Flask_HideVisuals()
+            if FlaskState.BeamPart then FlaskState.BeamPart.Transparency = 1 end
+            if FlaskState.AccentPart then FlaskState.AccentPart.Transparency = 1 end
+            if FlaskState.LandingRing then FlaskState.LandingRing.Transparency = 1 end
+        end
+        local function Flask_EnsureBeamParts()
+            if not FlaskState.BeamPart or not FlaskState.BeamPart.Parent then
+                local beam = Instance.new("Part")
+                beam.Name = "W2FlaskBeam"
+                beam.Anchored = true
+                beam.CanCollide = false
+                beam.CanTouch = false
+                beam.CanQuery = false
+                beam.CastShadow = false
+                beam.Material = Enum.Material.Neon
+                beam.Color = VD.FLASK_BeamColor or Color3.fromRGB(255, 255, 255)
+                beam.Transparency = 0.2
+                beam.Parent = Workspace
+                FlaskState.BeamPart = beam
+            end
+            if not FlaskState.AccentPart or not FlaskState.AccentPart.Parent then
+                local accent = Instance.new("Part")
+                accent.Name = "W2FlaskBeamAccent"
+                accent.Anchored = true
+                accent.CanCollide = false
+                accent.CanTouch = false
+                accent.CanQuery = false
+                accent.CastShadow = false
+                accent.Material = Enum.Material.SmoothPlastic
+                accent.Color = VD.FLASK_AccentColor or Color3.fromRGB(25, 25, 25)
+                accent.Transparency = 0.35
+                accent.Parent = Workspace
+                FlaskState.AccentPart = accent
+            end
+            if FlaskState.BeamPart then FlaskState.BeamPart.Color = VD.FLASK_BeamColor or Color3.fromRGB(255, 255, 255) end
+            if FlaskState.AccentPart then FlaskState.AccentPart.Color = VD.FLASK_AccentColor or Color3.fromRGB(25, 25, 25) end
+        end
+        local function Flask_UpdateBeam(origin, landing)
+            Flask_EnsureBeamParts()
+            local dir = landing - origin
+            local dist = dir.Magnitude
+            if dist < 0.1 then return end
+            local mid = (origin + landing) / 2
+            local cf = CFrame.lookAt(mid, landing)
+            FlaskState.BeamPart.Size = Vector3.new(0.12, 0.12, dist)
+            FlaskState.BeamPart.CFrame = cf
+            FlaskState.BeamPart.Transparency = 0.2
+            FlaskState.AccentPart.Size = Vector3.new(0.22, 0.22, dist)
+            FlaskState.AccentPart.CFrame = cf
+            FlaskState.AccentPart.Transparency = 0.35
+        end
+        local function Flask_UpdateLanding(pos)
+            if not VD.FLASK_ShowLanding then
+                if FlaskState.LandingRing then FlaskState.LandingRing.Transparency = 1 end
+                return
+            end
+            if not FlaskState.LandingRing or not FlaskState.LandingRing.Parent then
+                local ring = Instance.new("Part")
+                ring.Name = "W2FlaskLanding"
+                ring.Shape = Enum.PartType.Cylinder
+                ring.Anchored = true
+                ring.CanCollide = false
+                ring.CanTouch = false
+                ring.CanQuery = false
+                ring.CastShadow = false
+                ring.Material = Enum.Material.Neon
+                ring.Color = VD.FLASK_BeamColor or Color3.fromRGB(255, 255, 255)
+                ring.Size = Vector3.new(0.2, 5, 5)
+                ring.Parent = Workspace
+                FlaskState.LandingRing = ring
+            end
+            FlaskState.LandingRing.Color = VD.FLASK_BeamColor or Color3.fromRGB(255, 255, 255)
+            FlaskState.LandingRing.CFrame = CFrame.new(pos) * CFrame.Angles(0, 0, math.rad(90))
+            FlaskState.LandingRing.Transparency = 0.35
+        end
+        RunService.RenderStepped:Connect(function()
+            if not VD.FLASK_SilentAim then
+                Flask_HideVisuals()
+                FlaskState.Target = nil
+                FlaskState.PredictedPos = nil
+                return
+            end
+            if GetRole() ~= "Killer" then Flask_HideVisuals(); return end
+            local target = Flask_GetTarget()
+            if not target or not target.Root then
+                Flask_HideVisuals(); FlaskState.Target = nil; FlaskState.PredictedPos = nil; return
+            end
+            local hand = Flask_GetHandOrigin()
+            if not hand then return end
+            local landing = Flask_PredictLanding(hand.Position, target.Root)
+            FlaskState.Target = target
+            FlaskState.PredictedPos = landing
+            if VD.FLASK_ShowBeam then pcall(Flask_UpdateBeam, hand.Position, landing)
+            else
+                if FlaskState.BeamPart then FlaskState.BeamPart.Transparency = 1 end
+                if FlaskState.AccentPart then FlaskState.AccentPart.Transparency = 1 end
+            end
+            pcall(Flask_UpdateLanding, landing)
+        end)
+        task.spawn(function()
+            pcall(function()
+                local oldNC
+                oldNC = hookmetamethod(game, "__namecall", function(self, ...)
+                    if getnamecallmethod() == "FireServer"
+                       and self.Name == "ThrowFlask"
+                       and VD.FLASK_SilentAim
+                       and GetRole() == "Killer"
+                       and FlaskState.PredictedPos then
+                        local args = {...}
+                        if typeof(args[2]) == "Vector3" then
+                            local origin = args[2]
+                            local aimDir = (FlaskState.PredictedPos - origin)
+                            if aimDir.Magnitude > 0.1 then
+                                args[1] = aimDir.Unit
+                                return oldNC(self, unpack(args))
+                            end
+                        elseif typeof(args[1]) == "Vector3" then
+                            local hand = Flask_GetHandOrigin()
+                            if hand then
+                                local aimDir = (FlaskState.PredictedPos - hand.Position)
+                                if aimDir.Magnitude > 0.1 then
+                                    args[1] = aimDir.Unit
+                                    return oldNC(self, unpack(args))
+                                end
+                            end
+                        end
+                    end
+                    return oldNC(self, ...)
+                end)
+            end)
+        end)
+        W.Flask_SetEnabled = function(v) VD.FLASK_SilentAim = v and true or false; if not v then Flask_ClearVisuals() end end
+        W.Flask_SetBeamColor   = function(c) VD.FLASK_BeamColor = c end
+        W.Flask_SetAccentColor = function(c) VD.FLASK_AccentColor = c end
+        W.Flask_SetSpeed       = function(v) VD.FLASK_Speed = tonumber(v) or 90 end
+        W.Flask_SetGravity     = function(v) VD.FLASK_Gravity = tonumber(v) or 196 end
+        W.Flask_SetLead        = function(v) VD.FLASK_LeadMult = tonumber(v) or 1.0 end
+        W.Flask_SetRange       = function(v) VD.FLASK_Range = tonumber(v) or 200 end
+    end
+
+    --====================================================--
+    -- FIX #3: DASH LOCK LOGIC (HILANG)
+    --====================================================--
+    do
+        VD.DashLockEnabled       = VD.DashLockEnabled      or false
+        VD.DashLockDuration      = VD.DashLockDuration     or 1.5
+        VD.DashLockSmoothness    = VD.DashLockSmoothness   or 0.3
+        VD.FreezeDuringDashLock  = VD.FreezeDuringDashLock or false
+        VD._DashLockActive       = false
+        VD._DashLockTarget       = nil
+        VD._DashLockConnection   = nil
+        local DashAnimationId = "rbxassetid://98163597193511"
+        local function DashLock_Update()
+            if not VD.DashLockEnabled or not VD._DashLockActive then return end
+            local myChar = LocalPlayer.Character
+            local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+            if not myRoot then VD._DashLockTarget = nil; return end
+            local target, targetDist = nil, math.huge
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and TeamIs(player, "Survivor") then
+                    local char = player.Character
+                    if char then
+                        local root = char:FindFirstChild("HumanoidRootPart")
+                        local hum = char:FindFirstChildOfClass("Humanoid")
+                        if root and hum and hum.Health > 0 then
+                            local dist = (myRoot.Position - root.Position).Magnitude
+                            if dist < targetDist then targetDist = dist; target = root end
+                        end
+                    end
+                end
+            end
+            if not target then VD._DashLockTarget = nil; return end
+            VD._DashLockTarget = target
+            local cam = Workspace.CurrentCamera
+            if cam then
+                local smooth = VD.DashLockSmoothness or 0.3
+                cam.CFrame = cam.CFrame:Lerp(CFrame.new(cam.CFrame.Position, target.Position), smooth)
+            end
+            if VD.FreezeDuringDashLock then
+                local hum = myChar:FindFirstChildOfClass("Humanoid")
+                if hum and hum.WalkSpeed ~= 0 then hum.WalkSpeed = 0 end
+            end
+        end
+        local function DashLock_SetActive(active)
+            active = active and true or false
+            if active == VD._DashLockActive then return end
+            VD._DashLockActive = active
+            if active then
+                if not VD._DashLockConnection then
+                    VD._DashLockConnection = RunService.RenderStepped:Connect(function() pcall(DashLock_Update) end)
+                end
+            else
+                if VD._DashLockConnection then
+                    pcall(function() VD._DashLockConnection:Disconnect() end)
+                    VD._DashLockConnection = nil
+                end
+                VD._DashLockTarget = nil
+                if VD.FreezeDuringDashLock then
+                    local char = LocalPlayer.Character
+                    local hum = char and char:FindFirstChildOfClass("Humanoid")
+                    if hum and hum.WalkSpeed == 0 then hum.WalkSpeed = 16 end
+                end
+            end
+        end
+        local function DashLock_HookCharacter(char)
+            if not char then return end
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if not hum then return end
+            local anim = hum:FindFirstChildOfClass("Animator") or hum:WaitForChild("Animator", 5)
+            if not anim then return end
+            anim.AnimationPlayed:Connect(function(track)
+                if not VD.DashLockEnabled then return end
+                local aid = track.Animation and track.Animation.AnimationId or ""
+                if aid == DashAnimationId then
+                    DashLock_SetActive(true)
+                    task.delay(VD.DashLockDuration or 1.5, function() DashLock_SetActive(false) end)
+                end
+            end)
+        end
+        if LocalPlayer.Character then DashLock_HookCharacter(LocalPlayer.Character) end
+        LocalPlayer.CharacterAdded:Connect(function(c)
+            task.wait(0.5); DashLock_HookCharacter(c)
+        end)
+        W.DashLock_SetActive = DashLock_SetActive
+        W.DashLock_SetEnabled = function(v)
+            VD.DashLockEnabled = v and true or false
+            if not v then DashLock_SetActive(false) end
+        end
+    end
+
+    --====================================================--
+    -- FIX #4: SPEAR AIMBOT LOGIC (HILANG)
+    --====================================================--
+    do
+        VD.SPEAR_Aimbot = VD.SPEAR_Aimbot or false
+        VD.SPEAR_Gravity = VD.SPEAR_Gravity or 50
+        VD.SPEAR_Speed = VD.SPEAR_Speed or 100
+        local SpearBtnData = {
+            UI = nil, Button = nil, Active = true, DragLocked = false,
+            Dragging = false, DragStart = nil, DragStartPos = nil,
+            ManualTarget = nil, TargetIndex = 0,
+            TargetLabel = nil, LeftArrow = nil, RightArrow = nil,
+        }
+        local function SpearAimbotCalc(targetPos)
+            if not VD.SPEAR_Aimbot or GetRole() ~= "Killer" then return nil end
+            local char = LocalPlayer.Character
+            if not char then return nil end
+            local root = char:FindFirstChild("HumanoidRootPart")
+            if not root then return nil end
+            local startPos = root.Position + Vector3.new(0, 2, 0)
+            local distance = (targetPos - startPos).Magnitude
+            local gravity  = VD.SPEAR_Gravity or 50
+            local speed    = VD.SPEAR_Speed or 100
+            local time     = distance / speed
+            local drop     = 0.5 * gravity * time * time
+            return targetPos + Vector3.new(0, drop, 0)
+        end
+        local function Spear_GetTargetList()
+            local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            local list = {}
+            if not root then return list end
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and TeamIs(player, "Survivor") and player.Character then
+                    local tr = player.Character:FindFirstChild("HumanoidRootPart")
+                    local th = player.Character:FindFirstChildOfClass("Humanoid")
+                    if tr and th and th.MaxHealth > 0 and (th.Health / th.MaxHealth) > 0.25 then
+                        local dist = (tr.Position - root.Position).Magnitude
+                        table.insert(list, { Player = player, Dist = dist })
+                    end
+                end
+            end
+            table.sort(list, function(a, b) return a.Dist < b.Dist end)
+            local players = {}
+            for _, v in ipairs(list) do table.insert(players, v.Player) end
+            return players
+        end
+        local function Spear_UpdateTargetLabel()
+            if not (SpearBtnData and SpearBtnData.TargetLabel) then return end
+            if SpearBtnData.ManualTarget and SpearBtnData.ManualTarget.Parent then
+                SpearBtnData.TargetLabel.Text = SpearBtnData.ManualTarget.Name
+            else
+                SpearBtnData.TargetLabel.Text = "AUTO"
+            end
+            SpearBtnData.TargetLabel.Visible = true
+        end
+        local function Spear_CycleTarget(direction)
+            local list = Spear_GetTargetList()
+            if #list == 0 then
+                SpearBtnData.ManualTarget = nil; SpearBtnData.TargetIndex = 0
+                VD_Notify("Spear Aimbot", "Tidak ada target survivor.", 2)
+                return
+            end
+            local curIdx = nil
+            if SpearBtnData.ManualTarget then
+                for i, p in ipairs(list) do
+                    if p == SpearBtnData.ManualTarget then curIdx = i; break end
+                end
+            end
+            local nextIdx
+            if curIdx then
+                nextIdx = curIdx + direction
+                if nextIdx > #list then nextIdx = 1 end
+                if nextIdx < 1 then nextIdx = #list end
+            else nextIdx = 1 end
+            SpearBtnData.TargetIndex  = nextIdx
+            SpearBtnData.ManualTarget = list[nextIdx]
+            VD_Notify("Spear Aimbot", "Target: " .. SpearBtnData.ManualTarget.Name, 2)
+            Spear_UpdateTargetLabel()
+        end
+        local function Spear_UpdateAim()
+            if not VD.SPEAR_Aimbot then return end
+            if SpearBtnData and not SpearBtnData.Active then return end
+            if GetRole() ~= "Killer" then return end
+            local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if not root then return end
+            local target = nil
+            if SpearBtnData.ManualTarget then
+                local p = SpearBtnData.ManualTarget
+                local valid = p.Parent and TeamIs(p, "Survivor") and p.Character
+                if valid then
+                    local tr = p.Character:FindFirstChild("HumanoidRootPart")
+                    local th = p.Character:FindFirstChildOfClass("Humanoid")
+                    valid = tr and th and th.MaxHealth > 0 and (th.Health / th.MaxHealth) > 0.25
+                end
+                if valid then target = p
+                else SpearBtnData.ManualTarget = nil; Spear_UpdateTargetLabel() end
+            end
+            if not target then
+                local closest, closestDist = nil, math.huge
+                for _, player in ipairs(Players:GetPlayers()) do
+                    if player ~= LocalPlayer and TeamIs(player, "Survivor") and player.Character then
+                        local tr = player.Character:FindFirstChild("HumanoidRootPart")
+                        local th = player.Character:FindFirstChildOfClass("Humanoid")
+                        if tr and th and th.MaxHealth > 0 and (th.Health / th.MaxHealth) > 0.25 then
+                            local dist = (tr.Position - root.Position).Magnitude
+                            if dist < closestDist then closestDist = dist; closest = player end
+                        end
+                    end
+                end
+                target = closest
+            end
+            if target and target.Character then
+                local tr = target.Character:FindFirstChild("HumanoidRootPart")
+                if tr then
+                    local aimPos = SpearAimbotCalc(tr.Position)
+                    if aimPos then
+                        local cam = Workspace.CurrentCamera
+                        if cam then cam.CFrame = CFrame.new(cam.CFrame.Position, aimPos) end
+                    end
+                end
+            end
+        end
+        RunService.RenderStepped:Connect(function() pcall(Spear_UpdateAim) end)
+        W.SpearAimbot_SetEnabled = function(v)
+            VD.SPEAR_Aimbot = v and true or false
+        end
+        W.SpearAimbot_SetGravity = function(v) VD.SPEAR_Gravity = tonumber(v) or 50 end
+        W.SpearAimbot_SetSpeed   = function(v) VD.SPEAR_Speed   = tonumber(v) or 100 end
+        W.SpearAimbot_CycleTarget = Spear_CycleTarget
+    end
+
+    --====================================================--
+    -- FIX #5: CAMERA DBD LOGIC (HILANG)
+    --====================================================--
+    do
+        local CameraBindName = "W2_CameraDBD_Smooth"
+        local PreviousPosition = nil
+        local PreviousRotation = nil
+        local OriginalPOV      = 70
+        pcall(function() RunService:UnbindFromRenderStep(CameraBindName) end)
+        RunService:BindToRenderStep(
+            CameraBindName,
+            Enum.RenderPriority.Camera.Value + 1,
+            function(DeltaTime)
+                local Camera = Workspace.CurrentCamera
+                if not Camera then return end
+                if Camera.CameraType ~= Enum.CameraType.Custom
+                   and Camera.CameraType ~= Enum.CameraType.Follow then
+                    PreviousPosition = nil; PreviousRotation = nil; return
+                end
+                if VD.CamDBD_SmoothEnabled then
+                    local CurrentCFrame   = Camera.CFrame
+                    local CurrentPosition = CurrentCFrame.Position
+                    local CurrentRotation = CurrentCFrame.Rotation
+                    if not PreviousPosition or not PreviousRotation then
+                        PreviousPosition = CurrentPosition
+                        PreviousRotation = CurrentRotation
+                    else
+                        local smoothSpeed = tonumber(VD.CamDBD_SmoothSpeed) or 5
+                        local posAlpha = 1 - math.exp(-smoothSpeed * DeltaTime)
+                        PreviousPosition = PreviousPosition:Lerp(CurrentPosition, posAlpha)
+                        local rotAlpha = 1 - math.exp(-(smoothSpeed * 1.90) * DeltaTime)
+                        PreviousRotation = PreviousRotation:Lerp(CurrentRotation, rotAlpha)
+                        Camera.CFrame = CFrame.new(PreviousPosition) * PreviousRotation
+                    end
+                else
+                    PreviousPosition = nil; PreviousRotation = nil
+                end
+                if VD.CamDBD_POVEnabled then
+                    local povSpeed = tonumber(VD.CamDBD_POVSmooth) or 9
+                    local alpha = 1 - math.exp(-povSpeed * DeltaTime)
+                    local target = tonumber(VD.CamDBD_TargetPOV) or 85
+                    Camera.FieldOfView = Camera.FieldOfView + (target - Camera.FieldOfView) * alpha
+                end
+            end
+        )
+        LocalPlayer.CharacterAdded:Connect(function()
+            task.wait(0.5); PreviousPosition = nil; PreviousRotation = nil
+        end)
+        W.CamDBD_SetSmooth = function(v)
+            VD.CamDBD_SmoothEnabled = v and true or false
+            if not v then PreviousPosition = nil; PreviousRotation = nil
+            else
+                local cam = Workspace.CurrentCamera
+                if cam then
+                    PreviousPosition = cam.CFrame.Position
+                    PreviousRotation = cam.CFrame.Rotation
+                end
+            end
+        end
+        W.CamDBD_SetSmoothSpeed = function(v) VD.CamDBD_SmoothSpeed = tonumber(v) or 5 end
+        W.CamDBD_SetPOVLock = function(v)
+            VD.CamDBD_POVEnabled = v and true or false
+            if not v then
+                local cam = Workspace.CurrentCamera
+                if cam then cam.FieldOfView = OriginalPOV end
+            else
+                local cam = Workspace.CurrentCamera
+                if cam then OriginalPOV = cam.FieldOfView end
+            end
+        end
+        W.CamDBD_SetTargetPOV = function(v) VD.CamDBD_TargetPOV = tonumber(v) or 85 end
+        W.CamDBD_SetPOVSmooth = function(v) VD.CamDBD_POVSmooth = tonumber(v) or 9 end
     end-- ═══════════════════════════════════════════════════════
 -- [W2-03] AUTO CROUCH + AUTO ATTACK + AUTO FLEE
 -- ═══════════════════════════════════════════════════════
@@ -932,7 +1581,7 @@ local function __W2_Init_Main__()
         else
             if ParryState.CircleFolder then ParryDestroyCircle() end
         end
-        end-- ═══════════════════════════════════════════════════════
+            end-- ═══════════════════════════════════════════════════════
 -- [W2-05] AUTO PARRY V2
 -- ═══════════════════════════════════════════════════════
 
@@ -1212,7 +1861,7 @@ local function __W2_Init_Main__()
                 W_State.Adornment = nil
             end
         end)
-            end-- ═══════════════════════════════════════════════════════
+                end-- ═══════════════════════════════════════════════════════
 -- [W2-06] SELF HEAL + FAKE PERKS
 -- ═══════════════════════════════════════════════════════
 
@@ -1706,7 +2355,7 @@ local function __W2_Init_Main__()
             FP_Clean("AdrenalineRush")
             FP.ActiveBuffs["AdrenalineRush"] = nil
         end
-                end-- ═══════════════════════════════════════════════════════
+                    end-- ═══════════════════════════════════════════════════════
 -- [W2-07] STUN INDICATOR + TROLL TP + ESCAPE
 -- ═══════════════════════════════════════════════════════
 
@@ -2098,7 +2747,7 @@ local function __W2_Init_Main__()
             pcall(function() ev:FireServer() end)
             VD_Notify("Select Masked", "Deactivated", 2)
         else ForceNotify("Select Masked", "Deactivatepower remote not found", 2) end
-                    end-- ═══════════════════════════════════════════════════════
+                        end-- ═══════════════════════════════════════════════════════
 -- [W2-08] FAKE KORLESS + FULL ESP
 -- ═══════════════════════════════════════════════════════
 
@@ -3223,7 +3872,7 @@ local function __W2_Init_Main__()
         VD.KILLER_InfFrenzy = v and true or false
         if VD.KILLER_InfFrenzy then W.W2_StartJeffCooldownBypass()
         else W.W2_StopJeffCooldownBypass() end
-    end-- ═══════════════════════════════════════════════════════
+                                end-- ═══════════════════════════════════════════════════════
 -- [W2-10] ANTI BLIND + DESTROY PALLET + INF LUNGE + AIM LOCK
 -- ═══════════════════════════════════════════════════════
 
@@ -3576,7 +4225,7 @@ local function __W2_Init_Main__()
 
         W.GunAim_Start = GA_Start
         W.GunAim_Cfg = GunAim
-                                end-- ═══════════════════════════════════════════════════════
+                                    end-- ═══════════════════════════════════════════════════════
 -- [W2-11] KILLER ABILITIES + AUTO HOOK
 -- ═══════════════════════════════════════════════════════
 
@@ -3858,7 +4507,7 @@ local function __W2_Init_Main__()
             VD.KILLER_AutoHook = v and true or false
             if VD.KILLER_AutoHook then W.KA_StartAutoHook() else W.KA_StopAutoHook() end
         end
-                                    end-- ═══════════════════════════════════════════════════════
+                                        end-- ═══════════════════════════════════════════════════════
 -- [W2-12] PERKS DISPLAY + SPEED BOOST + CURSOR
 -- ═══════════════════════════════════════════════════════
 
@@ -4331,7 +4980,7 @@ local function __W2_Init_Main__()
             task.wait(1)
             if VD.CursorEnabled then W.Cursor_SetEnabled(true) end
         end)
-                                        end-- ═══════════════════════════════════════════════════════
+                                            end-- ═══════════════════════════════════════════════════════
 -- [W2-13] SILENT VEIL V1 + V2
 -- ═══════════════════════════════════════════════════════
 
@@ -4962,7 +5611,7 @@ local function __W2_Init_Main__()
             IsVeilSilentOn = IsVeilSilentOn,
             setTracker = function(v) VeilTrackerEnabled = v end,
         }
-    end-- ═══════════════════════════════════════════════════════
+                                                end-- ═══════════════════════════════════════════════════════
 -- [W2-14] SILENT FLASHLIGHT + LOCK POV + TOF
 -- ═══════════════════════════════════════════════════════
 
@@ -6143,7 +6792,7 @@ local function __W2_Init_Main__()
             end
             return false
         end
-    end-- ═══════════════════════════════════════════════════════
+                                                    end-- ═══════════════════════════════════════════════════════
 -- [W2-16] CAMERA DBD + FLOATING BUTTON SYSTEM
 -- ═══════════════════════════════════════════════════════
 
@@ -7529,7 +8178,7 @@ local function __W2_Init_Main__()
             if VD.ManualGen then StartManualThread() end
             if VD.AutoGen then StartAutoThread() end
         end)
-    end-- ═══════════════════════════════════════════════════════
+                                                            end-- ═══════════════════════════════════════════════════════
 -- [W2-18] PLAYER UTILITY + EMOTE + JERK OFF
 -- ═══════════════════════════════════════════════════════
 
@@ -7997,7 +8646,7 @@ local function __W2_Init_Main__()
             for k, v in pairs(ConfigData or {}) do snap[k] = v end
             return snap
         end
-    end-- ═══════════════════════════════════════════════════════
+                                                                end-- ═══════════════════════════════════════════════════════
 -- [W2-19] FAKE AVATAR + FAKE KORLESS + HEADER TITLE
 -- ═══════════════════════════════════════════════════════
 
@@ -8406,7 +9055,7 @@ local function __W2_Init_Main__()
                 if SpecGui then SpecGui:Destroy(); SpecGui = nil; SpecLabel = nil end
             end
         end
-    end-- ═══════════════════════════════════════════════════════
+                                                                    end-- ═══════════════════════════════════════════════════════
 -- [W2-20] UI BUILD PART 1 (WINDOW + INFO + TAB SURVIVOR)
 -- ═══════════════════════════════════════════════════════
 
